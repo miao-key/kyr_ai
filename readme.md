@@ -16,3 +16,4 @@
 
 - new.txt
 - 学习了git
+- git push origin main
