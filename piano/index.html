@@ -1,0 +1,1994 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电子钢琴</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 背景图片 */
+        .bg-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('12.jpg');
+            background-size: cover;
+            background-position: center;
+            z-index: -3;
+            transition: transform 0.5s ease-out;
+            /* 确保背景图片覆盖整个屏幕 */
+            min-height: 100vh;
+            min-width: 100vw;
+            object-fit: cover;
+        }
+
+        /* 视差星星层 */
+        .stars-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        .star {
+            position: absolute;
+            background-color: #fff;
+            border-radius: 50%;
+            opacity: 0;
+            box-shadow: 0 0 var(--glow-size) var(--glow-color);
+            animation: twinkle var(--duration) infinite ease-in-out;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0; transform: scale(0.8); }
+            50% { opacity: var(--opacity); transform: scale(1); }
+        }
+
+        /* 光带动画 */
+        .light-ribbon {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--ribbon-color), transparent);
+            z-index: -1;
+            opacity: 0.7;
+            filter: blur(1px);
+            transform-origin: left center;
+            animation: ribbon-flow 8s infinite ease-in-out;
+        }
+
+        @keyframes ribbon-flow {
+            0% { transform: scaleX(0) translateY(0) rotate(var(--angle)); opacity: 0; }
+            10% { opacity: 0.7; }
+            90% { opacity: 0.7; }
+            100% { transform: scaleX(1) translateY(var(--shift)) rotate(var(--angle)); opacity: 0; }
+        }
+
+        /* 流星效果 - 全新设计 */
+        .comet {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            z-index: -1;
+            opacity: 1;
+            transform-origin: center center;
+            box-shadow: none;
+        }
+
+        /* 基础尾迹 */
+        .comet::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: var(--tail-length, 100px);
+            height: 1px;
+            background: linear-gradient(to left, rgba(255, 255, 255, 0.8), transparent);
+            transform: translateY(-50%);
+            left: 2px;
+            border-radius: 0;
+            filter: none;
+        }
+
+        /* 不再使用额外彩色尾迹 */
+        .comet::after {
+            display: none;
+        }
+
+        /* 轻量型流星 - 简单清晰 */
+        .comet.light {
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.8);
+        }
+        
+        .comet.light::before {
+            height: 1px;
+            width: var(--tail-length, 80px);
+            background: linear-gradient(to left, rgba(255, 255, 255, 0.7), transparent);
+        }
+        
+        /* 标准流星 */
+        .comet.standard {
+            width: 3px;
+            height: 3px;
+        }
+        
+        .comet.standard::before {
+            height: 1px;
+            width: var(--tail-length, 120px);
+        }
+        
+        /* 长尾流星 */
+        .comet.long {
+            width: 3px;
+            height: 3px;
+        }
+        
+        .comet.long::before {
+            width: var(--tail-length, 200px);
+            background: linear-gradient(to left, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4), transparent);
+        }
+        
+        /* 蓝调流星 */
+        .comet.blue {
+            width: 3px;
+            height: 3px;
+            background-color: rgba(220, 240, 255, 0.9);
+        }
+        
+        .comet.blue::before {
+            background: linear-gradient(to left, rgba(220, 240, 255, 0.8), rgba(135, 206, 250, 0.4), transparent);
+        }
+        
+        /* 流星容器 - 管理动画对象 */
+        .comet-container {
+            position: absolute;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* 日出/日落光晕效果 */
+        .horizon-glow {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 40%;
+            background: radial-gradient(ellipse at center bottom, 
+                rgba(255, 175, 125, 0.2) 0%, 
+                rgba(255, 110, 50, 0.1) 30%, 
+                rgba(0, 0, 0, 0) 70%);
+            z-index: -2;
+            animation: horizon-pulse 10s infinite alternate;
+        }
+
+        @keyframes horizon-pulse {
+            0% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        /* 蓝粉色光带 */
+        .special-ribbons {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* 钢琴容器样式 */
+        .piano-container {
+            position: relative;
+            padding: 30px;
+            padding-bottom: 80px;  /* 增加底部空间 */
+            background: linear-gradient(to bottom, rgba(20, 20, 40, 0.7) 0%, rgba(10, 10, 30, 0.8) 100%);
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(138, 43, 226, 0.2), 0 10px 50px rgba(0,0,0,0.5);
+            border: 1px solid rgba(100, 100, 150, 0.4);
+            backdrop-filter: blur(5px);
+            z-index: 1;
+        }
+
+        /* 钢琴边缘的发光效果 */
+        .piano-container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, 
+                transparent 0%, 
+                rgba(0, 162, 255, 0.3) 25%, 
+                transparent 50%, 
+                rgba(255, 41, 117, 0.3) 75%, 
+                transparent 100%);
+            z-index: -1;
+            border-radius: 12px;
+            animation: border-glow 10s linear infinite;
+        }
+
+        @keyframes border-glow {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+
+        .piano {
+            display: flex;
+            position: relative;
+            padding: 20px 20px 40px 20px;
+            background: #1a1a1a;
+            border-radius: 5px;
+            box-shadow: inset 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        .key {
+            width: 60px;
+            height: 220px;
+            background: linear-gradient(to bottom, #fff 0%, #eee 75%, #ddd 100%);
+            border: 1px solid #ccc;
+            border-radius: 0 0 6px 6px;
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+            transition: all 0.15s;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2), inset 0 -1px 0 rgba(255,255,255,0.7);
+            margin: 0 -1px;
+            z-index: 1;
+            /* 添加相对定位容器，以便内部元素使用绝对定位进行动画 */
+            transform-style: preserve-3d;
+        }
+
+        /* 键盘释放时的过渡效果样式 */
+        .key-releasing {
+            transition: all 0.15s cubic-bezier(0, 0, 0.3, 1.3);
+        }
+
+        .key::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 15px;
+            background: linear-gradient(to bottom, #fff 0%, #f6f6f6 100%);
+            border-radius: 2px 2px 0 0;
+        }
+
+        .key.black {
+            width: 36px;
+            height: 140px;
+            background: linear-gradient(to bottom, #444 0%, #222 75%, #000 100%);
+            position: absolute;
+            margin-left: -18px;
+            z-index: 2;
+            border: 1px solid #000;
+            border-radius: 0 0 4px 4px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.8), inset 0 -1px 0 rgba(255,255,255,0.1);
+            transform-style: preserve-3d;
+        }
+
+        .key.black::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: linear-gradient(to bottom, #666 0%, #333 100%);
+            border-radius: 2px 2px 0 0;
+        }
+
+        /* 特殊的黑键布局 */
+        .key[data-note="C#4"], .key[data-note="D#4"] {
+            left: calc(50% - 30%);
+        }
+
+        .key[data-note="F#4"], .key[data-note="G#4"], .key[data-note="A#4"] {
+            left: calc(50% + 30%);
+        }
+
+        /* 按键按下效果（视觉层）*/
+        .key-pressed-effect {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 3;
+            pointer-events: none;
+            background: none;
+            transform: translateY(3px);
+            opacity: 0;
+            transition: opacity 0.1s;
+        }
+
+        .key.active {
+            background: linear-gradient(to bottom, #f0f0f0 0%, #e0e0e0 75%, #d0d0d0 100%);
+            /* 移除transform，防止整体跳动 */
+            transform: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1), inset 0 -1px 0 rgba(255,255,255,0.5);
+            /* 不再改变高度，防止整体结构变化 */
+            height: 220px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* 添加按键按下时的3D阴影效果替代位移 */
+        .key.active::before {
+            box-shadow: inset 0 2px 3px rgba(0,0,0,0.2);
+        }
+        
+        /* 使用伪元素添加按下效果 */
+        .key.active::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+            animation: key-glow 0.5s ease-out;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        @keyframes key-glow {
+            0% { opacity: 0.7; transform: scale(0.2); }
+            100% { opacity: 0; transform: scale(2); }
+        }
+
+        /* 黑键按下效果样式 */
+        .key.black.active {
+            background: linear-gradient(to bottom, #444 0%, #333 75%, #222 100%);
+            /* 移除transform，防止整体跳动 */
+            transform: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3), inset 0 -1px 0 rgba(255,255,255,0.1);
+            /* 不再改变高度，防止整体结构变化 */
+            height: 140px;
+            overflow: hidden;
+        }
+        
+        /* 添加按键按下时的3D阴影效果替代位移 */
+        .key.black.active::before {
+            box-shadow: inset 0 2px 3px rgba(0,0,0,0.3);
+        }
+
+        .key.black.active::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+            animation: key-glow 0.5s ease-out;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        /* 添加键盘按键的脉动边框 */
+        .key.active {
+            border: 1px solid rgba(100, 200, 255, 0.4);
+        }
+
+        .key.black.active {
+            border: 1px solid rgba(130, 130, 255, 0.6);
+        }
+
+        .key-label {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            color: #777;
+            font-size: 12px;
+            font-weight: bold;
+            text-shadow: 0 1px 1px rgba(255,255,255,0.7);
+        }
+
+        .key.black .key-label {
+            color: #ddd;
+            text-shadow: 0 1px 1px rgba(0,0,0,0.8);
+        }
+
+        .pedal {
+            width: 120px;
+            height: 25px;
+            background: linear-gradient(to bottom, #666 0%, #333 100%);
+            position: absolute;
+            bottom: 45px;  /* 调整位置，让出底部文字的空间 */
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+            transition: all 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #fff;
+            text-shadow: 0 1px 1px rgba(0,0,0,0.8);
+            white-space: nowrap;
+            border: 1px solid #222;
+        }
+
+        .pedal.active {
+            background: linear-gradient(to bottom, #555 0%, #222 100%);
+            transform: translateX(-50%) translateY(2px);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+
+        .piano-info {
+            color: #ccc;
+            text-align: center;
+            margin-top: 5px;
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            right: 0;
+            font-size: 12px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        /* 钢琴木质外壳效果 */
+        .piano::before {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: -5px;
+            right: -5px;
+            height: 20px;
+            background: linear-gradient(to bottom, #3c2210 0%, #5e381b 100%);
+            border-radius: 5px 5px 0 0;
+            border-bottom: 2px solid #2a1a0e;
+        }
+
+        .piano::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: -5px;
+            right: -5px;
+            height: 20px;
+            background: linear-gradient(to top, #3c2210 0%, #5e381b 100%);
+            border-radius: 0 0 5px 5px;
+            border-top: 2px solid #2a1a0e;
+        }
+
+        /* 音符动画样式 */
+        .note-anim {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            transform-origin: center center;
+            font-size: 24px;
+            pointer-events: none;
+            opacity: 1;
+            animation: note-jump 0.8s ease-out forwards;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+            z-index: 5; /* 确保音符显示在按键上方 */
+        }
+
+        .key.active .note-anim {
+            animation: note-jump-enhanced 1s ease-out forwards;
+        }
+
+        @keyframes note-jump {
+            0% {
+                opacity: 1;
+                transform: translate(var(--x-offset, 0), var(--y-offset, 0)) scale(var(--scale, 1));
+            }
+            60% {
+                opacity: 1;
+                transform: translate(calc(var(--x-offset, 0) * 1.1), calc(var(--y-offset, 0) - 30px)) scale(calc(var(--scale, 1) * 1.3));
+            }
+            100% {
+                opacity: 0;
+                transform: translate(calc(var(--x-offset, 0) * 1.2), calc(var(--y-offset, 0) - 60px)) scale(calc(var(--scale, 1) * 1.1)) rotate(var(--rotate, 0deg));
+            }
+        }
+
+        @keyframes note-jump-enhanced {
+            0% {
+                opacity: 1;
+                transform: translate(var(--x-offset, 0), var(--y-offset, 0)) scale(var(--scale, 1));
+                filter: drop-shadow(0 0 5px rgba(100, 200, 255, 0.8));
+            }
+            50% {
+                opacity: 1;
+                transform: translate(calc(var(--x-offset, 0) * 1.1), calc(var(--y-offset, 0) - 40px)) scale(calc(var(--scale, 1) * 1.5));
+                filter: drop-shadow(0 0 10px rgba(100, 200, 255, 0.6));
+            }
+            100% {
+                opacity: 0;
+                transform: translate(calc(var(--x-offset, 0) * 1.2), calc(var(--y-offset, 0) - 80px)) scale(calc(var(--scale, 1) * 1.2)) rotate(var(--rotate, 10deg));
+                filter: drop-shadow(0 0 2px rgba(100, 200, 255, 0.3));
+            }
+        }
+
+        /* 雪粒效果 - 取代流星 */
+        .snowflake {
+            position: absolute;
+            background-color: #fff;
+            border-radius: 50%;
+            z-index: -1;
+            opacity: 0.9;
+            box-shadow: 0 0 3px rgba(255, 255, 255, 0.8);
+            pointer-events: none;
+        }
+        
+        /* 小型雪粒 */
+        .snowflake.tiny {
+            width: 2px;
+            height: 2px;
+            opacity: 0.7;
+            filter: blur(0.3px);
+        }
+        
+        /* 普通雪粒 */
+        .snowflake.normal {
+            width: 4px;
+            height: 4px;
+            filter: blur(0.5px);
+        }
+        
+        /* 大型雪粒 */
+        .snowflake.large {
+            width: 6px;
+            height: 6px;
+            filter: blur(1px);
+        }
+        
+        /* 闪光雪粒 */
+        .snowflake.sparkle {
+            width: 4px;
+            height: 4px;
+            background-color: rgba(220, 240, 255, 0.95);
+            box-shadow: 0 0 4px rgba(170, 220, 255, 0.9);
+            filter: blur(0.5px);
+        }
+        
+        /* 雪粒容器 */
+        .snowflake-container {
+            position: absolute;
+            pointer-events: none;
+            z-index: -1;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        /* 添加键盘按键压下时的速度感 */
+        .key {
+            transition: transform 0.08s cubic-bezier(0.2, 0.8, 0.3, 1.2), 
+                        background 0.15s ease-in-out,
+                        box-shadow 0.15s ease-in-out,
+                        height 0.15s ease-in-out,
+                        border 0.15s ease-in-out;
+        }
+
+        .key.black {
+            transition: transform 0.08s cubic-bezier(0.2, 0.8, 0.3, 1.2), 
+                        background 0.15s ease-in-out,
+                        box-shadow 0.15s ease-in-out,
+                        height 0.15s ease-in-out,
+                        border 0.15s ease-in-out;
+        }
+
+        /* 添加《晴天》键盘指导样式 */
+        .song-guide {
+            margin-top: 20px;
+            background: rgba(10, 10, 30, 0.7);
+            border-radius: 8px;
+            padding: 15px;
+            color: #fff;
+            font-size: 14px;
+            text-align: center;
+            border: 1px solid rgba(100, 100, 150, 0.3);
+        }
+        
+        .song-guide h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #9dd1ff;
+            text-shadow: 0 0 5px rgba(100, 180, 255, 0.5);
+        }
+        
+        .song-notes {
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        
+        .note-highlight {
+            color: #ffb8de;
+            font-weight: bold;
+        }
+        
+        /* 添加长短音符的样式 */
+        .long-note {
+            color: #88ffff;
+            font-weight: bold;
+            padding: 2px 4px;
+            border-radius: 3px;
+            background: rgba(0, 150, 200, 0.2);
+            margin: 0 2px;
+        }
+        
+        .short-note {
+            color: #ffcc88;
+            font-weight: bold;
+            padding: 2px 4px;
+            border-radius: 3px;
+            background: rgba(200, 100, 0, 0.2);
+            margin: 0 2px;
+        }
+        
+        .pause-note {
+            color: #aaaaaa;
+            padding: 2px 6px;
+            margin: 0 2px;
+        }
+        
+        .rhythm-mark {
+            font-family: 'Arial Unicode MS', Arial, sans-serif;
+            letter-spacing: 2px;
+            color: #ffdd99;
+        }
+        
+        .playing-tip {
+            font-size: 12px;
+            color: #cccccc;
+            background: rgba(50, 50, 80, 0.4);
+            padding: 6px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        
+        .playing-tutorial {
+            margin-top: 15px;
+            background: rgba(50, 50, 80, 0.4);
+            padding: 10px;
+            border-radius: 4px;
+            text-align: left;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+        
+        .measure {
+            background: rgba(40, 40, 70, 0.4);
+            padding: 8px;
+            border-radius: 4px;
+            margin: 8px 0;
+            letter-spacing: 1px;
+        }
+        
+        .toggle-guide {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 5px 12px;
+            background: rgba(80, 80, 120, 0.6);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        
+        .toggle-guide:hover {
+            background: rgba(100, 100, 180, 0.7);
+        }
+        
+        .full-guide {
+            margin-top: 12px;
+            text-align: left;
+            background: rgba(30, 30, 50, 0.6);
+            padding: 10px 15px;
+            border-radius: 6px;
+            line-height: 1.8;
+        }
+        
+        .full-guide p {
+            margin: 5px 0;
+        }
+
+        /* 添加《美人鱼》前奏专用样式 */
+        .right-hand {
+            color: #9aff9a;
+            background: rgba(0, 150, 50, 0.2);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        
+        .left-hand {
+            color: #ff9a9a;
+            background: rgba(150, 50, 0, 0.2);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        
+        .chord-note {
+            color: #e2c0ff;
+            background: rgba(100, 0, 150, 0.2);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: bold;
+            margin: 0 2px;
+        }
+        
+        .accent-note {
+            color: #ffff88;
+            font-weight: bold;
+            padding: 2px 4px;
+            border-radius: 3px;
+            background: rgba(150, 150, 0, 0.3);
+            margin: 0 2px;
+            position: relative;
+        }
+
+        .measure-container {
+            margin: 12px 0;
+            border-left: 2px solid rgba(100, 150, 200, 0.4);
+            background: rgba(30, 40, 70, 0.4);
+            border-radius: 4px;
+        }
+        
+        .measure-number {
+            font-size: 12px;
+            color: #aabbdd;
+            padding: 3px 8px;
+            background: rgba(50, 70, 100, 0.5);
+            border-radius: 3px 3px 0 0;
+            margin: 0;
+        }
+        
+        .right-part {
+            background: rgba(40, 60, 40, 0.3);
+            margin: 0 0 1px 0;
+            padding: 8px;
+        }
+        
+        .left-part {
+            background: rgba(60, 40, 40, 0.3);
+            margin: 0;
+            padding: 8px;
+            border-radius: 0 0 4px 4px;
+        }
+        
+        .finger-position {
+            margin-top: 15px;
+            background: rgba(60, 50, 80, 0.4);
+            padding: 10px;
+            border-radius: 4px;
+            text-align: left;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景层 -->
+    <div class="bg-image" id="bgImage"></div>
+    <div class="horizon-glow"></div>
+    <div class="stars-layer" id="starsLayer"></div>
+    <div class="special-ribbons" id="specialRibbons"></div>
+    
+    <div class="piano-container">
+        <div class="piano" id="piano"></div>
+        <div class="pedal" id="pedal">延音踏板(空格键)</div>
+        <div class="piano-info">
+            使用键盘或鼠标演奏 | 空格键控制延音踏板
+        </div>
+        
+        <!-- 《美人鱼》前奏指导已被更新 -->
+        
+        <!-- 添加《美人鱼》键盘指导 -->
+        <div class="song-guide">
+            <h3>《美人鱼》高潮指导 (E大调)</h3>
+            <div class="song-notes">
+                <p class="playing-tip">
+                    注：<span class="right-hand">右手</span> <span class="left-hand">左手</span> 
+                    <span class="long-note">Y-</span>表示长音 <span class="short-note">Y.</span>表示短音 
+                    <span class="chord-note">[QET]</span>表示和弦 <span class="accent-note">Y!</span>表示重音
+                </p>
+                <p><span class="note-highlight">高潮简易版(E大调)：</span></p>
+                <p>
+                    <span class="right-hand">右手:</span> 
+                    <span class="accent-note">Y!</span> <span class="short-note">U.</span> <span class="short-note">9.</span> <span class="long-note">I-</span> <span class="short-note">U.</span> <span class="long-note">9-</span> <span class="short-note">U.</span> <span class="short-note">6.</span>
+                </p>
+                <p>
+                    <span class="left-hand">左手:</span> 
+                    <span class="chord-note">[EUA]</span> <span class="pause-note">/</span> <span class="chord-note">[RTU]</span>
+                </p>
+            </div>
+            <div class="toggle-guide" id="toggleMermaidGuide">显示完整高潮谱面</div>
+            <div class="full-guide" id="fullMermaidGuide" style="display: none;">
+                <p><span class="note-highlight">《美人鱼》高潮指导(E大调)：</span></p>
+                
+                <div class="measure-container">
+                    <p class="measure-number">前奏过渡</p>
+                    <p class="measure right-part">
+                        <span class="right-hand">右手: </span>
+                        <span class="short-note">6.</span> <span class="short-note">Y.</span> <span class="short-note">U.</span> <span class="pause-note">/</span>
+                    </p>
+                    <p class="measure left-part">
+                        <span class="left-hand">左手: </span>
+                        <span class="chord-note">[ETY]</span> <span class="pause-note">/</span>
+                    </p>
+                </div>
+                
+                <div class="measure-container">
+                    <p class="measure-number">"当我看见你的时候"</p>
+                    <p class="measure right-part">
+                        <span class="right-hand">右手: </span>
+                        <span class="accent-note">Y!</span> <span class="short-note">U.</span> <span class="short-note">9.</span> <span class="long-note">I-</span> <span class="short-note">U.</span> <span class="long-note">9-</span> <span class="short-note">U.</span> <span class="short-note">6.</span>
+                    </p>
+                    <p class="measure left-part">
+                        <span class="left-hand">左手: </span>
+                        <span class="chord-note">[EUA]</span> <span class="pause-note">/</span> <span class="chord-note">[RTU]</span> <span class="pause-note">/</span> 
+                        <span class="chord-note">[EUB]</span>
+                    </p>
+                </div>
+                
+                <div class="measure-container">
+                    <p class="measure-number">"我的感觉我的感觉"</p>
+                    <p class="measure right-part">
+                        <span class="right-hand">右手: </span>
+                        <span class="accent-note">6!</span> <span class="short-note">U.</span> <span class="short-note">9.</span> <span class="long-note">I-</span> <span class="short-note">U.</span> <span class="long-note">9-</span> <span class="short-note">Y.</span> <span class="accent-note">Y!</span>
+                    </p>
+                    <p class="measure left-part">
+                        <span class="left-hand">左手: </span>
+                        <span class="chord-note">[ETY]</span> <span class="pause-note">/</span> <span class="chord-note">[RTU]</span> <span class="pause-note">/</span> 
+                        <span class="chord-note">[WRY]</span>
+                    </p>
+                </div>
+                
+                <div class="measure-container">
+                    <p class="measure-number">"是海面像镜子平静"</p>
+                    <p class="measure right-part">
+                        <span class="right-hand">右手: </span>
+                        <span class="short-note">Y.</span> <span class="short-note">U.</span> <span class="short-note">9.</span> <span class="long-note">I-</span> <span class="short-note">U.</span> <span class="long-note">9-</span> <span class="short-note">U.</span> <span class="short-note">6.</span>
+                    </p>
+                    <p class="measure left-part">
+                        <span class="left-hand">左手: </span>
+                        <span class="chord-note">[ETY]</span> <span class="pause-note">/</span> <span class="chord-note">[RUI]</span> <span class="pause-note">/</span> 
+                        <span class="chord-note">[EYU]</span>
+                    </p>
+                </div>
+                
+                <p class="playing-tutorial">
+                    <span class="note-highlight">演奏提示：</span><br>
+                    1. 本歌曲原调为E大调，需要演奏黑键(6/G#)，注意使用正确的指法<br>
+                    2. 标记<span class="accent-note">Y!</span>的音要重音<br>
+                    3. <span class="chord-note">[EUA]</span>代表和弦，同时按下E、U、A键<br>
+                    4. 长音<span class="long-note">I-</span>需要持续更长时间<br>
+                    5. 可以使用踏板(空格键)使旋律更加流畅<br>
+                    6. 整体节奏保持平稳，但不要太机械，要有抑扬顿挫的感觉
+                </p>
+                
+                <p class="finger-position">
+                    <span class="note-highlight">手指建议：</span><br>
+                    右手：在E大调时，黑键(6/G#)使用3号手指，Y/A使用5号手指，U/B使用4号手指，9/C#使用3号手指，I/E使用2号手指<br>
+                    左手和弦：可用1-3-5手指配合，黑键通常用3号手指
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="piano.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 创建视差效果
+            document.addEventListener('mousemove', function(e) {
+                const bgImage = document.getElementById('bgImage');
+                const starsLayer = document.getElementById('starsLayer');
+                
+                // 计算鼠标在屏幕上的位置（0-1范围）
+                const mouseX = e.clientX / window.innerWidth;
+                const mouseY = e.clientY / window.innerHeight;
+                
+                // 应用视差效果
+                bgImage.style.transform = `translate(${-mouseX * 20}px, ${-mouseY * 20}px)`;
+                starsLayer.style.transform = `translate(${-mouseX * 40}px, ${-mouseY * 40}px)`;
+            });
+            
+            // 创建星星
+            createStars();
+            
+            // 创建蓝粉色光带 (模拟《你的名字》中的光带)
+            createSpecialRibbons();
+            
+            // 创建流星效果 - 设置雪粒消失更快的全局变量
+            window.snowflakeSettings = {
+                fadeStartThreshold: 0.7,  // 从0.9或0.8改为0.7，更早开始消失
+                fadeMultiplier: 3.5,      // 从5或10改为3.5，消失更快
+                speedMultiplier: 1.5      // 加快整体雪粒速度
+            };
+            createAdvancedComets();
+            
+            // 《晴天》谱面展开/收起功能
+            const toggleGuide = document.getElementById('toggleMermaidGuide');
+            const fullGuide = document.getElementById('fullMermaidGuide');
+            
+            if (toggleGuide && fullGuide) {
+                toggleGuide.addEventListener('click', function() {
+                    const isHidden = fullGuide.style.display === 'none';
+                    fullGuide.style.display = isHidden ? 'block' : 'none';
+                    toggleGuide.textContent = isHidden ? '收起完整谱面' : '显示完整高潮谱面';
+                    
+                    // 平滑滚动到谱面位置
+                    if (isHidden) {
+                        setTimeout(() => {
+                            fullGuide.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }, 100);
+                    }
+                });
+            }
+        });
+        
+        // 创建星星
+        function createStars() {
+            const starsLayer = document.getElementById('starsLayer');
+            const starsCount = 150;
+            
+            for (let i = 0; i < starsCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                // 星星位置
+                const x = Math.random() * 100;
+                const y = Math.random() * 100;
+                
+                // 星星大小 (1-3px)
+                const size = Math.random() * 2 + 1;
+                
+                // 闪烁动画
+                const duration = Math.random() * 5 + 2;
+                const delay = Math.random() * 5;
+                const opacity = Math.random() * 0.5 + 0.3;
+                
+                // 发光效果
+                const glowSize = Math.random() * 3 + 1;
+                
+                // 基于位置选择颜色 (底部偏黄，顶部偏蓝)
+                let hue;
+                if (y > 70) {
+                    hue = 40 + Math.random() * 20; // 底部偏黄色
+                } else if (y < 30) {
+                    hue = 180 + Math.random() * 40; // 顶部偏蓝色
+                } else {
+                    hue = 200 + Math.random() * 60; // 中间区域
+                }
+                
+                const glowColor = `hsla(${hue}, 100%, 80%, 0.8)`;
+                
+                star.style.left = `${x}%`;
+                star.style.top = `${y}%`;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.setProperty('--duration', `${duration}s`);
+                star.style.animationDelay = `${delay}s`;
+                star.style.setProperty('--opacity', opacity);
+                star.style.setProperty('--glow-size', `${glowSize}px`);
+                star.style.setProperty('--glow-color', glowColor);
+                
+                starsLayer.appendChild(star);
+            }
+        }
+        
+        // 创建蓝粉色光带
+        function createSpecialRibbons() {
+            const ribbonsContainer = document.getElementById('specialRibbons');
+            const ribbonsCount = 2; // 蓝色和粉色
+            
+            const colors = ['rgba(0, 162, 255, 0.8)', 'rgba(255, 41, 117, 0.8)'];
+            const baseAngles = [-30, -35]; // 基础角度
+            
+            for (let i = 0; i < ribbonsCount; i++) {
+                const ribbon = document.createElement('div');
+                ribbon.className = 'light-ribbon';
+                
+                const width = window.innerWidth * 1.5;
+                const height = 2 + Math.random() * 2;
+                
+                // 起始位置（位于屏幕上半部分）
+                const startX = window.innerWidth * 0.1;
+                const startY = window.innerHeight * 0.2;
+                
+                // 每个光带略有不同的角度和长度
+                const angle = baseAngles[i] + Math.random() * 5;
+                
+                // 为每个光带设置颜色
+                const ribbonColor = colors[i];
+                
+                // 应用样式
+                ribbon.style.width = `${width}px`;
+                ribbon.style.height = `${height}px`;
+                ribbon.style.left = `${startX}px`;
+                ribbon.style.top = `${startY}px`;
+                ribbon.style.setProperty('--ribbon-color', ribbonColor);
+                ribbon.style.setProperty('--angle', `${angle}deg`);
+                ribbon.style.setProperty('--shift', `${Math.random() * 50 - 25}px`);
+                ribbon.style.transformOrigin = 'left center';
+                ribbon.style.transform = `rotate(${angle}deg)`;
+                ribbon.style.animationDelay = `${i * 2}s`;
+                
+                ribbonsContainer.appendChild(ribbon);
+            }
+        }
+        
+        // 创建雪粒效果 - 替代原有的流星效果
+        function createAdvancedComets() {
+            const starsLayer = document.getElementById('starsLayer');
+            
+            // 创建雪粒容器
+            const snowflakeContainer = document.createElement('div');
+            snowflakeContainer.className = 'snowflake-container';
+            starsLayer.appendChild(snowflakeContainer);
+            
+            // 雪粒类型
+            const snowflakeTypes = [
+                'tiny',      // 小型雪粒
+                'normal',    // 普通雪粒
+                'large',     // 大型雪粒
+                'sparkle'    // 闪光雪粒
+            ];
+            
+            // 跟踪雪粒数量
+            let activeSnowflakeCount = 0;
+            const maxSnowflakes = 500; // 从300增加到500，扩大雪粒容量
+            
+            // 获取全局雪粒设置
+            let settings = window.snowflakeSettings || {
+                fadeStartThreshold: 0.9,
+                fadeMultiplier: 10,
+                speedMultiplier: 1.0
+            };
+            
+            // 添加一个变量来跟踪最近清理时间
+            let lastCleanupTime = 0;
+            const cleanupInterval = 5000; // 每5秒尝试清理一次
+            
+            // 添加监控计数器函数
+            function logSnowflakeCount() {
+                console.log(`当前雪粒数量: ${activeSnowflakeCount}/${maxSnowflakes}`);
+                
+                // 检查DOM中实际的雪粒数量是否与计数器匹配
+                const actualCount = document.querySelectorAll('.snowflake').length;
+                if (actualCount !== activeSnowflakeCount) {
+                    console.warn(`雪粒计数不匹配！计数器: ${activeSnowflakeCount}, 实际DOM: ${actualCount}`);
+                    // 修正计数器
+                    activeSnowflakeCount = actualCount;
+                }
+                
+                setTimeout(logSnowflakeCount, 5000); // 每5秒记录一次
+            }
+            setTimeout(logSnowflakeCount, 5000); // 开始监控
+            
+            // 节奏控制系统 - 全局变量
+            let globalSpeedFactor = 1.0; // 基础速度因子
+            let targetSpeedFactor = 1.0; // 目标速度因子，用于平滑过渡
+            let lastNoteTime = 0; // 上一个音符的时间戳
+            let noteIntervals = []; // 存储音符间隔
+            const maxIntervals = 10; // 只保留最近的10个间隔
+            let isRhythmFast = false; // 记录当前节奏状态
+            let speedTransitionActive = false; // 是否正在平滑过渡速度
+
+            // 速度平滑过渡系统 - 增强版
+            function smoothSpeedTransition() {
+                if (!speedTransitionActive) return;
+                
+                // 计算速度差异
+                const speedDiff = targetSpeedFactor - globalSpeedFactor;
+                
+                // 如果已经非常接近目标速度，直接设置为目标速度并停止过渡
+                if (Math.abs(speedDiff) < 0.03) {
+                    globalSpeedFactor = targetSpeedFactor;
+                    speedTransitionActive = false;
+                    return;
+                }
+                
+                // 优化平滑过渡，使用缓动函数
+                // 小速度差异时变化更慢，大速度差异时变化更快
+                let adjustFactor;
+                if (speedDiff > 0) {
+                    // 加速时使用缓入缓出效果 - 开始和结束慢，中间快
+                    const normalizedDiff = Math.min(speedDiff, 1.0);
+                    adjustFactor = 0.12 + (normalizedDiff * 0.08); // 0.12-0.20之间变化
+                } else {
+                    // 减速时更加平滑，避免突然减速
+                    const normalizedDiff = Math.min(Math.abs(speedDiff), 1.0);
+                    adjustFactor = 0.06 + (normalizedDiff * 0.04); // 0.06-0.10之间变化
+                }
+                
+                // 应用速度调整
+                globalSpeedFactor += speedDiff * adjustFactor;
+                
+                // 继续下一帧的过渡
+                requestAnimationFrame(smoothSpeedTransition);
+            }
+            
+            // 设置目标速度并启动平滑过渡
+            function setTargetSpeed(newSpeed) {
+                // 如果目标速度与当前目标相同，则不需要改变
+                if (newSpeed === targetSpeedFactor) return;
+                
+                // 设置新的目标速度
+                targetSpeedFactor = newSpeed;
+                
+                // 如果没有活跃的过渡，启动一个
+                if (!speedTransitionActive) {
+                    speedTransitionActive = true;
+                    requestAnimationFrame(smoothSpeedTransition);
+                }
+            }
+            
+            // 增强版节奏检测函数
+            function updateRhythm() {
+                const now = performance.now();
+                if (lastNoteTime > 0) {
+                    const interval = now - lastNoteTime;
+                    
+                    // 只记录合理的间隔（忽略过长的停顿）
+                    if (interval < 2000) {
+                        noteIntervals.push(interval);
+                        
+                        // 保持数组大小
+                        if (noteIntervals.length > maxIntervals) {
+                            noteIntervals.shift();
+                        }
+                        
+                        // 计算平均间隔时间
+                        if (noteIntervals.length >= 3) { // 至少需要几个数据点才能判断节奏
+                            const avgInterval = noteIntervals.reduce((sum, val) => sum + val, 0) / noteIntervals.length;
+                            
+                            // 使用平滑的速度映射函数而不是离散的阈值
+                            // 这会根据演奏速度提供更连续的速度变化
+                            let newTargetSpeed;
+                            
+                            if (avgInterval <= 200) {
+                                // 非常快的节奏固定为最高速度
+                                newTargetSpeed = 2.5;
+                            } else if (avgInterval >= 800) {
+                                // 非常慢的节奏固定为基础速度
+                                newTargetSpeed = 1.0;
+                            } else {
+                                // 使用平滑的映射函数计算中间速度
+                                // 从(800,1.0)到(200,2.5)的线性映射
+                                const normalizedInterval = (800 - avgInterval) / 600; // 0到1的范围
+                                newTargetSpeed = 1.0 + (normalizedInterval * 1.5); // 1.0到2.5的范围
+                            }
+                            
+                            // 更新节奏状态
+                            isRhythmFast = newTargetSpeed > 1.3;
+                            
+                            // 使用平滑过渡设置新的目标速度
+                            setTargetSpeed(newTargetSpeed);
+                            
+                            // 根据节奏速度创建雪粒
+                            // 节奏越快，创建的雪粒越多
+                            if (isRhythmFast) {
+                                // 计算强度，用于决定创建雪粒的数量
+                                const intensity = Math.min(1.0, (newTargetSpeed - 1.0) / 1.5); // 0到1的范围
+                                createRhythmSnowfall(intensity);
+                            } else {
+                                // 即使在慢节奏下也创建少量雪粒
+                                const lowIntensity = 0.2 + (newTargetSpeed - 1.0) * 0.2; // 低强度，但仍然会创建一些雪粒
+                                createRhythmSnowfall(lowIntensity);
+                            }
+                        }
+                    }
+                }
+                lastNoteTime = now;
+            }
+            
+            // 基于节奏创建新的雪粒群 - 增强版
+            function createRhythmSnowfall(intensity = 0.6) {
+                // 基于强度计算雪粒数量，更快的节奏会产生更多雪粒
+                // 增加基础数量，确保即使在低强度下也有足够的雪粒
+                const baseCount = 4;
+                const variableCount = Math.floor(10 * intensity); // 0-10之间变化，增加了最大数量
+                const count = baseCount + variableCount;
+                
+                // 从屏幕顶部随机位置创建雪粒
+                for (let i = 0; i < count; i++) {
+                    setTimeout(() => {
+                        if (activeSnowflakeCount < maxSnowflakes) {
+                            // 创建屏幕顶部的雪粒
+                            createTopSnowflake(intensity);
+                        }
+                    }, i * 30 + Math.random() * 20); // 更紧凑的时间间隔，使雪粒落下更连续
+                }
+            }
+            
+            // 新增函数：管理雪粒数量，主动清理不可见的雪粒
+            function manageSnowflakes() {
+                const now = performance.now();
+                
+                // 不要太频繁清理
+                if (now - lastCleanupTime < cleanupInterval) return;
+                
+                lastCleanupTime = now;
+                
+                // 只有当雪粒数量接近上限时才尝试清理
+                if (activeSnowflakeCount > maxSnowflakes * 0.8) {
+                    console.log(`清理前雪粒数量: ${activeSnowflakeCount}`);
+                    
+                    // 查找所有雪粒
+                    const allSnowflakes = document.querySelectorAll('.snowflake');
+                    
+                    // 获取视口高度
+                    const viewportHeight = window.innerHeight;
+                    
+                    // 清理已经超出视口的雪粒
+                    let cleanedCount = 0;
+                    allSnowflakes.forEach(snowflake => {
+                        const rect = snowflake.getBoundingClientRect();
+                        
+                        // 如果雪粒已经超出视口底部或不可见（可能卡在某处）
+                        if (rect.top > viewportHeight + 50 || parseFloat(snowflake.style.opacity || '1') < 0.1) {
+                            snowflake.remove();
+                            cleanedCount++;
+                        }
+                    });
+                    
+                    // 更新计数
+                    activeSnowflakeCount = document.querySelectorAll('.snowflake').length;
+                    
+                    console.log(`清理了 ${cleanedCount} 个雪粒，当前数量: ${activeSnowflakeCount}`);
+                }
+            }
+            
+            // 创建新雪粒之前，确保计数准确
+            function ensureAccurateCount() {
+                const actualCount = document.querySelectorAll('.snowflake').length;
+                if (Math.abs(actualCount - activeSnowflakeCount) > 10) {
+                    console.warn(`雪粒计数差异过大，重置计数器。计数器: ${activeSnowflakeCount}, 实际DOM: ${actualCount}`);
+                    activeSnowflakeCount = actualCount;
+                }
+                return activeSnowflakeCount;
+            }
+            
+            // 新增函数：从屏幕顶部创建雪粒
+            function createTopSnowflake(intensity = 0.5, isBlackKey = false) {
+                // 确保计数准确
+                ensureAccurateCount();
+                
+                if (activeSnowflakeCount >= maxSnowflakes) {
+                    // 即使达到最大数量，也尝试清理一下，为新雪粒腾出空间
+                    manageSnowflakes();
+                    // 如果仍然达到最大数量，返回
+                    if (activeSnowflakeCount >= maxSnowflakes) return;
+                }
+                
+                activeSnowflakeCount++;
+                
+                const snowflake = document.createElement('div');
+                
+                // 根据强度和按键类型选择雪粒类型
+                let typeIndex;
+                let sparkleChance;
+                
+                if (isBlackKey) {
+                    // 黑键的雪粒更偏向于冷色调/蓝色的闪光雪粒
+                    sparkleChance = 0.2 + (intensity * 0.6); // 黑键有更高几率产生闪光雪粒(20%-80%)
+                } else {
+                    // 白键的雪粒更偏向于普通雪粒
+                    sparkleChance = 0.1 + (intensity * 0.5); // 10%-60%几率是闪光雪粒
+                }
+                
+                if (Math.random() < sparkleChance) {
+                    typeIndex = 3; // 闪光雪粒
+                } else {
+                    // 其余几率在其他类型中分配，强度高时偏向大雪粒
+                    const largeChance = 0.2 + (intensity * 0.4); // 20%-60%几率是大雪粒
+                    if (Math.random() < largeChance) {
+                        typeIndex = 2; // 大雪粒
+                    } else {
+                        typeIndex = Math.random() < 0.6 ? 1 : 0; // 普通或小雪粒
+                    }
+                }
+                
+                const snowflakeType = snowflakeTypes[typeIndex];
+                snowflake.className = `snowflake ${snowflakeType}`;
+                
+                // 从屏幕顶部随机位置生成
+                // 确保雪粒分布在整个屏幕宽度上
+                const startX = Math.random() * window.innerWidth;
+                const startY = -5 - Math.random() * 15; // 从屏幕顶部稍微上方开始
+                
+                snowflake.style.left = `${startX}px`;
+                snowflake.style.top = `${startY}px`;
+                
+                // 根据按键类型设置不同的颜色
+                if (isBlackKey) {
+                    // 黑键的雪粒偏向于蓝紫色
+                    if (snowflakeType === 'sparkle') {
+                        // 闪光雪粒使用更明亮的蓝紫色
+                        const hue = 230 + Math.random() * 40; // 230-270(蓝紫色范围)
+                        const saturation = 80 + Math.random() * 20; // 80%-100%
+                        const lightness = 70 + Math.random() * 20; // 70%-90%
+                        const brightness = 1.2 + (intensity * 0.4);
+                        
+                        snowflake.style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                        snowflake.style.boxShadow = `0 0 4px hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                        snowflake.style.filter = `blur(0.5px) brightness(${brightness})`;
+                    } else {
+                        // 其他类型的雪粒使用淡蓝色
+                        const hue = 210 + Math.random() * 30; // 210-240(淡蓝色范围)
+                        const saturation = 70 + Math.random() * 20; // 70%-90%
+                        const lightness = 75 + Math.random() * 15; // 75%-90%
+                        
+                        snowflake.style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                        snowflake.style.boxShadow = `0 0 3px hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                    }
+                } else {
+                    // 白键的雪粒保持原有的白色或淡金色
+                    if (snowflakeType === 'sparkle') {
+                        const brightness = 1.1 + (intensity * 0.4);
+                        // 使用淡金色
+                        const hue = 40 + Math.random() * 20; // 40-60(淡金色范围)
+                        const saturation = 80 + Math.random() * 20; // 80%-100%
+                        const lightness = 75 + Math.random() * 15; // 75%-90%
+                        
+                        snowflake.style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                        snowflake.style.boxShadow = `0 0 4px hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                        snowflake.style.filter = `blur(0.5px) brightness(${brightness})`;
+                    }
+                }
+                
+                snowflakeContainer.appendChild(snowflake);
+                
+                // 获取雪粒的基础速度范围
+                let baseMinSpeed, baseMaxSpeed;
+                
+                // 根据雪粒类型、强度和按键类型设置速度范围
+                // 黑键的雪粒可以稍快一些
+                const keySpeedMultiplier = isBlackKey ? 1.15 : 1.0;
+                
+                switch (snowflakeType) {
+                    case 'tiny': 
+                        baseMinSpeed = (0.4 + (intensity * 0.2)) * keySpeedMultiplier; 
+                        baseMaxSpeed = (0.8 + (intensity * 0.4)) * keySpeedMultiplier; 
+                        break;
+                    case 'normal': 
+                        baseMinSpeed = (0.6 + (intensity * 0.3)) * keySpeedMultiplier; 
+                        baseMaxSpeed = (1.2 + (intensity * 0.6)) * keySpeedMultiplier; 
+                        break;
+                    case 'large': 
+                        baseMinSpeed = (0.8 + (intensity * 0.4)) * keySpeedMultiplier; 
+                        baseMaxSpeed = (1.5 + (intensity * 0.7)) * keySpeedMultiplier; 
+                        break;
+                    case 'sparkle': 
+                        baseMinSpeed = (1.0 + (intensity * 0.5)) * keySpeedMultiplier; 
+                        baseMaxSpeed = (1.8 + (intensity * 0.8)) * keySpeedMultiplier; 
+                        break;
+                    default: 
+                        baseMinSpeed = (0.7 + (intensity * 0.3)) * keySpeedMultiplier; 
+                        baseMaxSpeed = (1.4 + (intensity * 0.6)) * keySpeedMultiplier;
+                }
+                
+                // 在范围内随机选择基础速度
+                const baseSpeed = baseMinSpeed + Math.random() * (baseMaxSpeed - baseMinSpeed);
+                
+                // 应用当前全局速度因子
+                const initialSpeed = baseSpeed * globalSpeedFactor;
+                
+                // 保存为固定速度，不随后续全局速度变化
+                snowflake.dataset.speed = initialSpeed.toString();
+                snowflake.dataset.fixed = "true";
+                
+                // 计算距离和基本参数
+                const distance = window.innerHeight + 50 - startY;
+                
+                // 水平漂移参数 - 摆动幅度与强度相关
+                // 黑键的雪粒漂移幅度稍小，更垂直下落
+                const driftMultiplier = isBlackKey ? 0.8 : 1.0;
+                const horizontalDrift = (20 + Math.random() * 40 + (intensity * 20)) * driftMultiplier;
+                const driftDirection = Math.random() > 0.5 ? 1 : -1;
+                // 黑键的雪粒摆动频率更高，呈现不同的视觉效果
+                const swayFrequency = isBlackKey ? 
+                    (0.7 + Math.random() * 1.2) : // 黑键: 0.7-1.9
+                    (0.5 + Math.random() * 1.0);  // 白键: 0.5-1.5
+                
+                const startTime = performance.now();
+                
+                // 雪粒动画函数
+                function animateTopSnowflake(timestamp) {
+                    const elapsed = timestamp - startTime;
+                    
+                    // 使用固定初始速度 * 全局速度倍增器
+                    const currentSpeed = parseFloat(snowflake.dataset.speed) * settings.speedMultiplier;
+                    
+                    // 计算持续时间和进度
+                    const adjustedDuration = distance / (currentSpeed * 50);
+                    const progress = Math.min(elapsed / (adjustedDuration * 1000), 1);
+                    
+                    if (progress <= 1) {
+                        // 垂直方向是线性下落
+                        const y = startY + distance * progress;
+                        
+                        // 水平方向是正弦摆动
+                        const x = startX + Math.sin(progress * Math.PI * swayFrequency * 2) * horizontalDrift * driftDirection;
+                        
+                        // 更新位置
+                        snowflake.style.left = `${x}px`;
+                        snowflake.style.top = `${y}px`;
+                        
+                        // 随着下落轻微旋转 - 黑键和白键旋转方式不同
+                        const rotationAngle = isBlackKey ? 
+                            (progress * 450 * (Math.random() > 0.5 ? 1 : -1)) : // 黑键旋转更快
+                            (progress * 360 * (Math.random() > 0.5 ? 1 : -1));  // 白键正常旋转
+                        
+                        snowflake.style.transform = `rotate(${rotationAngle}deg)`;
+                        
+                        // 接近地面时渐渐消失 - 使用全局设置
+                        if (progress > settings.fadeStartThreshold) {
+                            snowflake.style.opacity = `${(1 - progress) * settings.fadeMultiplier}`;
+                        }
+                        
+                        requestAnimationFrame(animateTopSnowflake);
+                    } else {
+                        // 动画结束，移除雪粒
+                        snowflake.remove();
+                        activeSnowflakeCount = Math.max(0, activeSnowflakeCount - 1); // 确保不会小于0
+                        
+                        // 有一定概率创建新雪粒，保持雪粒数量
+                        if (Math.random() < 0.3 && activeSnowflakeCount < maxSnowflakes * 0.8) {
+                            setTimeout(() => {
+                                createTopSnowflake(intensity * 0.8, isBlackKey); // 降低强度，逐渐恢复正常
+                            }, Math.random() * 200);
+                        }
+                    }
+                }
+                
+                // 开始动画
+                requestAnimationFrame(animateTopSnowflake);
+            }
+            
+            // 修改createSnowflake函数开头部分
+            function createSnowflake(isTriggered = false, isRhythmBased = false, intensity = 0.5, isBlackKey = false) {
+                // 确保计数准确
+                ensureAccurateCount();
+                
+                // 控制雪粒数量
+                if (activeSnowflakeCount >= maxSnowflakes) {
+                    // 尝试清理不可见的雪粒
+                    manageSnowflakes();
+                    
+                    if (isTriggered) {
+                        // 如果是按键触发的，即使达到最大数量也要尝试创建爆发效果
+                        // 但强制保留一些容量给触发的雪粒
+                        if (activeSnowflakeCount > maxSnowflakes * 0.95) {
+                            // 如果实在太多，只创建最少量
+                            const burstCount = 2;
+                            createMinimalSnowBurst(burstCount, isBlackKey);
+                        } else {
+                            createTriggeredSnowBurst(isBlackKey);
+                        }
+                        return;
+                    } else if (activeSnowflakeCount >= maxSnowflakes) {
+                        // 如果清理后仍然达到最大数量，延迟尝试
+                        setTimeout(() => createSnowflake(false, false, 0.5, isBlackKey), 500);
+                        return;
+                    }
+                }
+                
+                activeSnowflakeCount++;
+                
+                const snowflake = document.createElement('div');
+                
+                // 选择雪粒类型
+                let typeIndex;
+                if (isTriggered) {
+                    // 按键触发的雪粒更倾向于使用大型和闪光
+                    typeIndex = Math.random() > 0.25 ? 3 : 2; // 75%几率是闪光雪粒
+                } else if (isRhythmBased) {
+                    // 节奏触发的雪粒根据节奏强度调整类型
+                    // 强度高时更多闪光雪粒
+                    const sparkleChance = 0.4 + (intensity * 0.4); // 40%-80%几率是闪光雪粒
+                    if (Math.random() < sparkleChance) {
+                        typeIndex = 3; // 闪光雪粒
+                    } else {
+                        // 其余几率在其他类型中分配，强度高时偏向大雪粒
+                        const largeChance = 0.4 + (intensity * 0.3); // 40%-70%
+                        if (Math.random() < largeChance) {
+                            typeIndex = 2; // 大雪粒
+                        } else {
+                            typeIndex = Math.random() < 0.6 ? 1 : 0; // 普通或小雪粒
+                        }
+                    }
+                } else {
+                    // 自动生成的雪粒 - 保持平衡分布
+                    const rand = Math.random();
+                    if (rand < 0.4) typeIndex = 0; // 40%几率是tiny
+                    else if (rand < 0.75) typeIndex = 1; // 35%几率是normal  
+                    else if (rand < 0.95) typeIndex = 2; // 20%几率是large
+                    else typeIndex = 3; // 5%几率是sparkle
+                }
+                
+                const snowflakeType = snowflakeTypes[typeIndex];
+                snowflake.className = `snowflake ${snowflakeType}`;
+                
+                // 雪粒起始位置
+                let startX, startY;
+                
+                if (isTriggered) {
+                    // 按键触发的雪粒从钢琴上方区域生成
+                    const pianoEl = document.querySelector('.piano-container');
+                    const pianoRect = pianoEl.getBoundingClientRect();
+                    startX = pianoRect.left + Math.random() * pianoRect.width;
+                    startY = pianoRect.top - 20 - Math.random() * 50;
+                } else if (isRhythmBased) {
+                    // 节奏触发的雪粒从屏幕顶部均匀分布区域生成
+                    startX = Math.random() * window.innerWidth;
+                    startY = -5 - Math.random() * 15; // 从屏幕顶部稍微上方开始
+                } else {
+                    // 自动生成的雪粒从屏幕顶部或稍微上方生成
+                    startX = Math.random() * window.innerWidth;
+                    startY = -10 - Math.random() * 30; // 从屏幕顶部上方一点开始
+                }
+                
+                snowflake.style.left = `${startX}px`;
+                snowflake.style.top = `${startY}px`;
+                
+                snowflakeContainer.appendChild(snowflake);
+                
+                // 获取雪粒的基础速度范围 - 为每个雪粒设置随机范围内的初始速度
+                let baseMinSpeed, baseMaxSpeed;
+                
+                // 根据雪粒类型设置不同的速度范围
+                switch (snowflakeType) {
+                    case 'tiny': 
+                        baseMinSpeed = 0.4; 
+                        baseMaxSpeed = 0.8; 
+                        break;
+                    case 'normal': 
+                        baseMinSpeed = 0.6; 
+                        baseMaxSpeed = 1.2; 
+                        break;
+                    case 'large': 
+                        baseMinSpeed = 0.8; 
+                        baseMaxSpeed = 1.5; 
+                        break;
+                    case 'sparkle': 
+                        baseMinSpeed = isTriggered ? 1.2 : 1.0; 
+                        baseMaxSpeed = isTriggered ? 2.0 : 1.8; 
+                        break;
+                    default: 
+                        baseMinSpeed = 0.7; 
+                        baseMaxSpeed = 1.4;
+                }
+                
+                // 在范围内随机选择基础速度 - 确保每个雪粒有不同初速度
+                const baseSpeed = baseMinSpeed + Math.random() * (baseMaxSpeed - baseMinSpeed);
+                
+                // 应用额外修正因子
+                let speedModifier = 1.0;
+                
+                // 按键触发的雪粒略快
+                if (isTriggered) {
+                    speedModifier *= 1.3;
+                }
+                
+                // 节奏触发的雪粒速度与节奏强度相关
+                if (isRhythmBased) {
+                    speedModifier *= 1.0 + (intensity * 0.4); // 强度越高，速度越快
+                }
+                
+                // 当前弹奏节奏的全局因子 - 影响初始速度
+                speedModifier *= globalSpeedFactor;
+                
+                // 最终的初始速度 - 保存为固定值
+                const initialSpeed = baseSpeed * speedModifier;
+                
+                // 存储初始速度到元素数据属性中 - 所有雪粒都是固定初始速度
+                snowflake.dataset.speed = initialSpeed.toString();
+                // 所有雪粒都标记为固定速度，即创建后不再受全局节奏变化影响
+                snowflake.dataset.fixed = "true";
+                
+                // 计算距离和基本参数
+                const distance = window.innerHeight + 50 - startY;
+                
+                // 水平漂移参数 - 模拟雪的飘动
+                const horizontalDrift = isTriggered ? 15 + Math.random() * 20 : 30 + Math.random() * 60;
+                const driftDirection = Math.random() > 0.5 ? 1 : -1; // 随机左右漂移
+                const swayFrequency = 0.5 + Math.random() * 1.0; // 摆动频率
+                
+                // 动画开始时间
+                const startTime = performance.now();
+                
+                // 雪粒动画函数 - 使用固定初始速度，不受后续全局速度变化影响
+                function animateSnowflake(timestamp) {
+                    const elapsed = timestamp - startTime;
+                    
+                    // 使用创建时固定的初始速度，不随全局速度变化，但应用全局速度倍增器
+                    const currentSpeed = parseFloat(snowflake.dataset.speed) * settings.speedMultiplier;
+                    
+                    // 计算持续时间和进度
+                    const adjustedDuration = distance / (currentSpeed * 50);
+                    const progress = Math.min(elapsed / (adjustedDuration * 1000), 1);
+                    
+                    if (progress <= 1) {
+                        // 垂直方向是线性下落
+                        const y = startY + distance * progress;
+                        
+                        // 水平方向是正弦摆动
+                        const x = startX + Math.sin(progress * Math.PI * swayFrequency * 2) * horizontalDrift * driftDirection;
+                        
+                        // 更新位置
+                        snowflake.style.left = `${x}px`;
+                        snowflake.style.top = `${y}px`;
+                        
+                        // 随着下落轻微旋转
+                        snowflake.style.transform = `rotate(${progress * 360 * (Math.random() > 0.5 ? 1 : -1)}deg)`;
+                        
+                        // 接近地面时渐渐消失 - 使用全局设置
+                        if (progress > settings.fadeStartThreshold) {
+                            snowflake.style.opacity = `${(1 - progress) * settings.fadeMultiplier}`;
+                        }
+                        
+                        requestAnimationFrame(animateSnowflake);
+                    } else {
+                        // 动画结束，移除雪粒
+                        snowflake.remove();
+                        activeSnowflakeCount--;
+                        
+                        // 对于非触发的雪粒，持续创建新雪粒
+                        if (!isTriggered) {
+                            setTimeout(() => {
+                                createSnowflake(false);
+                            }, Math.random() * 300); // 更快地补充新雪粒
+                        }
+                    }
+                }
+                
+                // 开始动画
+                requestAnimationFrame(animateSnowflake);
+            }
+            
+            // 按键触发的雪粒爆发效果
+            function createTriggeredSnowBurst(isBlackKey = false) {
+                // 一次产生多个雪粒
+                const burstCount = 5 + Math.floor(Math.random() * 5);
+                const pianoEl = document.querySelector('.piano-container');
+                const pianoRect = pianoEl.getBoundingClientRect();
+                
+                for (let i = 0; i < burstCount; i++) {
+                    // 确保不超过最大数量
+                    if (activeSnowflakeCount < maxSnowflakes) {
+                        const snowflake = document.createElement('div');
+                        activeSnowflakeCount++;
+                        
+                        // 优先使用闪光和大型雪粒，黑键白键有不同的概率
+                        let typeIndex;
+                        const sparkleChance = isBlackKey ? 0.75 : 0.7; // 黑键更高概率使用闪光雪粒
+                        typeIndex = Math.random() < sparkleChance ? 3 : 2; // 闪光或大型雪粒
+                        
+                        const snowflakeType = snowflakeTypes[typeIndex];
+                        snowflake.className = `snowflake ${snowflakeType}`;
+                        
+                        // 从钢琴上方的一个区域生成
+                        const burstCenterX = pianoRect.left + (pianoRect.width * 0.5);
+                        const startX = burstCenterX - 100 + Math.random() * 200;
+                        const startY = pianoRect.top - 30 - Math.random() * 20;
+                        
+                        snowflake.style.left = `${startX}px`;
+                        snowflake.style.top = `${startY}px`;
+                        
+                        // 根据按键类型设置不同颜色
+                        if (isBlackKey) {
+                            // 黑键爆发使用蓝紫色系
+                            if (snowflakeType === 'sparkle') {
+                                const hue = 230 + Math.random() * 40; // 230-270(蓝紫色范围)
+                                const saturation = 80 + Math.random() * 20; // 80%-100%
+                                const lightness = 70 + Math.random() * 20; // 70%-90%
+                                const brightness = 1.3 + Math.random() * 0.3;
+                                
+                                snowflake.style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                                snowflake.style.boxShadow = `0 0 5px hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                                snowflake.style.filter = `blur(0.5px) brightness(${brightness})`;
+                            } else {
+                                const hue = 210 + Math.random() * 30; // 210-240(蓝色范围) 
+                                const saturation = 70 + Math.random() * 20; // 70%-90%
+                                const lightness = 75 + Math.random() * 15; // 75%-90%
+                                
+                                snowflake.style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                                snowflake.style.boxShadow = `0 0 4px hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                            }
+                        } else {
+                            // 白键爆发使用金色/暖色系
+                            if (snowflakeType === 'sparkle') {
+                                const hue = 40 + Math.random() * 20; // 40-60(金色范围)
+                                const saturation = 80 + Math.random() * 20; // 80%-100%
+                                const lightness = 75 + Math.random() * 15; // 75%-90%
+                                const brightness = 1.2 + Math.random() * 0.3;
+                                
+                                snowflake.style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                                snowflake.style.boxShadow = `0 0 5px hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                                snowflake.style.filter = `blur(0.5px) brightness(${brightness})`;
+                            }
+                        }
+                        
+                        snowflakeContainer.appendChild(snowflake);
+                        
+                        // 为爆发效果设置速度范围
+                        // 黑键的爆发雪粒速度更快
+                        const speedMultiplier = isBlackKey ? 1.15 : 1.0;
+                        const baseMinSpeed = (1.2 + Math.random() * 0.3) * speedMultiplier;
+                        const baseMaxSpeed = (1.8 + Math.random() * 0.3) * speedMultiplier;
+                        
+                        // 在范围内随机选择 - 确保每个雪粒有不同的速度
+                        const baseSpeed = baseMinSpeed + Math.random() * (baseMaxSpeed - baseMinSpeed);
+                        
+                        // 应用当前全局速度因子 - 只影响初始速度
+                        const initialSpeed = baseSpeed * globalSpeedFactor;
+                        
+                        // 保存为固定速度，不随后续全局速度变化
+                        snowflake.dataset.speed = initialSpeed.toString();
+                        snowflake.dataset.fixed = "true";
+                        
+                        const distance = window.innerHeight + 50 - startY;
+                        
+                        // 爆发雪粒的水平散布 - 黑键白键使用不同的散布方式
+                        const driftMultiplier = isBlackKey ? 0.9 : 1.0; // 黑键爆发散布稍小
+                        const horizontalDrift = (60 + Math.random() * 80) * driftMultiplier;
+                        const driftDirection = startX < burstCenterX ? -1 : 1; // 从中心向两边扩散
+                        // 黑键爆发摆动频率更高
+                        const swayFrequency = isBlackKey ?
+                            0.6 + Math.random() * 1.6 : // 黑键: 0.6-2.2
+                            0.5 + Math.random() * 1.5;  // 白键: 0.5-2.0
+                        
+                        const startTime = performance.now();
+                        
+                        // 雪粒动画函数 - 类似但有更强的爆发效果
+                        function animateBurstSnowflake(timestamp) {
+                            const elapsed = timestamp - startTime;
+                            
+                            // 使用保存的固定初始速度和全局速度倍增器
+                            const currentSpeed = parseFloat(snowflake.dataset.speed) * settings.speedMultiplier;
+                            const adjustedDuration = distance / (currentSpeed * 50);
+                            const progress = Math.min(elapsed / (adjustedDuration * 1000), 1);
+                            
+                            if (progress <= 1) {
+                                // 垂直方向是加速下落（开始慢，然后加速）
+                                // 黑键白键使用不同的加速方式
+                                const verticalEase = isBlackKey ? 1.15 : 1.2; // 黑键爆发下落更线性
+                                const y = startY + distance * Math.pow(progress, verticalEase);
+                                
+                                // 水平方向是更强的摆动
+                                const x = startX + Math.sin(progress * Math.PI * swayFrequency * 3) * horizontalDrift * driftDirection * progress;
+                                
+                                // 更新位置
+                                snowflake.style.left = `${x}px`;
+                                snowflake.style.top = `${y}px`;
+                                
+                                // 旋转效果 - 黑键白键使用不同的旋转方式
+                                const rotateMultiplier = isBlackKey ? 800 : 720; // 黑键旋转更快
+                                snowflake.style.transform = `rotate(${progress * rotateMultiplier * (Math.random() > 0.5 ? 1 : -1)}deg)`;
+                                
+                                // 接近地面时渐渐消失 - 使用全局设置
+                                if (progress > settings.fadeStartThreshold) {
+                                    snowflake.style.opacity = `${(1 - progress) * settings.fadeMultiplier}`;
+                                }
+                                
+                                requestAnimationFrame(animateBurstSnowflake);
+                            } else {
+                                // 动画结束，移除雪粒
+                                snowflake.remove();
+                                activeSnowflakeCount = Math.max(0, activeSnowflakeCount - 1); // 确保不会小于0
+                            }
+                        }
+                        
+                        // 开始动画，但略微错开时间
+                        setTimeout(() => {
+                            requestAnimationFrame(animateBurstSnowflake);
+                        }, i * 30); // 雪粒爆发有轻微的时间差
+                    }
+                }
+            }
+            
+            // 添加一个最小化版本的雪粒爆发效果
+            function createMinimalSnowBurst(count, isBlackKey = false) {
+                const pianoEl = document.querySelector('.piano-container');
+                const pianoRect = pianoEl.getBoundingClientRect();
+                
+                for (let i = 0; i < count; i++) {
+                    const snowflake = document.createElement('div');
+                    activeSnowflakeCount++;
+                    
+                    // 使用闪光雪粒，确保可见性
+                    snowflake.className = 'snowflake sparkle';
+                    
+                    // 从钢琴上方中心生成
+                    const centerX = pianoRect.left + (pianoRect.width * 0.5);
+                    const startX = centerX - 30 + Math.random() * 60; // 较小范围
+                    const startY = pianoRect.top - 10 - Math.random() * 10; // 较小范围
+                    
+                    snowflake.style.left = `${startX}px`;
+                    snowflake.style.top = `${startY}px`;
+                    
+                    // 根据按键类型设置不同的颜色
+                    if (isBlackKey) {
+                        // 黑键使用蓝色系
+                        const hue = 220 + Math.random() * 40; // 220-260(蓝色范围)
+                        const saturation = 75 + Math.random() * 25; // 75%-100%
+                        const lightness = 70 + Math.random() * 20; // 70%-90%
+                        
+                        snowflake.style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                        snowflake.style.boxShadow = `0 0 4px hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                        snowflake.style.filter = `blur(0.5px) brightness(1.5)`;
+                    } else {
+                        // 白键使用默认的白色或淡金色
+                        const hue = 45 + Math.random() * 15; // 45-60(淡金色范围)
+                        const saturation = 80 + Math.random() * 20; // 80%-100%
+                        const lightness = 75 + Math.random() * 15; // 75%-90%
+                        
+                        snowflake.style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                        snowflake.style.boxShadow = `0 0 4px hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                        snowflake.style.filter = `blur(0.5px) brightness(1.5)`;
+                    }
+                    
+                    snowflakeContainer.appendChild(snowflake);
+                    
+                    // 较快的下落速度，黑键白键使用不同速度
+                    const speedMultiplier = isBlackKey ? 1.1 : 1.0;
+                    const baseSpeed = (1.8 + Math.random() * 0.4) * speedMultiplier;
+                    const initialSpeed = baseSpeed * globalSpeedFactor;
+                    
+                    snowflake.dataset.speed = initialSpeed.toString();
+                    snowflake.dataset.fixed = "true";
+                    
+                    const distance = window.innerHeight * 0.5; // 只下落半个屏幕
+                    
+                    // 小范围水平散布，黑键白键使用不同散布方式
+                    const driftMultiplier = isBlackKey ? 0.85 : 1.0;
+                    const horizontalDrift = (20 + Math.random() * 20) * driftMultiplier;
+                    const driftDirection = Math.random() > 0.5 ? 1 : -1;
+                    const swayFrequency = isBlackKey ? 
+                        1.2 + Math.random() * 0.6 : // 黑键：1.2-1.8
+                        1.0 + Math.random() * 0.5;  // 白键：1.0-1.5
+                    
+                    const startTime = performance.now();
+                    
+                    function animateMinimalSnowflake(timestamp) {
+                        const elapsed = timestamp - startTime;
+                        const currentSpeed = parseFloat(snowflake.dataset.speed);
+                        const adjustedDuration = distance / (currentSpeed * 50);
+                        const progress = Math.min(elapsed / (adjustedDuration * 1000), 1);
+                        
+                        if (progress <= 1) {
+                            const y = startY + distance * progress;
+                            const x = startX + Math.sin(progress * Math.PI * swayFrequency) * horizontalDrift * driftDirection;
+                            
+                            snowflake.style.left = `${x}px`;
+                            snowflake.style.top = `${y}px`;
+                            snowflake.style.transform = `rotate(${progress * 360}deg)`;
+                            
+                            if (progress > settings.fadeStartThreshold) {
+                                snowflake.style.opacity = `${(1 - progress) * settings.fadeMultiplier}`;
+                            }
+                            
+                            requestAnimationFrame(animateMinimalSnowflake);
+                        } else {
+                            snowflake.remove();
+                            activeSnowflakeCount = Math.max(0, activeSnowflakeCount - 1);
+                        }
+                    }
+                    
+                    requestAnimationFrame(animateMinimalSnowflake);
+                }
+            }
+            
+            // 修改window.createCometOnDemand函数，确保即使积累了很多雪粒也能创建新的
+            window.createCometOnDemand = function(isBlackKey = false) {
+                // 尝试清理旧雪粒腾出空间
+                manageSnowflakes();
+                
+                // 更新节奏信息
+                updateRhythm();
+                
+                // 获取当前全局速度，用于固定速度雪粒
+                const currentGlobalSpeed = globalSpeedFactor;
+                
+                // 1. 直接在按键位置上方生成一个主要雪粒
+                // 确保即使达到最大数量，也能为按键触发创建少量雪粒
+                if (activeSnowflakeCount < maxSnowflakes || maxSnowflakes - activeSnowflakeCount < 5) {
+                    createSnowflake(true, false, 0.6, isBlackKey);
+                }
+                
+                // 2. 额外生成散布的雪粒，数量根据当前雪粒总数调整
+                const remainingCapacity = maxSnowflakes - activeSnowflakeCount;
+                const extraSnowflakes = Math.min(
+                    remainingCapacity > 0 ? 2 + Math.floor(Math.random() * 3) : 0,
+                    remainingCapacity
+                );
+                
+                for (let i = 0; i < extraSnowflakes; i++) {
+                    setTimeout(() => {
+                        createSnowflake(true, false, 0.5, isBlackKey);
+                    }, i * 30); // 略微错开时间，造成连续下落的效果
+                }
+                
+                // 3. 从屏幕顶部生成雪粒，保证每次弹奏都有从顶部落下的雪粒
+                // 数量根据当前容量和节奏速度调整
+                const topSnowflakesMax = Math.min(
+                    2 + Math.floor(currentGlobalSpeed * 3), // 速度越快，创建越多雪粒
+                    Math.max(0, maxSnowflakes - activeSnowflakeCount - extraSnowflakes) // 确保不超过剩余容量
+                );
+                
+                const topSnowflakes = Math.max(1, topSnowflakesMax); // 至少创建1个
+                
+                for (let i = 0; i < topSnowflakes; i++) {
+                    setTimeout(() => {
+                        // 使用当前节奏强度计算
+                        const intensity = Math.min(1.0, (currentGlobalSpeed - 1.0) / 1.5);
+                        createTopSnowflake(Math.max(0.3, intensity), isBlackKey); // 最小强度为0.3，确保可见性
+                    }, i * 50 + Math.random() * 100); // 错开时间
+                }
+            };
+            
+            // 初始创建一批雪粒
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    createSnowflake(false);
+                }, i * 100); // 初始创建间隔较小，迅速布满屏幕
+            }
+            
+            // 定期检查并补充雪粒，确保雪花效果持续
+            setInterval(() => {
+                // 定期管理雪粒数量
+                manageSnowflakes();
+                
+                // 如果长时间没有弹奏，平滑地重置速度
+                const now = performance.now();
+                if (lastNoteTime > 0 && now - lastNoteTime > 3000) {
+                    setTargetSpeed(1.0); // 平滑回到正常速度
+                    isRhythmFast = false;
+                    noteIntervals = [];
+                    lastNoteTime = 0;
+                }
+                
+                // 确保持续有足够的雪粒
+                if (activeSnowflakeCount < maxSnowflakes * 0.4) {
+                    // 如果雪粒数量过低，创建更多以快速补充
+                    const snowflakesToCreate = Math.min(
+                        8, // 一次创建更多
+                        Math.floor(maxSnowflakes * 0.6 - activeSnowflakeCount) // 不超过60%的最大容量
+                    );
+                    
+                    for (let i = 0; i < snowflakesToCreate; i++) {
+                        setTimeout(() => {
+                            // 如果当前数量仍然低于阈值，创建新雪粒
+                            if (activeSnowflakeCount < maxSnowflakes * 0.6) {
+                                createTopSnowflake(0.3); // 使用较低强度
+                            }
+                        }, i * 100 + Math.random() * 300);
+                    }
+                }
+            }, 800); // 缩短检查间隔
+        }
+    </script>
+</body>
+</html> 
