@@ -28,12 +28,66 @@
             vertical-align: top;
             position: relative;/* 相对定位,子元素相对它定位 */
         }
+
+        .face{
+            width:70px;
+            height: 30px;
+            position: absolute;
+            right: 0;
+            top: 30px;
+            border-top-right-radius: 15px;
+            /* background-color: #e0ef0d; */
+        }
+
+        .eye{
+            width: 15px;
+            height: 14px;
+            border-radius: 50%;
+            border-bottom: 5px solid #020000;
+            position: absolute;
+        }
+
+        .eye-l{
+            left: 10px;
+        }
+        .eye-r{
+            right: 5px;
+        }
+        .eye-r-p{
+            border-top: 5px solid #020000;
+            border-bottom: 0px;
+        }
+
+        .mouth{
+            width: 30px;
+            height: 14px;
+            border-radius: 50%;
+            border-bottom: 5px solid #020000;
+            position: absolute;
+            bottom: -5px;
+            transform: translate(3px);
+            left: 0;
+            right: 0;
+            margin: auto;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div id="l-ball" class="ball"></div>
-        <div id="r-ball" class="ball"></div>
-    </div>
-</body>
-</html>
+        <div id="l-ball" class="ball">
+          <div class="face face-l">
+            <div class="eye eye-l"></div>
+            <div class="eye eye-r"></div>
+            <div class="mouth"></div>
+          </div>
+        </div>
+        <div id="r-ball" class="ball">
+          <div class="face face-r">
+            <div class="eye eye-l eye-r-p"></div>
+            <div class="eye eye-r eye-r-p"></div>
+            <div class="mouth"></div>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
