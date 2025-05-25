@@ -39,6 +39,30 @@
             /* background-color: #e0ef0d; */
         }
 
+        /* 右侧小球的脸朝左 */
+        .face-r {
+            right: auto;
+            left: 0;
+            border-top-right-radius: 0;
+            border-top-left-radius: 15px;
+        }
+
+        /* 右侧小球的眼睛位置调整 */
+        .face-r .eye-l {
+            left: auto;
+            right: 10px;
+        }
+
+        .face-r .eye-r {
+            right: auto;
+            left: 5px;
+        }
+
+        /* 右侧小球的嘴巴位置调整 */
+        .face-r .mouth {
+            transform: translate(-3px);
+        }
+
         .eye{
             width: 15px;
             height: 14px;
@@ -70,6 +94,100 @@
             right: 0;
             margin: auto;
         }
+
+        /* 添加亲亲动画 */
+        #l-ball {
+            animation: nuzzleLeft 4s ease-in-out infinite;
+            z-index: 2;
+        }
+
+        #r-ball {
+            animation: kissRight 4s ease-in-out infinite;
+            z-index: 1;
+        }
+
+        /* 左边球的动画 - 先蹭两下 */
+        @keyframes nuzzleLeft {
+            /* 初始状态 */
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            
+            /* 第一次蹭 */
+            10% { transform: translateX(20px) rotate(-5deg); }
+            15% { transform: translateX(20px) rotate(5deg); }
+            20% { transform: translateX(20px) rotate(-5deg); }
+            25% { transform: translateX(0) rotate(0deg); }
+            
+            /* 第二次蹭 */
+            35% { transform: translateX(20px) rotate(-5deg); }
+            40% { transform: translateX(20px) rotate(5deg); }
+            45% { transform: translateX(20px) rotate(-5deg); }
+            50% { transform: translateX(0) rotate(0deg); }
+            
+            /* 保持静止，等右球亲它 */
+            55%, 80% { transform: translateX(0) rotate(0deg); }
+        }
+
+        /* 右边球的动画 - 后亲左球 */
+        @keyframes kissRight {
+            /* 初始静止，等左球蹭完 */
+            0%, 55% { transform: translateX(0) rotate(0deg); }
+            
+            /* 向左亲 */
+            65% { transform: translateX(-30px) rotate(5deg); }
+            70% { transform: translateX(-30px) scale(0.9) rotate(5deg); }
+            75% { transform: translateX(-30px) rotate(5deg); }
+            
+            /* 回到初始位置 */
+            80%, 100% { transform: translateX(0) rotate(0deg); }
+        }
+
+        /* 心形动画 */
+        .heart {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 30px;
+            background-color: #ff3366;
+            transform-origin: center;
+            animation: heartBeat 4s ease-in-out infinite;
+            opacity: 0;
+            clip-path: path('M15,8 C15,8 14,3 9,3 C4,3 3,8 3,8 C3,8 3,13 15,20 C27,13 27,8 27,8 C27,8 26,3 21,3 C16,3 15,8 15,8 Z');
+            z-index: 10;
+        }
+
+        @keyframes heartBeat {
+            0%, 64%, 100% { transform: translateX(-50%) scale(0); opacity: 0; }
+            70% { transform: translateX(-50%) scale(1.2); opacity: 1; }
+            73% { transform: translateX(-50%) scale(1); opacity: 1; }
+            76% { transform: translateX(-50%) scale(1.1); opacity: 1; }
+            80% { transform: translateX(-50%) scale(0); opacity: 0; }
+        }
+
+        /* 嘴巴动画 */
+        #l-ball .mouth {
+            animation: leftMouth 4s ease-in-out infinite;
+        }
+        
+        #r-ball .mouth {
+            animation: rightMouth 4s ease-in-out infinite;
+        }
+
+        @keyframes leftMouth {
+            0%, 100% { width: 30px; border-bottom-width: 5px; }
+            /* 蹭的时候嘴巴微微变化 */
+            10%, 20%, 35%, 45% { width: 25px; border-bottom-width: 6px; }
+            15%, 40% { width: 28px; border-bottom-width: 5px; }
+            /* 被亲的时候嘴巴变化 */
+            65%, 75% { width: 15px; border-bottom-width: 7px; }
+        }
+        
+        @keyframes rightMouth {
+            0%, 60%, 100% { width: 30px; border-bottom-width: 5px; }
+            /* 亲的时候嘴巴变化 */
+            65%, 75% { width: 15px; border-bottom-width: 7px; }
+        }
     </style>
 </head>
 <body>
@@ -88,6 +206,7 @@
             <div class="mouth"></div>
           </div>
         </div>
+        <div class="heart"></div>
       </div>
     </body>
     </html>
