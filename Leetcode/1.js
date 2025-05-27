@@ -1,13 +1,19 @@
 /**
- * @param {number[]} nums
- * @return {void} Do not return anything, modify nums in-place instead.
+ * @param {string} s
+ * @return {number}
  */
-var moveZeroes = function(nums) {
-    for(let i = 0; i < nums.length; i++) {
-        if(nums[i] === 0){
-            nums.splice(i, 1);
-            nums.push(0);
+var lengthOfLongestSubstring = function(s) {
+    let left = 0;
+    let ans = 0;
+    const C = new Set();
+    for(let i=0;i<s.length;i++){
+        let c = s[i];
+        while(C.has(c)){
+            C.delete(s[left]);
+            left++;
         }
+        C.add(c);
+        ans=Math.max(ans,i-left+1);
     }
-    return nums;
+    return ans;
 };
