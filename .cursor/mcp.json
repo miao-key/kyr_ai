@@ -13,12 +13,14 @@
       ]
     },
     "manim-server": {
-      "command": "python",
+      "command": "cmd.exe",
       "args": [
-        "C:/Users/why/Desktop/lesson_ai/manim-mcp-server/src/manim_server.py"
+        "/c",
+        "C:/Users/why/Desktop/lesson_ai/start_manim_server.bat"
       ],
       "env": {
-        "MANIM_EXECUTABLE": "C:/Users/why/AppData/Local/Packages/PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0/LocalCache/local-packages/Python313/Scripts/manim.exe"
+        "MANIM_EXECUTABLE": "C:/Users/why/AppData/Local/Packages/PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0/LocalCache/local-packages/Python313/Scripts/manim.exe",
+        "PORT": "8090"
       }
     }
   }

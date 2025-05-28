@@ -1,0 +1,3 @@
+# This file is used internally by FFMPEG.
+file 'file:C:/Users/why/Desktop/lesson_ai/manim-mcp-server/src/media/videos/ManimScene/1080p60/partial_movie_files/MCPTest/3529212410_2663467930_223132457.mp4'
+file 'file:C:/Users/why/Desktop/lesson_ai/manim-mcp-server/src/media/videos/ManimScene/1080p60/partial_movie_files/MCPTest/3040924799_1754310298_3979572861.mp4'
