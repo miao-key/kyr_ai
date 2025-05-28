@@ -1,23 +1,138 @@
 *{
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
 }
 body {
-    background-color: #f3efef;
-    height: 100%;
+    background-color: #f8f8f8;
+    height: 100vh;
+    font-family: 'Microsoft YaHei', Arial, sans-serif;
 }
 .weui-page {
-    padding: 18px;
+    padding: 30px;
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 .weui-page__header{
-    padding: 40px;
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    text-align: center;
+    margin-bottom: 20px;
 }
 .weui-page__title{
-    font-size: 20px;
+    font-size: 24px;
     font-weight: bold;
     margin-bottom: 10px;
+    color: #333;
 }
 .weui-page__desc{
-    font-size: 12px;
-    color: #17d63d;
+    font-size: 14px;
+    color: #666;
+}
+
+/* 按钮区域样式 */
+.button-sp-area {
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+/* 按钮基础样式 */
+.weui-btn {
+    display: inline-block;
+    padding: 12px 24px;
+    font-size: 16px;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+    min-width: 120px;
+    font-weight: 500;
+}
+
+/* 主要按钮样式 */
+.weui-btn_primary {
+    background-color: #1AAD19;
+    color: #fff;
+    border: 1px solid #1AAD19;
+}
+
+.weui-btn_primary:hover {
+    background-color: #148c13;
+    box-shadow: 0 2px 8px rgba(26, 173, 25, 0.3);
+}
+
+/* 次要按钮样式 */
+.weui-btn_default {
+    background-color: #f8f8f8;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+.weui-btn_default:hover {
+    background-color: #eee;
+    border-color: #ccc;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 列表样式 */
+.weui-cells {
+    background-color: #fff;
+    margin: 15px;
+    border-radius: 5px;
+    overflow: hidden;
+    border: 1px solid #e5e5e5;
+}
+
+.weui-cells__title {
+    padding: 10px 15px;
+    font-size: 16px;
+    color: #333;
+    background-color: #f9f9f9;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.weui-cell {
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #f2f2f2;
+}
+
+.weui-cell:last-child {
+    border-bottom: none;
+}
+
+.weui-cell__hd {
+    margin-right: 10px;
+}
+
+.weui-cell__bd {
+    flex: 1;
+}
+
+.weui-cell__ft {
+    color: #888;
+    font-size: 14px;
+}
+
+/* 响应式调整 */
+@media screen and (max-width: 768px) {
+    .weui-page {
+        padding: 15px;
+    }
+    
+    .button-sp-area {
+        flex-direction: column;
+    }
+    
+    .weui-btn {
+        width: 100%;
+    }
 }

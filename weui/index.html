@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,47 +7,55 @@
     <link rel="stylesheet" href="index.css">
 </head>
 <body>
-    <!-- Block -->
     <div class="weui-page">
-        <!-- Element -->
         <header class="weui-page__header">
-            <h1 class="weui-page__title">Button</h1>
-            <p class="weui-page__desc">按钮</p>
+            <h1 class="weui-page__title">按钮组件展示</h1>
+            <p class="weui-page__desc">WeUI 风格的按钮设计与应用展示</p>
         </header>
         <main class="weui-page__body">
             <div class="button-sp-area">
-                <a href="#" class="weui-btn weui-btn_primary">主要操作</a>
-                <a href="#" class="weui-btn  weui-btn_default">次要操作</a>
+                <a href="javascript:;" class="weui-btn weui-btn_primary">主要操作</a>
+                <a href="javascript:;" class="weui-btn weui-btn_default">次要操作</a>
             </div>
+            
             <div class="weui-cells">
                 <h3 class="weui-cells__title">个人信息</h3>
                 <div class="weui-cell">
                     <div class="weui-cell__hd">
-                        <img src="" alt="">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="#999"/>
+                        </svg>
                     </div>
                     <div class="weui-cell__bd">
-                        <p>标题文字</p>
+                        <p>用户名称</p>
                     </div>
                     <div class="weui-cell__ft">
-                        说明文字
+                        张三
                     </div>
                 </div>
                 <div class="weui-cell">
                     <div class="weui-cell__hd">
-                        <img src="" alt="">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M6.62 10.79C8.06 13.62 10.38 15.94 13.21 17.38L15.41 15.18C15.69 14.9 16.08 14.82 16.43 14.93C17.55 15.3 18.75 15.5 20 15.5C20.55 15.5 21 15.95 21 16.5V20C21 20.55 20.55 21 20 21C10.61 21 3 13.39 3 4C3 3.45 3.45 3 4 3H7.5C8.05 3 8.5 3.45 8.5 4C8.5 5.25 8.7 6.45 9.07 7.57C9.18 7.92 9.1 8.31 8.82 8.59L6.62 10.79Z" fill="#999"/>
+                        </svg>
                     </div>
                     <div class="weui-cell__bd">
-                        <p>标题文字</p>
+                        <p>联系电话</p>
                     </div>
                     <div class="weui-cell__ft">
-                        说明文字
+                        138****6666
                     </div>
                 </div>
             </div>
+            
             <div class="weui-form">
-                <div class="weui-form__hd"></div>
-                <div class="weui-form__bd"></div>
-                <div class="weui-form__ft"></div>
+                <div class="weui-cells">
+                    <h3 class="weui-cells__title">操作示例</h3>
+                    <div class="button-sp-area">
+                        <a href="javascript:;" class="weui-btn weui-btn_primary">确认操作</a>
+                        <a href="javascript:;" class="weui-btn weui-btn_default">取消操作</a>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
