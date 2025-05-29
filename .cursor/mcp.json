@@ -1,27 +1,15 @@
 {
   "mcpServers": {
-    "claude-code": {
-      "command": "uvx",
-      "args": [
-        "--from",
-        "mcp-claude-code",
-        "claudecode",
-        "--allow-path",
-        "C:/Users/why/Desktop/lesson_ai",
-        "--project",
-        "C:/Users/why/Desktop/lesson_ai"
-      ]
-    },
     "manim-server": {
-      "command": "cmd.exe",
+      "command": "python",
       "args": [
-        "/c",
-        "C:/Users/why/Desktop/lesson_ai/start_manim_server.bat"
+        "C:/Users/why/Desktop/lesson_ai/manim-mcp-server/src/manim_server.py"
       ],
       "env": {
         "MANIM_EXECUTABLE": "C:/Users/why/AppData/Local/Packages/PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0/LocalCache/local-packages/Python313/Scripts/manim.exe",
-        "PORT": "8090"
+        "PORT": "8090",
+        "PYTHONPATH": "C:/Users/why/Desktop/lesson_ai"
       }
     }
   }
-} 
+}
