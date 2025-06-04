@@ -41,5 +41,5 @@ body{
 } */
 .qq-panel_active .qq-panel__title{
     opacity: 1;
-    transition: opacity 0.3s ease-in 0.4s;
+    transition: opacity 0.3s ease-in 0.4s; 
 }

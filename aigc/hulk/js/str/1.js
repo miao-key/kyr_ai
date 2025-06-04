@@ -18,5 +18,4 @@
 // {} 也省了 只有一句话的时候
 // 他是返回值的时候，连return 都能省略
 const reverseString = (str) => str.split('').reverse().join('')
-
 console.log(reverseString("hello"));

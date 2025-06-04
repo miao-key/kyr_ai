@@ -22,3 +22,25 @@
 - .container>#l-ball.ball+#r-ball.ball
   > 子元素选择器
   + 兄弟元素选择器
+
+- display 属性
+  div  block
+  span, i a  inline
+  display 切换行内块级的格式化上下文能力
+  inline-block 行内块级 设置宽高 在一行
+  inline 行内 不可以设置宽高
+  block 块级 独占一行
+
+- 面向对象的css
+  多态
+  复用 多类名
+- 定位
+  - position 定位
+    relative 相对定位
+      - 子元素相对它定位
+      - 相对于自身的位置定位
+    absolute 绝对定位
+      -
+    absolute 找到离它最近的position 不为static的属性定位
+    直到body为止
+    .container absolute body
