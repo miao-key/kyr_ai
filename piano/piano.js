@@ -16,362 +16,6 @@ const keyMap = {
     'i': 'C5', '9': 'C#5', 'o': 'D5'
 };
 
-// 添加预设曲目数据
-const songLibrary = {
-    // 小星星
-    'twinkle': {
-        name: '小星星',
-        tempo: 120, // BPM
-        notes: [
-            { note: 'C4', duration: 1 },
-            { note: 'C4', duration: 1 },
-            { note: 'G4', duration: 1 },
-            { note: 'G4', duration: 1 },
-            { note: 'A4', duration: 1 },
-            { note: 'A4', duration: 1 },
-            { note: 'G4', duration: 2 },
-            { note: 'F4', duration: 1 },
-            { note: 'F4', duration: 1 },
-            { note: 'E4', duration: 1 },
-            { note: 'E4', duration: 1 },
-            { note: 'D4', duration: 1 },
-            { note: 'D4', duration: 1 },
-            { note: 'C4', duration: 2 }
-        ]
-    },
-    // 欢乐颂
-    'ode': {
-        name: '欢乐颂',
-        tempo: 120,
-        notes: [
-            { note: 'E4', duration: 1 },
-            { note: 'E4', duration: 1 },
-            { note: 'F4', duration: 1 },
-            { note: 'G4', duration: 1 },
-            { note: 'G4', duration: 1 },
-            { note: 'F4', duration: 1 },
-            { note: 'E4', duration: 1 },
-            { note: 'D4', duration: 1 },
-            { note: 'C4', duration: 1 },
-            { note: 'C4', duration: 1 },
-            { note: 'D4', duration: 1 },
-            { note: 'E4', duration: 1 },
-            { note: 'E4', duration: 1.5 },
-            { note: 'D4', duration: 0.5 },
-            { note: 'D4', duration: 2 }
-        ]
-    },
-    // 生日快乐
-    'birthday': {
-        name: '生日快乐',
-        tempo: 100,
-        notes: [
-            { note: 'C4', duration: 0.75 },
-            { note: 'C4', duration: 0.25 },
-            { note: 'D4', duration: 1 },
-            { note: 'C4', duration: 1 },
-            { note: 'F4', duration: 1 },
-            { note: 'E4', duration: 2 },
-            { note: 'C4', duration: 0.75 },
-            { note: 'C4', duration: 0.25 },
-            { note: 'D4', duration: 1 },
-            { note: 'C4', duration: 1 },
-            { note: 'G4', duration: 1 },
-            { note: 'F4', duration: 2 },
-            { note: 'C4', duration: 0.75 },
-            { note: 'C4', duration: 0.25 },
-            { note: 'C5', duration: 1 },
-            { note: 'A4', duration: 1 },
-            { note: 'F4', duration: 1 },
-            { note: 'E4', duration: 1 },
-            { note: 'D4', duration: 1 },
-            { note: 'A#4', duration: 0.75 },
-            { note: 'A#4', duration: 0.25 },
-            { note: 'A4', duration: 1 },
-            { note: 'F4', duration: 1 },
-            { note: 'G4', duration: 1 },
-            { note: 'F4', duration: 2 }
-        ]
-    },
-    // 美人鱼高潮片段
-    'mermaid': {
-        name: '美人鱼',
-        tempo: 76, // 调整BPM至林俊杰演唱版本的实际速度
-        notes: [
-            // 前奏过渡 (E大调：原曲为E大调)
-            { note: 'G#4', duration: 0.5 },
-            { note: 'A4', duration: 0.5 },
-            { note: 'B4', duration: 0.5 },
-            
-            // 高潮片段 "当我看见你的时候"
-            { note: 'A4', duration: 0.5, isAccent: true }, // 当
-            { note: 'B4', duration: 0.35 }, // 我
-            { note: 'C#5', duration: 0.35 }, // 看
-            { note: 'E5', duration: 0.65, isLong: true }, // 见
-            { note: 'B4', duration: 0.4 }, // 你
-            { note: 'C#5', duration: 0.85, isLong: true }, // 的
-            { note: 'B4', duration: 0.6 }, // 时
-            { note: 'G#4', duration: 0.35 }, // 候
-            
-            // "我的感觉我的感觉"
-            { note: 'G#4', duration: 0.4, isAccent: true }, // 我
-            { note: 'B4', duration: 0.35 }, // 的
-            { note: 'C#5', duration: 0.4 }, // 感
-            { note: 'E5', duration: 0.7, isLong: true }, // 觉
-            { note: 'B4', duration: 0.4 }, // 我
-            { note: 'C#5', duration: 0.8, isLong: true }, // 的
-            { note: 'A4', duration: 0.4 }, // 感
-            { note: 'A4', duration: 0.65, isAccent: true }, // 觉
-            
-            // "是海面像镜子平静"
-            { note: 'A4', duration: 0.4 }, // 是
-            { note: 'B4', duration: 0.4 }, // 海
-            { note: 'C#5', duration: 0.4 }, // 面
-            { note: 'E5', duration: 0.7, isLong: true }, // 像
-            { note: 'B4', duration: 0.4 }, // 镜
-            { note: 'C#5', duration: 0.8, isLong: true }, // 子
-            { note: 'B4', duration: 0.6 }, // 平
-            { note: 'G#4', duration: 0.5 }, // 静
-            
-            // 间奏
-            { note: 'A4', duration: 0.5 },
-            { note: 'G#4', duration: 0.5 },
-            { note: 'B4', duration: 0.7 },
-            { duration: 0.6, isPause: true }, // 短暂停顿
-            
-            // 第二段 "当我看见你的心事"
-            { note: 'A4', duration: 0.5, isAccent: true }, // 当
-            { note: 'B4', duration: 0.35 }, // 我
-            { note: 'C#5', duration: 0.35 }, // 看
-            { note: 'E5', duration: 0.65, isLong: true }, // 见
-            { note: 'B4', duration: 0.4 }, // 你
-            { note: 'C#5', duration: 0.85, isLong: true }, // 的
-            { note: 'B4', duration: 0.6 }, // 心
-            { note: 'G#4', duration: 0.35 }, // 事
-            
-            // "我的心事我的真实"
-            { note: 'G#4', duration: 0.4, isAccent: true }, // 我
-            { note: 'B4', duration: 0.35 }, // 的
-            { note: 'C#5', duration: 0.4 }, // 心
-            { note: 'E5', duration: 0.7, isLong: true }, // 事
-            { note: 'B4', duration: 0.4 }, // 我
-            { note: 'C#5', duration: 0.8, isLong: true }, // 的
-            { note: 'A4', duration: 0.4 }, // 真
-            { note: 'A4', duration: 0.65, isAccent: true }, // 实
-            
-            // "是人鱼的眼泪汪汪"
-            { note: 'A4', duration: 0.4 }, // 是
-            { note: 'B4', duration: 0.4 }, // 人
-            { note: 'C#5', duration: 0.4 }, // 鱼
-            { note: 'E5', duration: 0.7, isLong: true }, // 的
-            { note: 'B4', duration: 0.4 }, // 眼
-            { note: 'C#5', duration: 0.8, isLong: true }, // 泪
-            { note: 'B4', duration: 0.6 }, // 汪
-            { note: 'G#4', duration: 0.5 }, // 汪
-            
-            // 尾音延长
-            { note: 'A4', duration: 2.5, isLong: true, isAccent: true } // 尾音
-        ]
-    }
-};
-
-// 自动演奏相关变量
-let autoPlayIntervalId = null;
-let currentSong = null;
-let currentNoteIndex = 0;
-let isPlaying = false;
-
-// 创建音频上下文
-const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-const mainGainNode = audioContext.createGain();
-mainGainNode.connect(audioContext.destination);
-mainGainNode.gain.value = 0.5;
-
-// 创建更真实的钢琴音色
-function createPianoSound(frequency, velocity = 0.7, isLongPress = false) {
-    // 创建多个振荡器以获得更丰富的声音
-    const oscillators = [];
-    const gainNodes = [];
-    
-    // 检查频率所对应的音符（用于E大调的特殊处理）
-    let isKeyNote = false; // 是否是E大调的关键音符
-    let isEMajor = false; // 是否是E大调的音符
-    
-    // 将频率转换回音符名称（近似值）
-    for (const [noteName, noteFreq] of Object.entries(notes)) {
-        if (Math.abs(frequency - noteFreq) < 1) {
-            // E大调的关键音符: E, G#, B
-            if (noteName.includes('E') || noteName.includes('G#') || noteName.includes('B')) {
-                isKeyNote = true;
-            }
-            // E大调的音符: E, F#, G#, A, B, C#, D#
-            if (noteName.includes('E') || noteName.includes('F#') || noteName.includes('G#') || 
-                noteName.includes('A') || noteName.includes('B') || noteName.includes('C#') || 
-                noteName.includes('D#')) {
-                isEMajor = true;
-            }
-            break;
-        }
-    }
-    
-    // 计算衰减时间 - 低音区较长，高音区较短
-    // 长按音符衰减时间更长，点按音符衰减时间更短
-    let baseDecayTime = isLongPress ? 4.0 : 1.8;  // 加大长按和短按的差异
-    
-    // E大调的音符，尤其是关键音符，衰减时间更长，听起来更柔美
-    if (isEMajor) {
-        baseDecayTime *= isLongPress ? 1.15 : 1.08;
-        if (isKeyNote) {
-            baseDecayTime *= 1.1; // 关键音符延长10%
-        }
-    }
-    
-    const normalizedFreq = Math.min(1, Math.max(0, (frequency - 100) / 1000)); // 归一化频率到0-1范围
-    const decayTime = baseDecayTime * (1 - normalizedFreq * 0.6); // 低频衰减更长
-    
-    // 设置攻击和释放特性
-    const attackTime = isLongPress ? 0.02 : 0.005; // 长按攻击延长
-    let sustainLevel = isLongPress ? 0.5 : 0.3; // 加大长按和短按的延音差异
-    
-    // E大调音符的延音稍强
-    if (isEMajor) {
-        sustainLevel *= 1.1;
-        if (isKeyNote) {
-            sustainLevel = Math.min(0.75, sustainLevel * 1.15); // 关键音符延音更强
-        }
-    }
-    
-    // 主音
-    const mainOsc = audioContext.createOscillator();
-    const mainGain = audioContext.createGain();
-    // E大调音符使用更丰富的波形
-    mainOsc.type = isEMajor && isLongPress ? 'triangle' : isLongPress ? 'triangle' : 'sine';
-    mainOsc.frequency.value = frequency;
-    
-    // 泛音 - 添加更多泛音使声音更丰富
-    const harmonicOsc1 = audioContext.createOscillator();
-    const harmonicGain1 = audioContext.createGain();
-    harmonicOsc1.type = 'sine';
-    harmonicOsc1.frequency.value = frequency * 2; // 第一泛音
-    let harmonicGain1Value = isLongPress ? 0.28 : 0.18;
-    // 增强E大调关键音的泛音
-    if (isKeyNote) {
-        harmonicGain1Value *= 1.15;
-    }
-    harmonicGain1.gain.value = harmonicGain1Value;
-    
-    const harmonicOsc2 = audioContext.createOscillator();
-    const harmonicGain2 = audioContext.createGain();
-    harmonicOsc2.type = 'sine';
-    harmonicOsc2.frequency.value = frequency * 3; // 第二泛音
-    let harmonicGain2Value = isLongPress ? 0.15 : 0.08;
-    // 增强E大调关键音的泛音
-    if (isKeyNote) {
-        harmonicGain2Value *= 1.2;
-    }
-    harmonicGain2.gain.value = harmonicGain2Value;
-
-    // 额外添加第三泛音（仅在长按时较明显）
-    const harmonicOsc3 = audioContext.createOscillator();
-    const harmonicGain3 = audioContext.createGain();
-    harmonicOsc3.type = 'sine';
-    harmonicOsc3.frequency.value = frequency * 4; // 第三泛音
-    let harmonicGain3Value = isLongPress ? 0.07 : 0.02;
-    // 增强E大调关键音的泛音
-    if (isKeyNote && isLongPress) {
-        harmonicGain3Value *= 1.25;
-    }
-    harmonicGain3.gain.value = harmonicGain3Value;
-    
-    // 创建滤波器使声音更温暖
-    const filter = audioContext.createBiquadFilter();
-    filter.type = 'lowpass';
-    
-    // E大调的音符使用略高的滤波截止频率，使音色更明亮
-    let filterFreq = isLongPress ? 
-                    6000 - normalizedFreq * 1200 : // 长按滤波较高
-                    4500 - normalizedFreq * 2000;  // 短按滤波较低
-    
-    if (isEMajor) {
-        filterFreq *= 1.1; // 提高滤波截止频率
-        if (isKeyNote) {
-            filterFreq *= 1.1; // 关键音符更明亮
-        }
-    }
-    
-    filter.frequency.value = filterFreq;
-    filter.Q.value = isEMajor && isKeyNote ? 1.8 : (isLongPress ? 1.5 : 0.8); // 增加E大调关键音的共振
-    
-    // 设置音量包络
-    const now = audioContext.currentTime;
-    
-    // 主振荡器音量包络
-    mainGain.gain.setValueAtTime(0, now);
-    mainGain.gain.linearRampToValueAtTime(velocity * (isLongPress ? 0.65 : 0.6), now + attackTime); // 攻击
-    mainGain.gain.exponentialRampToValueAtTime(velocity * sustainLevel, now + 0.1); // 初始衰减
-    mainGain.gain.exponentialRampToValueAtTime(0.001, now + decayTime); // 长衰减
-    
-    // 泛音包络
-    harmonicGain1.gain.setValueAtTime(0, now);
-    harmonicGain1.gain.linearRampToValueAtTime(velocity * harmonicGain1Value, now + attackTime);
-    
-    // 为E大调关键音符的泛音延长衰减时间
-    if (isKeyNote && isEMajor) {
-        harmonicGain1.gain.exponentialRampToValueAtTime(0.001, now + decayTime * (isLongPress ? 1.0 : 0.8));
-    } else {
-        harmonicGain1.gain.exponentialRampToValueAtTime(0.001, now + decayTime * (isLongPress ? 0.9 : 0.7));
-    }
-    
-    harmonicGain2.gain.setValueAtTime(0, now);
-    harmonicGain2.gain.linearRampToValueAtTime(velocity * harmonicGain2Value, now + attackTime);
-    
-    // 为E大调关键音符的泛音延长衰减时间
-    if (isKeyNote && isEMajor) {
-        harmonicGain2.gain.exponentialRampToValueAtTime(0.001, now + decayTime * (isLongPress ? 0.9 : 0.6));
-    } else {
-        harmonicGain2.gain.exponentialRampToValueAtTime(0.001, now + decayTime * (isLongPress ? 0.8 : 0.5));
-    }
-    
-    harmonicGain3.gain.setValueAtTime(0, now);
-    harmonicGain3.gain.linearRampToValueAtTime(velocity * harmonicGain3Value, now + attackTime);
-    
-    // 为E大调关键音符的泛音延长衰减时间
-    if (isKeyNote && isEMajor) {
-        harmonicGain3.gain.exponentialRampToValueAtTime(0.001, now + decayTime * (isLongPress ? 0.8 : 0.5));
-    } else {
-        harmonicGain3.gain.exponentialRampToValueAtTime(0.001, now + decayTime * (isLongPress ? 0.7 : 0.4));
-    }
-    
-    // 连接主振荡器
-    mainOsc.connect(mainGain);
-    mainGain.connect(filter);
-    
-    // 连接泛音振荡器
-    harmonicOsc1.connect(harmonicGain1);
-    harmonicGain1.connect(filter);
-    
-    harmonicOsc2.connect(harmonicGain2);
-    harmonicGain2.connect(filter);
-    
-    harmonicOsc3.connect(harmonicGain3);
-    harmonicGain3.connect(filter);
-    
-    // 连接到主输出
-    filter.connect(mainGainNode);
-    
-    // 启动所有振荡器
-    mainOsc.start();
-    harmonicOsc1.start();
-    harmonicOsc2.start();
-    harmonicOsc3.start();
-    
-    // 跟踪所有振荡器和增益节点以便后续停止
-    oscillators.push(mainOsc, harmonicOsc1, harmonicOsc2, harmonicOsc3);
-    gainNodes.push(mainGain, harmonicGain1, harmonicGain2, harmonicGain3);
-    
-    return { oscillators, gainNodes, filter };
-}
-
 // 延音踏板状态
 let sustainPedalActive = false;
 const activeNotes = new Map();
@@ -538,15 +182,127 @@ function positionBlackKeys() {
     });
 }
 
+// 创建音频上下文
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+const mainGainNode = audioContext.createGain();
+mainGainNode.connect(audioContext.destination);
+mainGainNode.gain.value = 0.5;
+
+// 创建更真实的钢琴音色
+function createPianoSound(frequency, velocity = 0.7, isLongPress = false) {
+    // 创建多个振荡器以获得更丰富的声音
+    const oscillators = [];
+    const gainNodes = [];
+    
+    // 计算衰减时间 - 低音区较长，高音区较短
+    // 长按音符衰减时间更长，点按音符衰减时间更短
+    let baseDecayTime = isLongPress ? 4.0 : 1.8;  // 加大长按和短按的差异
+    
+    const normalizedFreq = Math.min(1, Math.max(0, (frequency - 100) / 1000)); // 归一化频率到0-1范围
+    const decayTime = baseDecayTime * (1 - normalizedFreq * 0.6); // 低频衰减更长
+    
+    // 设置攻击和释放特性
+    const attackTime = isLongPress ? 0.02 : 0.005; // 长按攻击延长
+    let sustainLevel = isLongPress ? 0.5 : 0.3; // 加大长按和短按的延音差异
+    
+    // 主音
+    const mainOsc = audioContext.createOscillator();
+    const mainGain = audioContext.createGain();
+    mainOsc.type = isLongPress ? 'triangle' : 'sine';
+    mainOsc.frequency.value = frequency;
+    
+    // 泛音 - 添加更多泛音使声音更丰富
+    const harmonicOsc1 = audioContext.createOscillator();
+    const harmonicGain1 = audioContext.createGain();
+    harmonicOsc1.type = 'sine';
+    harmonicOsc1.frequency.value = frequency * 2; // 第一泛音
+    let harmonicGain1Value = isLongPress ? 0.28 : 0.18;
+    harmonicGain1.gain.value = harmonicGain1Value;
+    
+    const harmonicOsc2 = audioContext.createOscillator();
+    const harmonicGain2 = audioContext.createGain();
+    harmonicOsc2.type = 'sine';
+    harmonicOsc2.frequency.value = frequency * 3; // 第二泛音
+    let harmonicGain2Value = isLongPress ? 0.15 : 0.08;
+    harmonicGain2.gain.value = harmonicGain2Value;
+
+    // 额外添加第三泛音（仅在长按时较明显）
+    const harmonicOsc3 = audioContext.createOscillator();
+    const harmonicGain3 = audioContext.createGain();
+    harmonicOsc3.type = 'sine';
+    harmonicOsc3.frequency.value = frequency * 4; // 第三泛音
+    let harmonicGain3Value = isLongPress ? 0.07 : 0.02;
+    harmonicGain3.gain.value = harmonicGain3Value;
+    
+    // 创建滤波器使声音更温暖
+    const filter = audioContext.createBiquadFilter();
+    filter.type = 'lowpass';
+    
+    let filterFreq = isLongPress ? 
+                    6000 - normalizedFreq * 1200 : // 长按滤波较高
+                    4500 - normalizedFreq * 2000;  // 短按滤波较低
+    
+    filter.frequency.value = filterFreq;
+    filter.Q.value = isLongPress ? 1.5 : 0.8;
+    
+    // 设置音量包络
+    const now = audioContext.currentTime;
+    
+    // 主振荡器音量包络
+    mainGain.gain.setValueAtTime(0, now);
+    mainGain.gain.linearRampToValueAtTime(velocity * (isLongPress ? 0.65 : 0.6), now + attackTime); // 攻击
+    mainGain.gain.exponentialRampToValueAtTime(velocity * sustainLevel, now + 0.1); // 初始衰减
+    mainGain.gain.exponentialRampToValueAtTime(0.001, now + decayTime); // 长衰减
+    
+    // 泛音包络
+    harmonicGain1.gain.setValueAtTime(0, now);
+    harmonicGain1.gain.linearRampToValueAtTime(velocity * harmonicGain1Value, now + attackTime);
+    harmonicGain1.gain.exponentialRampToValueAtTime(0.001, now + decayTime * (isLongPress ? 0.9 : 0.7));
+    
+    harmonicGain2.gain.setValueAtTime(0, now);
+    harmonicGain2.gain.linearRampToValueAtTime(velocity * harmonicGain2Value, now + attackTime);
+    harmonicGain2.gain.exponentialRampToValueAtTime(0.001, now + decayTime * (isLongPress ? 0.8 : 0.5));
+    
+    harmonicGain3.gain.setValueAtTime(0, now);
+    harmonicGain3.gain.linearRampToValueAtTime(velocity * harmonicGain3Value, now + attackTime);
+    harmonicGain3.gain.exponentialRampToValueAtTime(0.001, now + decayTime * (isLongPress ? 0.7 : 0.4));
+    
+    // 连接主振荡器
+    mainOsc.connect(mainGain);
+    mainGain.connect(filter);
+    
+    // 连接泛音振荡器
+    harmonicOsc1.connect(harmonicGain1);
+    harmonicGain1.connect(filter);
+    
+    harmonicOsc2.connect(harmonicGain2);
+    harmonicGain2.connect(filter);
+    
+    harmonicOsc3.connect(harmonicGain3);
+    harmonicGain3.connect(filter);
+    
+    // 连接到主输出
+    filter.connect(mainGainNode);
+    
+    // 启动所有振荡器
+    mainOsc.start();
+    harmonicOsc1.start();
+    harmonicOsc2.start();
+    harmonicOsc3.start();
+    
+    // 跟踪所有振荡器和增益节点以便后续停止
+    oscillators.push(mainOsc, harmonicOsc1, harmonicOsc2, harmonicOsc3);
+    gainNodes.push(mainGain, harmonicGain1, harmonicGain2, harmonicGain3);
+    
+    return { oscillators, gainNodes, filter };
+}
+
 // 播放音符
 function playNote(frequency, velocity = 0.7, isLongPress = false) {
     const sound = createPianoSound(frequency, velocity, isLongPress);
     const noteId = Date.now() + Math.random();
     
     activeNotes.set(noteId, sound);
-    
-    // 触发流星效果
-    triggerComet();
     
     if (!sustainPedalActive) {
         // 为长按音符设置更长的持续时间
@@ -678,9 +434,13 @@ function addKeyPressEffect(keyElement, velocity) {
     
     // 使用box-shadow来模拟按下的深度
     if (isBlackKey) {
-        keyElement.style.boxShadow = `0 ${Math.max(1, 3 - pressDepth * 0.5)}px ${pressDepth}px rgba(0,0,0,0.7), inset 0 -1px 0 rgba(255,255,255,0.1)`;
+        // 增强黑键按下时的视觉效果，使阴影更明显
+        keyElement.style.boxShadow = `0 ${Math.max(1, 3 - pressDepth * 0.5)}px ${pressDepth}px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2)`;
+        // 添加边框高亮以增强视觉效果
+        keyElement.style.border = '1px solid rgba(130, 130, 255, 0.6)';
     } else {
         keyElement.style.boxShadow = `0 ${Math.max(1, 5 - pressDepth * 0.8)}px ${pressDepth}px rgba(0,0,0,0.2), inset 0 -1px 0 rgba(255,255,255,0.7)`;
+        keyElement.style.border = '1px solid rgba(100, 200, 255, 0.4)';
     }
     
     // 力度高时添加额外的视觉效果
@@ -699,7 +459,8 @@ function addKeyPressEffect(keyElement, velocity) {
         
         // 设置闪光颜色
         if (isBlackKey) {
-            flash.style.background = 'radial-gradient(circle at center, rgba(150,150,255,0.9) 0%, rgba(100,100,200,0) 70%)';
+            // 增强黑键闪光效果，使其更加明显
+            flash.style.background = 'radial-gradient(circle at center, rgba(180,180,255,0.95) 0%, rgba(120,120,255,0) 70%)';
         } else {
             flash.style.background = 'radial-gradient(circle at center, rgba(255,255,255,0.9) 0%, rgba(200,220,255,0) 70%)';
         }
@@ -812,7 +573,7 @@ function smoothKeyRelease(keyElement) {
     
     // 设置涟漪颜色
     if (isBlackKey) {
-        ripple.style.background = 'radial-gradient(circle at center, rgba(80,80,120,0.3) 0%, rgba(80,80,120,0) 70%)';
+        ripple.style.background = 'radial-gradient(circle at center, rgba(120,120,200,0.4) 0%, rgba(80,80,120,0) 70%)';
     } else {
         ripple.style.background = 'radial-gradient(circle at center, rgba(200,220,255,0.3) 0%, rgba(200,220,255,0) 70%)';
     }
@@ -839,6 +600,7 @@ function smoothKeyRelease(keyElement) {
     
     // 重置所有样式属性，回到原始状态
     keyElement.style.boxShadow = '';
+    keyElement.style.border = '';  // 重置我们添加的边框样式
     keyElement.style.setProperty('--press-depth', '0px');
     
     // 短暂延迟后移除过渡类
@@ -882,37 +644,53 @@ function handleMouseUp(e) {
     }
 }
 
-// 初始化
-document.addEventListener('DOMContentLoaded', () => {
+// 初始化钢琴
+window.addEventListener('DOMContentLoaded', () => {
+    // 创建钢琴
     createPiano();
-    createAutoPlayControls();
     
-    // 键盘事件
-    document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('keyup', handleKeyUp);
+    // 为所有键添加事件监听器
+    document.querySelectorAll('.key').forEach(key => {
+        key.addEventListener('mousedown', handleMouseDown);
+        key.addEventListener('mouseup', handleMouseUp);
+        key.addEventListener('mouseleave', handleMouseUp);
+    });
     
-    // 鼠标事件
-    const piano = document.getElementById('piano');
-    piano.addEventListener('mousedown', handleMouseDown);
-    piano.addEventListener('mouseup', handleMouseUp);
-    piano.addEventListener('mouseleave', () => {
-        // 只有当不使用延音踏板时才停止音符
-        if (!sustainPedalActive) {
-            document.querySelectorAll('.key.active').forEach(key => {
-                key.classList.remove('active');
-                const noteId = key.dataset.noteId;
-                if (noteId) {
-                    stopNote(noteId);
-                }
-            });
+    // 添加键盘事件监听器
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    
+    // 添加延音踏板监听器
+    window.addEventListener('keydown', e => {
+        if (e.code === 'Space') {
+            handleSustainPedal(true);
         }
     });
     
-    // 添加延音踏板鼠标事件
-    const pedal = document.getElementById('pedal');
-    pedal.addEventListener('mousedown', () => handleSustainPedal(true));
-    pedal.addEventListener('mouseup', () => handleSustainPedal(false));
-    pedal.addEventListener('mouseleave', () => handleSustainPedal(false));
+    window.addEventListener('keyup', e => {
+        if (e.code === 'Space') {
+            handleSustainPedal(false);
+        }
+    });
+    
+    // 启用触屏控制器
+    enableTouchControls();
+});
+
+// 启用触摸控制
+function enableTouchControls() {
+    // 为所有键添加触摸事件
+    document.querySelectorAll('.key').forEach(key => {
+        key.addEventListener('touchstart', e => {
+            e.preventDefault();
+            handleMouseDown({ target: key });
+        });
+        
+        key.addEventListener('touchend', e => {
+            e.preventDefault();
+            handleMouseUp({ target: key });
+        });
+    });
     
     // 防止在移动设备上滚动页面
     document.body.addEventListener('touchmove', e => {
@@ -920,243 +698,6 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
         }
     }, { passive: false });
-});
-
-// 创建自动演奏控制UI
-function createAutoPlayControls() {
-    const pianoContainer = document.querySelector('.piano-container');
-    if (!pianoContainer) return;
-    
-    // 创建控制面板容器
-    const controlsContainer = document.createElement('div');
-    controlsContainer.className = 'auto-play-controls';
-    controlsContainer.style.marginTop = '20px';
-    controlsContainer.style.display = 'flex';
-    controlsContainer.style.justifyContent = 'center';
-    controlsContainer.style.alignItems = 'center';
-    controlsContainer.style.gap = '10px';
-    
-    // 创建歌曲选择下拉框
-    const songSelect = document.createElement('select');
-    songSelect.id = 'songSelect';
-    songSelect.style.padding = '5px 10px';
-    songSelect.style.borderRadius = '5px';
-    songSelect.style.background = '#333';
-    songSelect.style.color = '#fff';
-    songSelect.style.border = '1px solid #666';
-    
-    // 添加歌曲选项
-    Object.keys(songLibrary).forEach(key => {
-        const option = document.createElement('option');
-        option.value = key;
-        option.textContent = songLibrary[key].name;
-        songSelect.appendChild(option);
-    });
-    
-    // 创建播放按钮
-    const playButton = document.createElement('button');
-    playButton.id = 'autoPlayBtn';
-    playButton.textContent = '播放';
-    playButton.style.padding = '5px 15px';
-    playButton.style.borderRadius = '5px';
-    playButton.style.background = 'linear-gradient(to bottom, #4CAF50, #388E3C)';
-    playButton.style.color = 'white';
-    playButton.style.border = 'none';
-    playButton.style.cursor = 'pointer';
-    playButton.style.fontWeight = 'bold';
-    playButton.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
-    
-    // 添加按钮点击事件
-    playButton.addEventListener('click', () => {
-        if (isPlaying) {
-            stopAutoPlay();
-        } else {
-            const selectedSong = songSelect.value;
-            startAutoPlay(selectedSong);
-        }
-    });
-    
-    // 将控件添加到容器
-    controlsContainer.appendChild(songSelect);
-    controlsContainer.appendChild(playButton);
-    
-    // 添加到钢琴容器
-    pianoContainer.appendChild(controlsContainer);
-}
-
-// 修改开始自动演奏函数，支持暂停和更精确的节奏控制
-function startAutoPlay(songKey) {
-    // 如果已经在播放，先停止
-    if (isPlaying) {
-        stopAutoPlay();
-    }
-    
-    // 获取要播放的歌曲
-    currentSong = songLibrary[songKey];
-    if (!currentSong) return;
-    
-    isPlaying = true;
-    currentNoteIndex = 0;
-    
-    // 更新UI显示
-    updateAutoPlayUI();
-    
-    // 计算音符间隔时间（毫秒）
-    const beatDuration = 60000 / currentSong.tempo; // 一拍的毫秒数
-    
-    // 播放第一个音符
-    playNextNote();
-    
-    function playNextNote() {
-        if (!isPlaying || currentNoteIndex >= currentSong.notes.length) {
-            stopAutoPlay();
-            return;
-        }
-        
-        const noteData = currentSong.notes[currentNoteIndex];
-        const duration = noteData.duration * beatDuration; // 音符持续时间（毫秒）
-        
-        // 检查是否为休止符
-        if (noteData.isPause) {
-            // 休止符，只需等待然后播放下一个音符
-            currentNoteIndex++;
-            setTimeout(playNextNote, duration);
-            return;
-        }
-        
-        const note = noteData.note;
-        const isLongPress = noteData.isLong || false; // 长按音符
-        const isAccent = noteData.isAccent || false; // 重音音符
-        
-        // 查找并高亮对应的键
-        const keyElement = document.querySelector(`[data-note="${note}"]`);
-        if (keyElement) {
-            // 高亮并播放音符
-            keyElement.classList.add('active');
-            
-            // 根据音符特性调整力度
-            let velocity = 0.7; // 基础力度
-            if (isAccent) velocity = 0.85; // 重音音符力度更强
-            if (isLongPress) velocity = Math.min(0.9, velocity + 0.05); // 长按音符稍强
-            
-            // 林俊杰版本的特色处理 - 对于特定音符类型做额外处理
-            if (songKey === 'mermaid') {
-                // 高潮部分的主旋律音符更突出
-                if (isAccent && isLongPress) velocity = 0.95; // 更强的重音
-                
-                // E大调音阶的处理 - 突出E大调的音色特点
-                if (note === 'E5' || note === 'B4') {
-                    // 主音和属音稍强一些
-                    velocity = Math.min(0.98, velocity + 0.1);
-                } else if (note === 'G#4') {
-                    // 大三度音稍强，突出大调明亮感
-                    velocity = Math.min(0.95, velocity + 0.08);
-                } else if (note === 'C#5') {
-                    // 副属音加强表现力
-                    velocity = Math.min(0.96, velocity + 0.08);
-                }
-                
-                // 装饰音效果 - 短促的连音
-                if (!isLongPress && duration < 0.4 * beatDuration) {
-                    velocity *= 0.9; // 轻柔一些
-                }
-            }
-            
-            // 播放音符，传递长按参数
-            const noteId = playNote(notes[note], velocity, isLongPress);
-            keyElement.dataset.noteId = noteId;
-            showNoteAnimation(keyElement, velocity);
-            
-            // 计算按键释放时间 - 模拟真实演奏的连断奏效果
-            let releaseTime;
-            
-            if (songKey === 'mermaid') {
-                // 林俊杰版本的专属节奏控制 - 更精准的处理
-                if (isLongPress) {
-                    // 长音符持续约85-92%的时值，E大调需要更连贯
-                    releaseTime = Math.min(duration * 0.92, duration - 40);
-                } else if (duration < 0.4 * beatDuration) {
-                    // 短音符更短促，约70-75%的时值
-                    releaseTime = duration * 0.75;
-                } else {
-                    // 普通音符约80-85%的时值，使E大调更流畅
-                    releaseTime = duration * 0.85;
-                }
-                
-                // 对于连续的上行或下行音符，增加连贯性
-                if (currentNoteIndex > 0 && currentNoteIndex < currentSong.notes.length - 1) {
-                    const prevNote = currentSong.notes[currentNoteIndex - 1].note;
-                    const nextNote = currentSong.notes[currentNoteIndex + 1].note;
-                    
-                    // 如果是连续上行或下行的旋律，则增加连贯性
-                    if ((prevNote && nextNote) && 
-                        ((notes[note] > notes[prevNote] && notes[nextNote] > notes[note]) || 
-                         (notes[note] < notes[prevNote] && notes[nextNote] < notes[note]))) {
-                        releaseTime = Math.min(duration * 0.95, releaseTime + 50); // 更连贯的处理
-                    }
-                }
-            } else {
-                // 其他歌曲的通用控制
-                releaseTime = Math.min(duration, isLongPress ? duration * 0.9 : duration * 0.75);
-            }
-            
-            // 音符结束后释放按键
-            setTimeout(() => {
-                smoothKeyRelease(keyElement);
-                if (noteId && !sustainPedalActive) {
-                    stopNote(noteId);
-                }
-                
-                // 延时播放下一个音符
-                currentNoteIndex++;
-                if (currentNoteIndex < currentSong.notes.length) {
-                    // 计算下一个音符的延迟时间 - 保持严格的节奏感
-                    const nextDelay = Math.max(duration - releaseTime, 0);
-                    setTimeout(playNextNote, nextDelay);
-                } else {
-                    // 播放完成，可以选择循环或停止
-                    isPlaying = false;
-                    updateAutoPlayUI();
-                }
-            }, releaseTime);
-        } else {
-            // 如果找不到键，跳过到下一个
-            currentNoteIndex++;
-            setTimeout(playNextNote, 100);
-        }
-    }
-}
-
-// 停止自动演奏
-function stopAutoPlay() {
-    isPlaying = false;
-    
-    // 释放所有按下的键
-    document.querySelectorAll('.key.active').forEach(key => {
-        smoothKeyRelease(key);
-        const noteId = key.dataset.noteId;
-        if (noteId) {
-            stopNote(noteId);
-        }
-    });
-    
-    // 更新UI
-    updateAutoPlayUI();
-}
-
-// 更新自动演奏UI
-function updateAutoPlayUI() {
-    const playButton = document.getElementById('autoPlayBtn');
-    const songSelect = document.getElementById('songSelect');
-    
-    if (playButton) {
-        playButton.textContent = isPlaying ? '停止' : '播放';
-        playButton.classList.toggle('playing', isPlaying);
-    }
-    
-    if (songSelect) {
-        songSelect.disabled = isPlaying;
-    }
 }
 
 // 在文件底部添加，暴露触发流星的函数

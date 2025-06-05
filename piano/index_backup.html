@@ -249,11 +249,7 @@
             cursor: pointer;
             position: relative;
             user-select: none;
-            transition: transform 0.08s cubic-bezier(0.2, 0.8, 0.3, 1.2), 
-                        background 0.15s ease-in-out,
-                        box-shadow 0.15s ease-in-out,
-                        border 0.15s ease-in-out;
-            /* 移除高度过渡，防止引起跳动 */
+            transition: all 0.15s;
             box-shadow: 0 5px 10px rgba(0,0,0,0.2), inset 0 -1px 0 rgba(255,255,255,0.7);
             margin: 0 -1px;
             z-index: 1;
@@ -288,11 +284,6 @@
             border-radius: 0 0 4px 4px;
             box-shadow: 0 3px 6px rgba(0,0,0,0.8), inset 0 -1px 0 rgba(255,255,255,0.1);
             transform-style: preserve-3d;
-            transition: transform 0.08s cubic-bezier(0.2, 0.8, 0.3, 1.2), 
-                        background 0.15s ease-in-out,
-                        box-shadow 0.15s ease-in-out,
-                        border 0.15s ease-in-out;
-            /* 移除高度过渡，防止引起跳动 */
         }
 
         .key.black::before {
@@ -374,13 +365,11 @@
             /* 不再改变高度，防止整体结构变化 */
             height: 140px;
             overflow: hidden;
-            opacity: 1; /* 确保黑键不会变透明 */
         }
         
         /* 添加按键按下时的3D阴影效果替代位移 */
         .key.black.active::before {
             box-shadow: inset 0 2px 3px rgba(0,0,0,0.3);
-            background: linear-gradient(to bottom, #555 0%, #333 100%);
         }
 
         .key.black.active::after {
@@ -390,15 +379,10 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: radial-gradient(circle at center, rgba(180,180,255,0.5) 0%, rgba(100,100,200,0) 70%);
-            animation: black-key-glow 0.5s ease-out;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+            animation: key-glow 0.5s ease-out;
             pointer-events: none;
             z-index: 3;
-        }
-        
-        @keyframes black-key-glow {
-            0% { opacity: 0.8; transform: scale(0.2); }
-            100% { opacity: 0; transform: scale(2); }
         }
 
         /* 添加键盘按键的脉动边框 */
@@ -430,13 +414,8 @@
             color: rgba(255, 255, 255, 0.9);
         }
         
-        /* 修改：活跃状态下键盘标签不再完全透明，而是更亮 */
         .key.active .key-label {
-            color: rgba(255, 255, 255, 0.7);
-        }
-        
-        .key.black.active .key-label {
-            color: rgba(200, 220, 255, 0.8);
+            color: rgba(255, 255, 255, 0);
         }
         
         .pedal {
@@ -588,16 +567,16 @@
             transition: transform 0.08s cubic-bezier(0.2, 0.8, 0.3, 1.2), 
                         background 0.15s ease-in-out,
                         box-shadow 0.15s ease-in-out,
+                        height 0.15s ease-in-out,
                         border 0.15s ease-in-out;
-            /* 移除高度过渡，防止引起跳动 */
         }
 
         .key.black {
             transition: transform 0.08s cubic-bezier(0.2, 0.8, 0.3, 1.2), 
                         background 0.15s ease-in-out,
                         box-shadow 0.15s ease-in-out,
+                        height 0.15s ease-in-out,
                         border 0.15s ease-in-out;
-            /* 移除高度过渡，防止引起跳动 */
         }
 
         /* 添加《晴天》键盘指导样式 */
