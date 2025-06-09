@@ -12,7 +12,7 @@ App
   Node (server)  AI 统领一切 JS AI全干工程师
   
 
-## 项目的创建
+## **项目**的创建
 - npm 是什么？ node package manager
   node 包管理器 安装react package App开发能力
   - npm init vite
@@ -24,4 +24,30 @@ App
   项目模板， 基于它开始开发
 - cd 项目名
 - npm i 安装依赖
-- npm run dev
+- npm run dev 
+  3000 端口启动应用
+
+# 5 W
+- what Web App
+- how npm init vite 初始化并vite的项目
+- 安装依赖
+- 启动应用 http 5173 react 技术栈 Web App
+远离JS API 编程，面向业务
+## 响应式业务
+## TODOS 任务列表
+  - 数据 ['脱单','学习','健身']
+    数据在页面上渲染 react 提供点啥 支持这个业务
+
+## react 初体验
+- react 组件是完成开发任务的最小单元
+- 组件组合html,css,js
+- 组件是一个函数
+- 返回html
+- 函数题里面 return 之前可以申明数据和业务逻辑
+- {} js 表达式 不用写DOM API
+
+## 响应式数据
+- 数据会发生改变的，数据状态 state
+- [todos,setTodos] = useState(初始值)使用一个数据状态，返回一个数组
+  数组第一项 数据项
+  数组第二项 修改数据项的方法

@@ -17,11 +17,11 @@ function TodoList(){
     // 响应式界面开发 
     // hi 数据状态 setHi 修改数据状态的方法
     // es6 解构 允许从数组或对象中提取值，并赋值给变量
-    const [hi, setHi] = useState("haha");
+    const [hi, setHi] = useState("wow");
     const [title, setTitle] = useState('Todo List');
     const [todos, setTodos] = useState([{
         id:1,
-        text:'吃饭',
+        text:'钓鱼',
         completed: false
     }]);
 
