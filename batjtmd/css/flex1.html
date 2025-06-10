@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flex 弹性布局</title>
+    <style>
+        *{
+            padding: 0;
+            margin: 0;
+        }
+        .container{
+            display: flex;
+            width: 600px;
+            height: 300px;
+        }
+        .left{
+
+            flex: 1 2 500px;
+            background-color: red;
+        }
+        .right{
+            flex: 2 1 400px;
+            background-color: blue;
+        }
+        /* 
+            子元素的 flex-shrink 的值分别为 2，1
+            溢出：500+400 － 600 = 300。
+            总权重为2＊500+1＊400=1400
+            两个元素分别收缩：
+            300 * 2(flex-shrink) * 500(width) / 1400= 214.28
+            300 * 1(flex-shrink) * 400(width) / 1400= 85.72
+            三个元素的最终宽度分别为：
+            500 - 214.28 = 285.72
+            400 - 85.72 = 314.28
+        */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left"></div>
+        <div class="right"></div>
+    </div>
+</body>
+</html>
