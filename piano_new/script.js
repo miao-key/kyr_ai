@@ -1,3 +1,160 @@
+// 背景音乐控制
+let backgroundMusic = null;
+let musicVolume = 0.3; // 默认音量30%
+
+// 初始化背景音乐
+function initBackgroundMusic() {
+    backgroundMusic = document.getElementById('background-music');
+    if (backgroundMusic) {
+        backgroundMusic.volume = musicVolume;
+        
+        // 添加音频加载事件监听器
+        backgroundMusic.addEventListener('loadstart', () => {
+            console.log('开始加载背景音乐...');
+        });
+        
+        backgroundMusic.addEventListener('canplay', () => {
+            console.log('背景音乐可以播放');
+            // 显示音乐控制提示
+        // showMusicNotification('🎵 点击任意位置开始播放背景音乐');
+        });
+        
+        backgroundMusic.addEventListener('error', (e) => {
+            console.error('背景音乐加载失败:', e);
+            // showMusicNotification('❌ 背景音乐加载失败，请检查网络连接');
+        });
+        
+        // 尝试自动播放背景音乐
+        const playPromise = backgroundMusic.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                console.log('背景音乐开始播放');
+                // showMusicNotification('🎵 背景音乐已开始播放');
+            }).catch(error => {
+                console.log('自动播放被阻止，需要用户交互后播放:', error);
+                // showMusicNotification('🎵 点击任意位置开始播放背景音乐');
+                // 添加点击事件监听器，在用户首次交互时播放音乐
+                document.addEventListener('click', function playOnFirstClick() {
+                    const playPromise = backgroundMusic.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => {
+                            console.log('用户交互后背景音乐开始播放');
+                            // showMusicNotification('🎵 背景音乐已开始播放');
+                        }).catch(err => {
+                            console.error('播放失败:', err);
+                            // showMusicNotification('❌ 背景音乐播放失败');
+                        });
+                    }
+                    document.removeEventListener('click', playOnFirstClick);
+                }, { once: true });
+            });
+        }
+    } else {
+        console.error('未找到背景音乐元素');
+    }
+}
+
+// 控制背景音乐音量
+function setBackgroundMusicVolume(volume) {
+    musicVolume = volume / 100; // 转换为0-1范围
+    if (backgroundMusic) {
+        backgroundMusic.volume = musicVolume;
+    }
+}
+
+// 调整背景音乐音量（游戏时降低，菜单时恢复）
+function adjustBackgroundMusicForGame(isGameActive) {
+    if (backgroundMusic) {
+        if (isGameActive) {
+            // 游戏进行时，将背景音乐音量降低到10%
+            backgroundMusic.volume = musicVolume * 0.1;
+        } else {
+            // 菜单或结束时，恢复到正常音量的60%
+            backgroundMusic.volume = musicVolume * 0.6;
+        }
+    }
+}
+
+// 显示音乐通知
+function showMusicNotification(message) {
+    // 创建通知元素
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 10px 15px;
+        border-radius: 5px;
+        font-size: 14px;
+        z-index: 10000;
+        transition: opacity 0.3s ease;
+    `;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // 3秒后自动消失
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// 页面加载完成后初始化背景音乐
+window.addEventListener('DOMContentLoaded', initBackgroundMusic);
+
+// 添加音乐控制按钮
+function addMusicControlButton() {
+    const controlButton = document.createElement('button');
+    controlButton.innerHTML = '🎵';
+    controlButton.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255, 255, 255, 0.9);
+        font-size: 20px;
+        cursor: pointer;
+        z-index: 1000;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease;
+    `;
+    
+    controlButton.addEventListener('click', () => {
+        if (backgroundMusic) {
+            if (backgroundMusic.paused) {
+                backgroundMusic.play().then(() => {
+                    controlButton.innerHTML = '🎵';
+                    // showMusicNotification('🎵 背景音乐已开始播放');
+                }).catch(err => {
+                    console.error('播放失败:', err);
+                    // showMusicNotification('❌ 背景音乐播放失败');
+                });
+            } else {
+                backgroundMusic.pause();
+                controlButton.innerHTML = '🔇';
+                // showMusicNotification('🔇 背景音乐已暂停');
+            }
+        }
+    });
+    
+    document.body.appendChild(controlButton);
+}
+
+// 页面加载完成后添加音乐控制按钮
+// window.addEventListener('DOMContentLoaded', () => {
+//     setTimeout(addMusicControlButton, 1000); // 延迟1秒添加按钮
+// });
+
 // 音符频率映射
 const notes = {
     'C4': 261.63, 'C#4': 277.18, 'D4': 293.66, 'D#4': 311.13,
@@ -561,7 +718,7 @@ let fallingNotes = [];
 let gameAnimationId = null;
 let volume = 0.5;
 let showKeyLabels = true;
-let showKeyboardHints = true;
+let showKeyboardHints = false;
 let gameSpeed = 1.0;
 let noteSpeed = 100; // 音符下落速度 (像素/秒) - 降低速度让音符下落更平缓
 
@@ -592,6 +749,7 @@ const fallZoneHeight = 300;
 // 当前等待弹奏的音符索引
 let currentNoteIndex = 0;
 let nextExpectedNotes = []; // 下一个期望的音符序列
+let lastNoteProcessedTime = null; // 最后一个音符被处理的时间
 
 // 初始化音频上下文
 function initAudio() {
@@ -765,11 +923,15 @@ function createPiano() {
         hint.textContent = noteToKeyMap[blackKeyInfo.note] || '';
         key.appendChild(hint);
         
-        // 设置黑键位置 - 精确计算位置使其居中在相邻白键之间
+        // 设置黑键位置 - 精确计算位置使其居中在相邻白键之间，并右移屏幕四分之一后再左移一点
         const whiteKeyWidth = 62; // 白键宽度(60px) + 间距(2px)
         const blackKeyWidth = 36;
-        const rightOffset = 240; // 黑键整体偏移量（微调右移）
-        const leftPosition = (blackKeyInfo.afterWhiteKey + 1) * whiteKeyWidth - (blackKeyWidth / 2) + rightOffset;
+        const screenQuarter = window.innerWidth / 4; // 屏幕宽度的四分之一
+        const leftOffset = 150; // 向左偏移150像素
+        // 计算黑键应该位于两个白键之间的中心位置，然后右移屏幕四分之一再左移一点
+        // afterWhiteKey表示黑键位于第几个白键之后
+        const basePosition = (blackKeyInfo.afterWhiteKey * whiteKeyWidth) + (whiteKeyWidth / 2) - (blackKeyWidth / 2);
+        const leftPosition = basePosition + screenQuarter - leftOffset;
         key.style.left = `${leftPosition}px`;
         
         piano.appendChild(key);
@@ -850,17 +1012,17 @@ function updateFallingNotes(currentTime) {
         }
     });
     
-    // 清理已经消失的音符
-    fallingNotes = fallingNotes.filter(note => {
+    // 立即清理已经消失的音符
+    for (let i = fallingNotes.length - 1; i >= 0; i--) {
+        const note = fallingNotes[i];
         if (note.toRemove) {
-            // 移除DOM元素
+            // 立即移除DOM元素
             if (note.element && note.element.parentNode) {
                 note.element.parentNode.removeChild(note.element);
             }
-            return false;
+            fallingNotes.splice(i, 1);
         }
-        return true;
-    });
+    }
 }
 
 // 长按状态管理
@@ -1007,6 +1169,11 @@ function hitNote(fallingNote, index) {
     combo++;
     hitNotes++;
     
+    // 检查是否是最后一个音符
+    if (currentSong && index === currentSong.notes.length - 1) {
+        lastNoteProcessedTime = performance.now();
+    }
+    
     // 根据连击数决定判定类型
     let judgment = 'none'; // 默认不显示判定文字
     if (combo === 5) {
@@ -1028,8 +1195,11 @@ function hitNote(fallingNote, index) {
     showJudgment(judgment, fallingNote.element);
     updateUI();
     
-    // 标记为待移除
+    // 立即移除音符
     fallingNote.toRemove = true;
+    if (fallingNote.element && fallingNote.element.parentNode) {
+        fallingNote.element.parentNode.removeChild(fallingNote.element);
+    }
 }
 
 // 获取连击倍数
@@ -1209,14 +1379,22 @@ function missNote(fallingNote, index) {
     fallingNote.hit = true;
     combo = 0;
     
+    // 检查是否是最后一个音符
+    if (currentSong && index === currentSong.notes.length - 1) {
+        lastNoteProcessedTime = performance.now();
+    }
+    
     // 错过音符后，连击数从下一个音符重新开始计算
     // currentNoteIndex已经在调用此函数前更新了
     
     showJudgment('miss', fallingNote.element);
     updateUI();
     
-    // 标记为待移除
+    // 立即移除音符
     fallingNote.toRemove = true;
+    if (fallingNote.element && fallingNote.element.parentNode) {
+        fallingNote.element.parentNode.removeChild(fallingNote.element);
+    }
 }
 
 // 显示判定结果
@@ -1224,31 +1402,39 @@ function showJudgment(judgment, noteElement) {
     const rect = noteElement.getBoundingClientRect();
     const pianoRect = document.getElementById('piano').getBoundingClientRect();
     
-    // 根据新的判定逻辑显示文字
+    // 根据新的判定逻辑显示文字 - 优化显示效果，减少干扰
     if (judgment === 'perfect' || judgment === 'good' || judgment === 'miss') {
         const judgmentElement = document.createElement('div');
         judgmentElement.className = `judgment ${judgment}`;
         judgmentElement.textContent = judgment.toUpperCase();
-        judgmentElement.style.left = `${rect.left - pianoRect.left}px`;
-        judgmentElement.style.top = `${rect.top - pianoRect.top}px`;
+        
+        // 调整位置，避免遮挡下落音符
+        judgmentElement.style.left = `${rect.left - pianoRect.left + 40}px`; // 向右偏移
+        judgmentElement.style.top = `${rect.top - pianoRect.top - 20}px`; // 向上偏移
+        
+        // 降低透明度和大小，减少视觉干扰
+        judgmentElement.style.opacity = '0.8';
+        judgmentElement.style.fontSize = '18px'; // 减小字体
+        judgmentElement.style.pointerEvents = 'none'; // 确保不阻挡交互
         
         // 设置判定文字颜色与音符颜色一致
         if (judgment !== 'miss') {
             const noteColor = getNoteColor(noteElement);
             if (noteColor) {
                 judgmentElement.style.color = noteColor;
-                judgmentElement.style.textShadow = `0 0 10px ${noteColor}, 0 0 20px ${noteColor}`;
+                judgmentElement.style.textShadow = `0 0 5px ${noteColor}`; // 减少光晕
             }
         }
         
         const pianoContainer = document.getElementById('piano').parentElement;
         pianoContainer.appendChild(judgmentElement);
         
+        // 缩短显示时间，减少干扰
         setTimeout(() => {
             if (judgmentElement.parentNode) {
                 judgmentElement.parentNode.removeChild(judgmentElement);
             }
-        }, 1000);
+        }, 600); // 从1000ms减少到600ms
     }
     
     // 创建粒子爆炸效果，使用音符颜色
@@ -1355,6 +1541,9 @@ function startGame(songName) {
     currentSong = songLibrary[songName];
     gameState = 'playing';
     gameStartTime = performance.now();
+    
+    // 降低背景音乐音量以减少干扰
+    adjustBackgroundMusicForGame(true);
     pauseStartTime = 0; // 重置暂停时间
     score = 0;
     combo = 0;
@@ -1368,6 +1557,7 @@ function startGame(songName) {
     // 重置音符生成队列
     noteQueue = [];
     lastProcessedNoteIndex = 0;
+    lastNoteProcessedTime = null; // 重置最后音符处理时间
     
     // 清理现有的下落音符和判定效果
     document.querySelectorAll('.falling-note, .judgment').forEach(el => {
@@ -1458,9 +1648,53 @@ function gameLoop() {
     updateFallingNotes(currentTime);
     
     // 检查游戏是否结束
-    if (gameTime > currentSong.duration + 2000) {
+    const noMoreNotes = lastProcessedNoteIndex >= currentSong.notes.length;
+    const activeFallingNotes = fallingNotes.filter(note => !note.toRemove && !note.hit);
+    const noActiveFallingNotes = activeFallingNotes.length === 0;
+    const noQueuedNotes = noteQueue.length === 0;
+    
+    // 优先条件：最后一个音符被处理后0.5秒结束游戏
+    if (lastNoteProcessedTime && currentTime >= lastNoteProcessedTime + 500) {
+        // 强制清理所有剩余音符
+        fallingNotes.forEach(note => {
+            if (note.element && note.element.parentNode) {
+                note.element.parentNode.removeChild(note.element);
+            }
+        });
+        fallingNotes.length = 0;
+        noteQueue.length = 0;
         endGame();
         return;
+    }
+    
+    // 备用结束条件1：所有音符都已生成且没有活跃音符时立即结束
+    if (noMoreNotes && noActiveFallingNotes && noQueuedNotes) {
+        fallingNotes.forEach(note => {
+            if (note.element && note.element.parentNode) {
+                note.element.parentNode.removeChild(note.element);
+            }
+        });
+        fallingNotes.length = 0;
+        noteQueue.length = 0;
+        endGame();
+        return;
+    }
+    
+    // 备用结束条件2：所有音符都已生成，且游戏时间超过最后音符时间2秒（作为最终保险）
+    if (noMoreNotes) {
+        const lastNoteTime = currentSong.notes.length > 0 ? currentSong.notes[currentSong.notes.length - 1].time : 0;
+        if (gameTime >= lastNoteTime + 2000) {
+            // 强制清理所有剩余音符
+            fallingNotes.forEach(note => {
+                if (note.element && note.element.parentNode) {
+                    note.element.parentNode.removeChild(note.element);
+                }
+            });
+            fallingNotes.length = 0;
+            noteQueue.length = 0;
+            endGame();
+            return;
+        }
     }
     
     gameAnimationId = requestAnimationFrame(gameLoop);
@@ -1473,6 +1707,9 @@ function endGame() {
         cancelAnimationFrame(gameAnimationId);
         gameAnimationId = null;
     }
+    
+    // 恢复背景音乐音量
+    adjustBackgroundMusicForGame(false);
     
     // 清理所有剩余的下落音符
     fallingNotes.forEach(note => {
@@ -1509,8 +1746,108 @@ function showGameResult() {
     gradeElement.textContent = grade;
     gradeElement.className = 'grade-value ' + grade;
     
+    // 更新副标题
+    const subtitleElement = document.getElementById('resultSubtitle');
+    const subtitleMessages = {
+        'S': '完美演奏！你是真正的钢琴大师！',
+        'A': '出色的表现！继续保持这种水准！',
+        'B': '不错的演奏！还有进步的空间！',
+        'C': '基础扎实，多加练习会更好！',
+        'D': '继续努力，熟能生巧！'
+    };
+    subtitleElement.textContent = subtitleMessages[grade] || '恭喜完成挑战！';
+    
+    // 更新表现评价消息
+    const messageElement = document.getElementById('performanceMessage');
+    const performanceMessages = getPerformanceMessage(parseFloat(accuracy), maxCombo, grade);
+    messageElement.textContent = performanceMessages.text;
+    messageElement.className = 'performance-message ' + performanceMessages.class;
+    
+    // 添加分数动画效果
+    animateScoreCounter(finalScoreValue);
+    
     // 显示结算界面
-    document.getElementById('gameResultOverlay').style.display = 'flex';
+    const resultOverlay = document.getElementById('gameResultOverlay');
+    resultOverlay.style.display = 'flex';
+    
+    // 添加调试：确认结算界面可以接收点击事件
+    resultOverlay.addEventListener('click', function(e) {
+        console.log('结算界面被点击，目标元素:', e.target);
+        console.log('点击位置:', e.clientX, e.clientY);
+    }, { once: true });
+    
+    // 添加备用的按钮事件监听器，防止onclick失效
+    const retryBtn = resultOverlay.querySelector('.retry-btn');
+    const menuBtn = resultOverlay.querySelector('.menu-btn');
+    
+    if (retryBtn) {
+        retryBtn.addEventListener('click', function(e) {
+            console.log('重试按钮直接点击事件触发');
+            e.stopPropagation();
+            retryGame();
+        });
+    }
+    
+    if (menuBtn) {
+        menuBtn.addEventListener('click', function(e) {
+            console.log('菜单按钮直接点击事件触发');
+            e.stopPropagation();
+            backToMenu();
+        });
+    }
+}
+
+// 获取表现评价消息
+function getPerformanceMessage(accuracy, combo, grade) {
+    if (accuracy >= 95 && combo >= 50) {
+        return {
+            text: '🎉 完美无瑕的演奏！你的技艺令人惊叹！',
+            class: 'excellent'
+        };
+    } else if (accuracy >= 90) {
+        return {
+            text: '🌟 优秀的表现！你的音乐天赋很出众！',
+            class: 'excellent'
+        };
+    } else if (accuracy >= 80) {
+        return {
+            text: '👏 很好的演奏！继续练习会更加完美！',
+            class: 'good'
+        };
+    } else if (accuracy >= 70) {
+        return {
+            text: '💪 不错的尝试！多练习节奏感会有提升！',
+            class: 'good'
+        };
+    } else if (accuracy >= 50) {
+        return {
+            text: '🎵 基础不错！建议多熟悉曲谱和节拍！',
+            class: 'average'
+        };
+    } else {
+        return {
+            text: '🎹 继续努力！每一次练习都是进步的开始！',
+            class: 'poor'
+        };
+    }
+}
+
+// 分数动画效果
+function animateScoreCounter(targetScore) {
+    const scoreElement = document.getElementById('finalScore');
+    let currentScore = 0;
+    const increment = Math.ceil(targetScore / 30); // 30帧内完成动画，加快速度
+    const duration = 500; // 缩短到0.5秒
+    const frameTime = duration / 30;
+    
+    const timer = setInterval(() => {
+        currentScore += increment;
+        if (currentScore >= targetScore) {
+            currentScore = targetScore;
+            clearInterval(timer);
+        }
+        scoreElement.textContent = Math.floor(currentScore);
+    }, frameTime);
 }
 
 // 计算评级
@@ -1524,8 +1861,17 @@ function calculateGrade(accuracy) {
 
 // 重试游戏
 function retryGame() {
+    console.log('重试游戏按钮被点击');
+    
     // 隐藏结算界面
-    document.getElementById('gameResultOverlay').style.display = 'none';
+    const overlay = document.getElementById('gameResultOverlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+        console.log('结算界面已隐藏');
+    }
+    
+    // 重置游戏状态
+    gameState = 'menu';
     
     // 获取当前选择的歌曲
     const selectedSong = document.getElementById('songSelect').value;
@@ -1536,12 +1882,66 @@ function retryGame() {
 
 // 返回菜单
 function backToMenu() {
-    // 隐藏结算界面
-    document.getElementById('gameResultOverlay').style.display = 'none';
+    console.log('返回菜单按钮被点击');
     
-    // 重置游戏状态
+    // 隐藏结算界面
+    const overlay = document.getElementById('gameResultOverlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+        console.log('结算界面已隐藏');
+    }
+    
+    // 停止游戏循环
+    if (gameAnimationId) {
+        cancelAnimationFrame(gameAnimationId);
+        gameAnimationId = null;
+    }
+    
+    // 恢复背景音乐音量
+    adjustBackgroundMusicForGame(false);
+    
+    // 清理所有游戏相关的DOM元素
+    document.querySelectorAll('.falling-note, .judgment, .particle, .halo-effect').forEach(el => {
+        if (el.parentNode) {
+            el.parentNode.removeChild(el);
+        }
+    });
+    
+    // 移除所有按键的激活状态
+    document.querySelectorAll('.key.active').forEach(key => {
+        key.classList.remove('active');
+    });
+    
+    // 清空所有游戏数组和状态
+    fallingNotes = [];
+    noteQueue = [];
+    pressedKeys.clear();
+    nextExpectedNotes = [];
+    
+    // 重置游戏变量
     gameState = 'menu';
+    score = 0;
+    combo = 0;
+    maxCombo = 0;
+    hitNotes = 0;
+    totalNotes = 0;
+    currentNoteIndex = 0;
+    lastProcessedNoteIndex = 0;
+    currentSong = null;
+    currentDifficulty = 'normal';
+    gameStartTime = 0;
+    pauseStartTime = 0;
+    
+    // 更新UI显示
     updateUI();
+    
+    // 重置选择器到默认值
+    const songSelect = document.getElementById('songSelect');
+    const difficultySelect = document.getElementById('difficultySelect');
+    if (songSelect) songSelect.selectedIndex = 0;
+    if (difficultySelect) difficultySelect.selectedIndex = 1; // 默认选择正常难度
+    
+    console.log('已返回菜单，所有游戏状态已重置');
 }
 
 // 暂停/继续游戏
@@ -1571,6 +1971,9 @@ function stopGame() {
         gameAnimationId = null;
     }
     
+    // 恢复背景音乐音量
+    adjustBackgroundMusicForGame(false);
+    
     // 清理
     fallingNotes = [];
     document.querySelectorAll('.falling-note, .judgment').forEach(el => el.remove());
@@ -1583,12 +1986,16 @@ function stopGame() {
 function toggleFreePlay() {
     if (gameState === 'freeplay') {
         gameState = 'menu';
+        // 恢复背景音乐音量
+        adjustBackgroundMusicForGame(false);
     } else {
         // 停止当前游戏
         if (gameState === 'playing' || gameState === 'paused') {
             stopGame();
         }
         gameState = 'freeplay';
+        // 降低背景音乐音量以减少干扰
+        adjustBackgroundMusicForGame(true);
         // 清理游戏元素
         document.querySelectorAll('.falling-note, .judgment').forEach(el => el.remove());
     }
@@ -1606,8 +2013,90 @@ function updateUI() {
     const comboElement = document.getElementById('combo');
     if (comboElement) {
         const multiplier = getComboMultiplier(combo);
-        const multiplierText = multiplier > 1.0 ? ` (${multiplier}x)` : '';
-        comboElement.textContent = `连击: ${combo}${multiplierText}`;
+        comboElement.textContent = `连击: ${combo}`;
+        
+        // 根据连击数每10个一个梯度设置不同的颜色和发光效果
+        if (combo > 0) {
+            let glowColor, textColor, glowIntensity;
+            const comboLevel = Math.floor(combo / 10); // 每10连击一个等级
+            
+            switch (comboLevel) {
+                case 0: // 1-9连击
+                    glowColor = '#ffffff'; // 白色
+                    textColor = '#ffffff';
+                    glowIntensity = '5px';
+                    break;
+                case 1: // 10-19连击
+                    glowColor = '#2196f3'; // 蓝色
+                    textColor = '#64b5f6';
+                    glowIntensity = '8px';
+                    break;
+                case 2: // 20-29连击
+                    glowColor = '#4caf50'; // 绿色
+                    textColor = '#81c784';
+                    glowIntensity = '10px';
+                    break;
+                case 3: // 30-39连击
+                    glowColor = '#ffeb3b'; // 黄色
+                    textColor = '#fff176';
+                    glowIntensity = '12px';
+                    break;
+                case 4: // 40-49连击
+                    glowColor = '#ff9800'; // 橙色
+                    textColor = '#ffb74d';
+                    glowIntensity = '15px';
+                    break;
+                case 5: // 50-59连击
+                    glowColor = '#ff6b6b'; // 红色
+                    textColor = '#ff8a80';
+                    glowIntensity = '18px';
+                    break;
+                case 6: // 60-69连击
+                    glowColor = '#e91e63'; // 粉红色
+                    textColor = '#f48fb1';
+                    glowIntensity = '20px';
+                    break;
+                case 7: // 70-79连击
+                    glowColor = '#9c27b0'; // 紫色
+                    textColor = '#ce93d8';
+                    glowIntensity = '22px';
+                    break;
+                case 8: // 80-89连击
+                    glowColor = '#673ab7'; // 深紫色
+                    textColor = '#b39ddb';
+                    glowIntensity = '25px';
+                    break;
+                default: // 90+连击
+                    glowColor = '#ffd700'; // 金色
+                    textColor = '#ffecb3';
+                    glowIntensity = '30px';
+                    // 添加彩虹效果
+                    comboElement.style.background = 'linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #ffeaa7, #fab1a0)';
+                    comboElement.style.webkitBackgroundClip = 'text';
+                    comboElement.style.webkitTextFillColor = 'transparent';
+                    break;
+            }
+            
+            if (comboLevel < 9) {
+                comboElement.style.color = textColor;
+                comboElement.style.background = '';
+                comboElement.style.webkitBackgroundClip = '';
+                comboElement.style.webkitTextFillColor = '';
+            }
+            
+            comboElement.style.textShadow = `0 0 ${glowIntensity} ${glowColor}, 0 0 ${parseInt(glowIntensity) * 2}px ${glowColor}`;
+            comboElement.style.fontWeight = 'bold';
+            comboElement.style.fontSize = `${Math.min(18 + comboLevel * 2, 32)}px`; // 字体大小也随连击数增加
+        } else {
+            // 重置样式
+            comboElement.style.color = '';
+            comboElement.style.textShadow = '';
+            comboElement.style.fontWeight = '';
+            comboElement.style.fontSize = '';
+            comboElement.style.background = '';
+            comboElement.style.webkitBackgroundClip = '';
+            comboElement.style.webkitTextFillColor = '';
+        }
     }
     
     // 更新连击阶段提示
@@ -1617,8 +2106,8 @@ function updateUI() {
     if (comboStageElement && comboStageText) {
         const stageInfo = getComboStageInfo(combo);
         if (stageInfo) {
-            comboStageElement.style.display = 'block';
-            comboStageText.textContent = stageInfo;
+            // 隐藏文字提示，避免影响游戏体验
+            comboStageElement.style.display = 'none';
         } else {
             comboStageElement.style.display = 'none';
         }
@@ -1689,6 +2178,12 @@ function updateVolume(value) {
     if (masterGain) {
         masterGain.gain.value = volume;
     }
+    // 更新背景音乐基础音量
+    setBackgroundMusicVolume(value * 0.6); // 背景音乐音量设为游戏音效的60%
+    
+    // 根据当前游戏状态重新调整背景音乐音量
+    const isGameActive = (gameState === 'playing' || gameState === 'freeplay');
+    adjustBackgroundMusicForGame(isGameActive);
 }
 
 // 页面加载完成后初始化
@@ -1696,6 +2191,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initAudio();
     createPiano();
     updateUI();
+    updateKeyboardHints();
     
     // 键盘事件监听
     document.addEventListener('keydown', function(e) {
