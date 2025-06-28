@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>狼人杀 - 9人标准局</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>🐺 狼人杀 - 9人标准局</h1>
+            <div class="game-info">
+                <span id="current-phase">游戏准备中...</span>
+                <span id="day-count">第1天</span>
+            </div>
+        </header>
+
+        <main>
+            <!-- 游戏开始界面 -->
+            <div id="start-screen" class="screen active">
+                <div class="welcome">
+                    <h2>欢迎来到狼人杀游戏</h2>
+                    <p>9人标准局配置：3狼人 + 3村民 + 1预言家 + 1女巫 + 1猎人</p>
+                    <div class="player-setup">
+                        <label for="player-name">请输入您的昵称：</label>
+                        <input type="text" id="player-name" placeholder="留空将随机分配昵称" maxlength="10">
+                    </div>
+                    <div class="role-selection">
+                        <label>
+                            <input type="radio" name="role-choice" value="random" checked>
+                            随机分配身份
+                        </label>
+                        <label>
+                            <input type="radio" name="role-choice" value="choose">
+                            自由选择身份
+                        </label>
+                    </div>
+                    <div id="role-options" class="role-options" style="display:none;">
+                        <h3>选择您的身份：</h3>
+                        <div class="role-grid">
+                            <div class="role-option" data-role="werewolf">
+                                <div class="role-icon">🐺</div>
+                                <div class="role-name">狼人</div>
+                            </div>
+                            <div class="role-option" data-role="seer">
+                                <div class="role-icon">🔮</div>
+                                <div class="role-name">预言家</div>
+                            </div>
+                            <div class="role-option" data-role="witch">
+                                <div class="role-icon">🧙‍♀️</div>
+                                <div class="role-name">女巫</div>
+                            </div>
+                            <div class="role-option" data-role="hunter">
+                                <div class="role-icon">🏹</div>
+                                <div class="role-name">猎人</div>
+                            </div>
+                            <div class="role-option" data-role="villager">
+                                <div class="role-icon">👨</div>
+                                <div class="role-name">村民</div>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="start-game" class="btn btn-primary">开始游戏</button>
+                </div>
+            </div>
+
+            <!-- 角色分配界面 -->
+            <div id="role-screen" class="screen">
+                <div class="role-reveal">
+                    <h2>您的身份是</h2>
+                    <div id="player-role" class="role-card">
+                        <div class="role-icon">🤔</div>
+                        <div class="role-name">未知</div>
+                        <div class="role-description">点击查看身份</div>
+                    </div>
+                    <button id="confirm-role" class="btn btn-primary" style="display:none;">确认身份</button>
+                </div>
+            </div>
+
+            <!-- 游戏主界面 -->
+            <div id="game-screen" class="screen">
+                <div class="players-layout">
+                    <div class="players-left">
+                        <!-- 左侧5名玩家 -->
+                    </div>
+                    <div class="players-right">
+                        <!-- 右侧4名玩家 -->
+                    </div>
+                </div>
+
+                <div class="game-actions">
+                    <div id="night-actions" class="action-panel" style="display:none;">
+                        <h3>夜晚行动</h3>
+                        <div id="action-content"></div>
+                    </div>
+
+                    <div id="day-actions" class="action-panel" style="display:none;">
+                        <h3>白天讨论</h3>
+
+                        <div id="voting-section" style="display:none;">
+                            <h4>投票环节</h4>
+                            <p>请选择要投票的玩家：</p>
+                            <div id="vote-options"></div>
+                        </div>
+                        <div class="game-controls">
+                            <button id="restart-game-ingame" class="btn btn-danger">重开游戏</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game-log">
+                    <h3>游戏记录</h3>
+                    <div id="log-content"></div>
+                </div>
+            </div>
+
+            <!-- 游戏结束界面 -->
+            <div id="end-screen" class="screen">
+                <div class="game-result">
+                    <h2 id="result-title">游戏结束</h2>
+                    <div id="result-content"></div>
+                    <div class="final-roles">
+                        <h3>身份揭晓</h3>
+                        <div id="roles-reveal"></div>
+                    </div>
+                    <button id="restart-game" class="btn btn-primary">重新开始</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 模态框 -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
