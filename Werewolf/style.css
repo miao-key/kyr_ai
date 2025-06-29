@@ -261,6 +261,100 @@ header h1 {
     }
 }
 
+/* 身份申明样式 */
+.identity-claim-input {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 30px;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.identity-claim-input h3 {
+    text-align: center;
+    color: #ffd700;
+    margin-bottom: 20px;
+    font-size: 1.8em;
+}
+
+.identity-options {
+    margin: 20px 0;
+}
+
+.identity-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+.identity-buttons .btn {
+    flex: 1;
+    min-width: 120px;
+    padding: 10px 15px;
+    font-size: 0.9em;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+}
+
+#seer-check-section {
+    background: rgba(227, 242, 253, 0.1) !important;
+    border: 2px solid rgba(33, 150, 243, 0.3);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+#seer-check-section h4 {
+    color: #64b5f6;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+#check-target-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 15px 0;
+    justify-content: center;
+}
+
+#check-target-options .btn {
+    padding: 8px 12px;
+    font-size: 0.85em;
+    border-radius: 12px;
+    min-width: auto;
+}
+
+#check-result {
+    width: 100%;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 1em;
+}
+
+#check-reasoning, #identity-speech {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 1em;
+    resize: vertical;
+    min-height: 80px;
+}
+
+#check-reasoning::placeholder, #identity-speech::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
 /* 按钮样式 */
 .btn {
     padding: 12px 30px;
@@ -773,6 +867,33 @@ header h1 {
     border-left-color: #74b9ff;
     background: rgba(116, 185, 255, 0.1);
     font-style: italic;
+}
+
+.log-entry.identity-claim {
+    border-left-color: #ffd700;
+    background: rgba(255, 215, 0, 0.15);
+    font-weight: bold;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    margin: 15px 0;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(255, 215, 0, 0.2);
+    animation: identityClaimPulse 0.8s ease-in-out;
+}
+
+@keyframes identityClaimPulse {
+    0% {
+        transform: scale(0.95);
+        opacity: 0.8;
+    }
+    50% {
+        transform: scale(1.02);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 /* 游戏结束界面 */

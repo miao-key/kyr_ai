@@ -1,12 +1,19 @@
-# React + Vite
+# 智能前端之语音
+- AI时代新的交互体验，语言交互
+  虚拟数字人 AIGC 文字 -> 语音
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+- 敏感信息怎么保护？
+  .gitignore 哪些文件不用提交到远程 仓库也不进入
+  node_modules/ 太大了 没有必要提交 npm i 
 
-Currently, two official plugins are available:
+  - 环境变量
+    .env.local 本地环境变量 . 开头 本地项目需要的key
+    添加到。gitignore 里面，
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 单向数据流
+  input value {prompt}
+  保持数据状态和界面的统一
+  UI = f(state) state 驱动界面
+  onChange 修改
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- base64 格式

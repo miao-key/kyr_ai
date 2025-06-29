@@ -21,6 +21,20 @@ class WerewolfGame {
         this.initializeEventListeners();
     }
     
+
+    
+
+    
+
+    
+
+
+
+    
+
+
+
+    
     // 初始化事件监听器
     initializeEventListeners() {
         document.getElementById('start-game').addEventListener('click', () => this.startGame());
@@ -83,19 +97,21 @@ class WerewolfGame {
     }
     
     // 开始游戏
-    // 获取随机默认名字
-    getRandomDefaultName() {
+    // 获取默认名字（按顺序选择）
+    getDefaultName() {
         const defaultNames = [
             '神秘玩家', '匿名侠客', '路过的人', '新手村民', '游戏达人',
             '夜行者', '推理高手', '逻辑大师', '观察员', '策略家',
             '智者', '守护者', '探索者', '冒险家', '思考者'
         ];
-        return defaultNames[Math.floor(Math.random() * defaultNames.length)];
+        // 基于当前时间选择名字，确保每次游戏有一定变化但不是完全随机
+        const timeIndex = Math.floor(Date.now() / 1000) % defaultNames.length;
+        return defaultNames[timeIndex];
     }
 
     startGame() {
         const inputName = document.getElementById('player-name').value.trim();
-        const playerName = inputName || this.getRandomDefaultName();
+        const playerName = inputName || this.getDefaultName();
         const roleChoice = document.querySelector('input[name="role-choice"]:checked').value;
         
         // 检查是否选择了自定义角色
@@ -294,12 +310,15 @@ class WerewolfGame {
     
     // 执行夜晚行动
     async executeNightActions() {
+        // 首先执行AI行动，确保女巫能看到狼人的杀人目标
+        this.executeAIActions();
+        
         const player = this.players.find(p => !p.isAI);
-        const actionContent = document.getElementById('action-content');
+        const actionContent = document.getElementById('night-action-content');
         
         if (!player.isAlive) {
             actionContent.innerHTML = '<p>您已死亡，无法行动。</p>';
-            await this.delay(2000);
+            await this.delay(800); // 减少死亡玩家等待时间
             this.processNightResults();
             return;
         }
@@ -318,7 +337,7 @@ class WerewolfGame {
             case 'villager':
             default:
                 actionContent.innerHTML = '<p>夜晚无特殊行动，请等待...</p>';
-                await this.delay(1500); // 缩短等待时间
+                await this.delay(500); // 进一步缩短等待时间
                 break;
         }
         
@@ -332,7 +351,7 @@ class WerewolfGame {
             this.witchSelectAction(action);
         }
     }
-    
+
     // 女巫选择毒人目标
     selectPoisonTarget(targetId) {
         if (this.witchSelectTarget) {
@@ -412,13 +431,13 @@ class WerewolfGame {
     
     // 狼人行动
     async werewolfAction() {
-        const actionContent = document.getElementById('action-content');
+        const actionContent = document.getElementById('night-action-content');
         const alivePlayers = this.players.filter(p => p.isAlive);
         const werewolves = this.players.filter(p => p.role.name === 'werewolf');
         
         if (alivePlayers.length === 0) {
             actionContent.innerHTML = '<p>没有可以杀死的目标。</p>';
-            await this.delay(3000);
+            await this.delay(1000); // 减少无目标时的延迟
             return;
         }
         
@@ -463,12 +482,15 @@ class WerewolfGame {
                 if (timeLeft <= 0) {
                     clearInterval(timer);
                     if (!this.nightActions.kill) {
-                        // 时间到了还没选择，随机选择一个目标
-                        const randomTarget = alivePlayers[Math.floor(Math.random() * alivePlayers.length)];
-                        this.nightActions.kill = randomTarget.id;
-                        actionContent.innerHTML = `<p>时间到！自动选择了 ${randomTarget.name}</p>`;
+                        // 时间到了还没选择，选择威胁最大的目标
+                        const priorityTarget = alivePlayers.find(p => p.claimedRole === 'seer') || 
+                                              alivePlayers.find(p => p.claimedRole === 'witch') || 
+                                              alivePlayers.find(p => p.claimedRole === 'hunter') || 
+                                              alivePlayers[0];
+                        this.nightActions.kill = priorityTarget.id;
+                        actionContent.innerHTML = `<p>时间到！自动选择了 ${priorityTarget.name}</p>`;
                     }
-                    setTimeout(resolve, 1000);
+                    setTimeout(resolve, 300); // 减少女巫行动超时延迟
                 }
             }, 1000);
             
@@ -522,13 +544,13 @@ class WerewolfGame {
     
     // 预言家行动
     async seerAction() {
-        const actionContent = document.getElementById('action-content');
+        const actionContent = document.getElementById('night-action-content');
         const realPlayer = this.players.find(p => !p.isAI);
         const alivePlayers = this.players.filter(p => p.isAlive && p.id !== realPlayer.id);
         
         if (alivePlayers.length === 0) {
             actionContent.innerHTML = '<p>没有可以查验的目标。</p>';
-            await this.delay(3000);
+            await this.delay(1000); // 减少无目标时的延迟
             return;
         }
         
@@ -584,14 +606,14 @@ class WerewolfGame {
                             </div>
                         `;
                     }
-                    setTimeout(resolve, 3000);
+                    setTimeout(resolve, 1000); // 减少预言家超时延迟
                 }
             }, 1000);
             
             // 存储resolve函数和选择目标
             this.seerActionResolve = () => {
                 clearInterval(timer);
-                setTimeout(resolve, 3000); // 显示结果3秒后结束
+                setTimeout(resolve, 1000); // 减少预言家结果显示延迟
             };
             
             this.seerSelectedTarget = (targetId) => {
@@ -686,25 +708,23 @@ class WerewolfGame {
             
             targetCard.style.position = 'relative';
             targetCard.appendChild(identityBadge);
-        }
-        if (targetCard) {
+            
             // 移除之前的特效
             targetCard.classList.remove('seer-good', 'seer-evil');
             
-            // 添加新的特效
+            // 添加新的特效（永久保留）
             const effectClass = isWerewolf ? 'seer-evil' : 'seer-good';
             targetCard.classList.add(effectClass);
             
-            // 5秒后移除特效
-            setTimeout(() => {
-                targetCard.classList.remove(effectClass);
-            }, 5000);
+            // 身份标识和特效将永久保留，不会自动移除
+        } else {
+            console.error('Target card not found for player ID:', targetId);
         }
     }
     
     // 女巫行动
     async witchAction() {
-        const actionContent = document.getElementById('action-content');
+        const actionContent = document.getElementById('night-action-content');
         
         // 初始化女巫药剂状态（如果还没有的话）
         if (!this.witchPotions) {
@@ -793,7 +813,7 @@ class WerewolfGame {
                 if (timeLeft <= 0) {
                     clearInterval(timer);
                     actionContent.innerHTML = '<p>时间到！女巫选择不使用药剂</p>';
-                    setTimeout(resolve, 1000);
+                    setTimeout(resolve, 300); // 减少女巫超时延迟
                 }
             }, 1000);
             
@@ -831,7 +851,7 @@ class WerewolfGame {
                     actionContent.innerHTML = '<p>女巫选择不使用药剂</p>';
                 }
                 
-                setTimeout(() => this.witchActionResolve(), 1000);
+                setTimeout(() => this.witchActionResolve(), 300); // 减少女巫确认行动延迟
             };
             
             this.witchCancelAction = () => {
@@ -858,8 +878,15 @@ class WerewolfGame {
         if (werewolves.length > 0 && !this.nightActions.kill) {
             const targets = this.players.filter(p => p.isAlive && p.role.team !== 'werewolf');
             if (targets.length > 0) {
-                const randomTarget = targets[Math.floor(Math.random() * targets.length)];
-                this.nightActions.kill = randomTarget.id;
+                // 优先选择神职角色
+                const priorityTarget = targets.find(p => p.claimedRole === 'seer') || 
+                                      targets.find(p => p.claimedRole === 'witch') || 
+                                      targets.find(p => p.claimedRole === 'hunter') || 
+                                      targets.find(p => p.role.name === 'seer') || 
+                                      targets.find(p => p.role.name === 'witch') || 
+                                      targets.find(p => p.role.name === 'hunter') || 
+                                      targets[0];
+                this.nightActions.kill = priorityTarget.id;
             }
         }
         
@@ -1005,8 +1032,13 @@ class WerewolfGame {
             const chosen = priorities[0];
             // 如果最高优先级太低，选择威胁最大的目标
             if (chosen.priority < 30) {
+                const gameData = {
+                    aliveWerewolves: werewolves.length,
+                    dayNumber: this.dayCount,
+                    alivePlayers: this.players.filter(p => p.isAlive)
+                };
                 const mostThreatening = targets.reduce((most, target) => 
-                    this.calculateThreatLevel(target) > this.calculateThreatLevel(most) ? target : most
+                    this.calculateThreatLevel(target, gameData) > this.calculateThreatLevel(most, gameData) ? target : most
                 );
                 return {
                     target: mostThreatening,
@@ -1267,8 +1299,13 @@ class WerewolfGame {
         }
         
         // 兜底策略：选择威胁最大的目标
+        const gameData = {
+            aliveWerewolves: this.players.filter(p => p.isAlive && p.role.name === 'werewolf').length,
+            dayNumber: this.dayCount,
+            alivePlayers: this.players.filter(p => p.isAlive)
+        };
         return targets.reduce((most, target) => 
-            this.calculateThreatLevel(target) > this.calculateThreatLevel(most) ? target : most
+            this.calculateThreatLevel(target, gameData) > this.calculateThreatLevel(most, gameData) ? target : most
         );
     }
     
@@ -1359,8 +1396,13 @@ class WerewolfGame {
         }
         
         // 兜底：选择威胁最小的好人
+        const gameData = {
+            aliveWerewolves: werewolves.length,
+            dayNumber: this.dayCount,
+            alivePlayers: this.players.filter(p => p.isAlive)
+        };
         return villageTeam.reduce((least, player) => 
-            this.calculateThreatLevel(player) < this.calculateThreatLevel(least) ? player : least
+            this.calculateThreatLevel(player, gameData) < this.calculateThreatLevel(least, gameData) ? player : least
         );
     }
     
@@ -1473,8 +1515,13 @@ class WerewolfGame {
         }
         
         // 兜底：选择威胁最小的目标
+        const gameData = {
+            aliveWerewolves: werewolves.length,
+            dayNumber: this.dayCount,
+            alivePlayers: this.players.filter(p => p.isAlive)
+        };
         return villageTeam.reduce((least, player) => 
-            this.calculateThreatLevel(player) < this.calculateThreatLevel(least) ? player : least
+            this.calculateThreatLevel(player, gameData) < this.calculateThreatLevel(least, gameData) ? player : least
         );
     }
     
@@ -1609,9 +1656,7 @@ class WerewolfGame {
     
     // 处理夜晚结果
     processNightResults() {
-        // 执行AI行动
-        this.executeAIActions();
-        
+        console.log('处理夜晚结果开始');
         let deathMessages = [];
         let deaths = [];
         
@@ -1626,9 +1671,9 @@ class WerewolfGame {
                 } else {
                     victim.isAlive = false;
                     deaths.push(victim);
-                    this.lastDeathPosition = victim.position; // 记录最后死亡玩家位置
-                    deathMessages.push(`${victim.name}(${victim.position}号位) 在夜晚被狼人杀死了。`);
-                    this.addLog(`${victim.name}(${victim.position}号位) 在夜晚被狼人杀死了。`, 'death');
+                    console.log(`狼人杀死了: ${victim.name}(${victim.position}号位)`);
+                    deathMessages.push(`${victim.name}(${victim.position}号位) 昨夜死亡。`);
+                    this.addLog(`${victim.name}(${victim.position}号位) 昨夜死亡。`, 'death');
                     
                     // 如果是猎人被杀，触发技能
                     if (victim.role.name === 'hunter') {
@@ -1644,11 +1689,9 @@ class WerewolfGame {
             if (poisonVictim && poisonVictim.isAlive) {
                 poisonVictim.isAlive = false;
                 deaths.push(poisonVictim);
-                if (!this.lastDeathPosition) {
-                    this.lastDeathPosition = poisonVictim.position;
-                }
-                deathMessages.push(`${poisonVictim.name}(${poisonVictim.position}号位) 被女巫毒死了。`);
-                this.addLog(`${poisonVictim.name}(${poisonVictim.position}号位) 被女巫毒死了。`, 'death');
+                console.log(`女巫毒死了: ${poisonVictim.name}(${poisonVictim.position}号位)`);
+                deathMessages.push(`${poisonVictim.name}(${poisonVictim.position}号位) 昨夜死亡。`);
+                this.addLog(`${poisonVictim.name}(${poisonVictim.position}号位) 昨夜死亡。`, 'death');
                 
                 // 如果是猎人被毒，触发技能
                 if (poisonVictim.role.name === 'hunter') {
@@ -1657,8 +1700,16 @@ class WerewolfGame {
             }
         }
         
+        // 设置最后死亡位置为所有死亡玩家中位置号最大的
+        if (deaths.length > 0) {
+            this.lastDeathPosition = Math.max(...deaths.map(p => p.position));
+            console.log('设置最后死亡位置为:', this.lastDeathPosition);
+            console.log('死亡玩家:', deaths.map(p => `${p.name}(${p.position}号位)`));
+        }
+        
         // 如果没有人死亡
         if (deaths.length === 0 && !this.nightActions.heal) {
+            console.log('昨夜平安无事，当前lastDeathPosition:', this.lastDeathPosition);
             deathMessages.push('昨夜平安无事。');
             this.addLog('昨夜平安无事。', 'important');
         }
@@ -1670,9 +1721,8 @@ class WerewolfGame {
             return;
         }
         
-        // 快速开始白天阶段
-        const combinedMessage = deathMessages.join(' ');
-        setTimeout(() => this.startDayPhase(combinedMessage), 1000);
+        // 快速开始白天阶段（不传递死亡消息，避免重复通报）
+        setTimeout(() => this.startDayPhase(), 300); // 减少延迟从1000ms到300ms
     }
     
     // 触发猎人技能
@@ -1725,7 +1775,7 @@ class WerewolfGame {
     }
     
     // 开始白天阶段
-    startDayPhase(deathMessage) {
+    startDayPhase() {
         this.currentPhase = 'day';
         this.updateGameInfo('白天讨论', this.dayCount);
         
@@ -1733,28 +1783,37 @@ class WerewolfGame {
         document.getElementById('day-actions').style.display = 'block';
         document.getElementById('voting-section').style.display = 'none';
         
-        if (deathMessage) {
-            this.addLog(deathMessage, 'important');
-        }
         this.addLog(`第${this.dayCount}天白天开始，按序发言讨论。`);
         
         // 重置发言状态
         this.players.forEach(p => p.hasSpoken = false);
         
-        // 开始发言环节
+        // 直接开始发言环节
         this.startSpeechPhase();
     }
     
     // 开始发言阶段
     startSpeechPhase() {
+        console.log('开始发言阶段');
         this.currentSpeaker = null;
         this.speechOrder = this.calculateSpeechOrder();
         this.speechIndex = 0;
+        
+        console.log('发言顺序长度:', this.speechOrder.length);
+        console.log('发言顺序:', this.speechOrder.map(p => `${p.name}(${p.position}号)`));
+        
+        if (this.speechOrder.length === 0) {
+            console.log('没有玩家可以发言，直接进入投票阶段');
+            this.addLog('没有玩家可以发言，直接进入投票阶段', 'important');
+            setTimeout(() => this.startVotingPhase(), 300);
+            return;
+        }
         
         this.addLog('=== 发言环节开始 ===', 'important');
         this.addLog(`发言顺序：${this.speechOrder.map(p => `${p.name}(${p.position}号)`).join(' → ')}`);
         
         // 开始第一个玩家发言
+        console.log('调用nextSpeaker开始第一个玩家发言');
         this.nextSpeaker();
     }
     
@@ -1762,24 +1821,40 @@ class WerewolfGame {
     calculateSpeechOrder() {
         const alivePlayers = this.players.filter(p => p.isAlive);
         
+        console.log('计算发言顺序 - 存活玩家:', alivePlayers.map(p => `${p.name}(${p.position}号)`));
+        console.log('最后死亡位置:', this.lastDeathPosition);
+        
+        // 如果没有存活的玩家，返回空数组
+        if (alivePlayers.length === 0) {
+            console.log('没有存活玩家，返回空数组');
+            return [];
+        }
+        
         if (!this.lastDeathPosition) {
             // 没有玩家死亡，按序号从小到大发言
-            return alivePlayers.sort((a, b) => a.position - b.position);
+            const order = alivePlayers.sort((a, b) => a.position - b.position);
+            console.log('没有死亡玩家，按序号发言:', order.map(p => `${p.name}(${p.position}号)`));
+            return order;
         }
         
         // 有玩家死亡，从死亡玩家的下一个序号开始按顺序发言
         const sortedPlayers = alivePlayers.sort((a, b) => a.position - b.position);
         const maxPosition = Math.max(...alivePlayers.map(p => p.position));
         
+        console.log('排序后的存活玩家:', sortedPlayers.map(p => `${p.name}(${p.position}号)`));
+        console.log('最大位置号:', maxPosition);
+        
         let speechOrder = [];
         
         // 从死亡玩家的下一个序号开始发言
         let startPosition = this.lastDeathPosition + 1;
+        console.log('开始发言位置:', startPosition);
         
         // 先添加从死亡位置+1到最大序号的玩家
         for (let pos = startPosition; pos <= maxPosition; pos++) {
             const player = sortedPlayers.find(p => p.position === pos);
             if (player) {
+                console.log(`添加玩家到发言顺序: ${player.name}(${player.position}号)`);
                 speechOrder.push(player);
             }
         }
@@ -1788,32 +1863,43 @@ class WerewolfGame {
         for (let pos = 1; pos <= this.lastDeathPosition; pos++) {
             const player = sortedPlayers.find(p => p.position === pos);
             if (player && !speechOrder.includes(player)) {
+                console.log(`添加玩家到发言顺序: ${player.name}(${player.position}号)`);
                 speechOrder.push(player);
             }
         }
         
+        console.log('最终发言顺序:', speechOrder.map(p => `${p.name}(${p.position}号)`));
         return speechOrder;
     }
     
     // 下一个发言者
     nextSpeaker() {
+        console.log('nextSpeaker被调用, speechIndex:', this.speechIndex, 'speechOrder.length:', this.speechOrder.length);
+        
         if (this.speechIndex >= this.speechOrder.length) {
             // 所有人发言完毕，开始投票
+            console.log('所有人发言完毕，开始投票');
             this.addLog('=== 发言环节结束 ===', 'important');
-            setTimeout(() => this.startVotingPhase(), 1000);
+            setTimeout(() => this.startVotingPhase(), 300); // 减少投票阶段开始延迟
             return;
         }
         
         const speaker = this.speechOrder[this.speechIndex];
+        console.log('当前发言者:', speaker ? `${speaker.name}(${speaker.position}号)` : 'undefined');
+        
+        if (!speaker) {
+            console.error('发言者为undefined，speechIndex:', this.speechIndex, 'speechOrder:', this.speechOrder);
+            return;
+        }
+        
         this.currentSpeaker = speaker;
         speaker.hasSpoken = true;
-        
-        console.log('nextSpeaker - Current speaker:', speaker.name, 'isAI:', speaker.isAI, 'position:', speaker.position);
         
         this.addLog(`轮到 ${speaker.name}(${speaker.position}号) 发言：`, 'speech');
         
         if (speaker.isAI) {
             // AI发言
+            console.log('AI发言:', speaker.name);
             setTimeout(() => {
                 this.generateAISpeech(speaker);
                 setTimeout(() => {
@@ -1823,6 +1909,7 @@ class WerewolfGame {
             }, 1000);
         } else {
             // 玩家发言
+            console.log('玩家发言:', speaker.name);
             this.showPlayerSpeechInput();
         }
     }
@@ -1831,6 +1918,10 @@ class WerewolfGame {
     showPlayerSpeechInput() {
         console.log('showPlayerSpeechInput called for player:', this.currentSpeaker);
         console.log('Current speaker isAI:', this.currentSpeaker?.isAI);
+        
+        // 确保白天行动面板可见
+        document.getElementById('day-actions').style.display = 'block';
+        document.getElementById('night-actions').style.display = 'none';
         
         const actionContent = document.getElementById('action-content');
         if (!actionContent) {
@@ -2010,7 +2101,26 @@ class WerewolfGame {
             if (this.aiChatActive) {
                 this.triggerAIResponse();
             }
-        }, Math.random() * 4000 + 2000); // 2-6秒后AI发言
+        }, this.getAISpeechDelay()); // 基于角色特性的发言延迟
+    }
+    
+    // 计算AI发言延迟
+    getAISpeechDelay() {
+        const currentSpeaker = this.aiSpeechQueue[this.currentAISpeakerIndex];
+        if (!currentSpeaker) return 3000;
+        
+        // 基于角色特性决定发言延迟
+        if (currentSpeaker.role.name === 'werewolf') {
+            return 3500; // 狼人需要更多时间思考
+        } else if (currentSpeaker.role.name === 'seer') {
+            return 2500; // 预言家发言较快
+        } else if (currentSpeaker.role.name === 'witch') {
+            return 3000; // 女巫中等速度
+        } else if (currentSpeaker.role.name === 'hunter') {
+            return 2800; // 猎人发言较直接
+        } else {
+            return 2700; // 村民发言相对简单
+        }
     }
     
     // 触发AI回复（按顺序）
@@ -2067,6 +2177,23 @@ class WerewolfGame {
         if (this.aiSpeechTimeout) {
             clearTimeout(this.aiSpeechTimeout);
             this.aiSpeechTimeout = null;
+        }
+        
+        // 处理玩家的身份声明
+        const claimedIdentitySelect = document.getElementById('claimed-identity');
+        if (claimedIdentitySelect && claimedIdentitySelect.value) {
+            const claimedRole = claimedIdentitySelect.value;
+            this.currentSpeaker.claimedRole = claimedRole;
+            
+            const roleNames = {
+                'villager': '村民',
+                'werewolf': '狼人', 
+                'seer': '预言家',
+                'witch': '女巫',
+                'hunter': '猎人'
+            };
+            
+            this.addLog(`${this.currentSpeaker.name}声明身份：${roleNames[claimedRole]}`, 'identity-claim');
         }
         
         // 将所有聊天记录添加到游戏日志
@@ -2313,8 +2440,8 @@ class WerewolfGame {
             if (!hasPlayerClaimedHunter) return 'hunter';
         } else if (strategicAnalysis.threatLevel >= 4) {
             // 中等威胁：选择性抢夺
-            if (!hasPlayerClaimedSeer && Math.random() > 0.3) return 'seer';
-            if (!hasPlayerClaimedWitch && Math.random() > 0.5) return 'witch';
+            if (!hasPlayerClaimedSeer && strategicAnalysis.threatLevel >= 6) return 'seer';
+            if (!hasPlayerClaimedWitch && strategicAnalysis.threatLevel >= 5) return 'witch';
         }
         
         return 'villager';
@@ -2453,10 +2580,10 @@ class WerewolfGame {
         
         // 狼人占优势时，村民需要伪装神职分散注意力
         if (strategicAnalysis.isWerewolfWinning || strategicAnalysis.threatLevel >= 5) {
-            // 选择一个没人声称的神职
-            if (!hasPlayerClaimedSeer && Math.random() > 0.4) return 'seer';
-            if (!hasPlayerClaimedHunter && Math.random() > 0.6) return 'hunter';
-            if (!hasPlayerClaimedWitch && Math.random() > 0.7) return 'witch';
+            // 选择一个没人声称的神职，优先选择预言家
+            if (!hasPlayerClaimedSeer && strategicAnalysis.threatLevel >= 6) return 'seer';
+            if (!hasPlayerClaimedHunter && strategicAnalysis.threatLevel >= 7) return 'hunter';
+            if (!hasPlayerClaimedWitch && strategicAnalysis.threatLevel >= 8) return 'witch';
         }
         
         // 如果自己被怀疑，可以伪装神职自保
@@ -2474,7 +2601,7 @@ class WerewolfGame {
         
         // 后期可以策略性伪装
         if (dayNumber >= 3 && strategicAnalysis.threatLevel >= 3) {
-            if (!hasPlayerClaimedSeer && Math.random() > 0.7) return 'seer';
+            if (!hasPlayerClaimedSeer && strategicAnalysis.threatLevel >= 5) return 'seer';
         }
         
         return 'villager'; // 默认诚实
@@ -2594,8 +2721,12 @@ class WerewolfGame {
                 suspicionLevel *= 1.2;
             }
             
-            // 9. 随机因素（大幅降低权重）
-            suspicionLevel += Math.random() * 0.5;
+            // 9. 行为一致性分析（替代随机因素）
+            if (speechCount < this.day) {
+                suspicionLevel += 0.3; // 发言过少
+            } else if (speechCount > this.day * 2) {
+                suspicionLevel += 0.2; // 发言过多
+            }
             
             // 确保可疑度在合理范围内
             suspicionLevel = Math.max(0, suspicionLevel);
@@ -2653,16 +2784,21 @@ class WerewolfGame {
                 '。希望大家都能坦诚相待。'
             ];
             
+            // 基于角色选择发言风格
+            const openingIndex = player.role.name === 'werewolf' ? 0 : (player.role.name === 'seer' ? 1 : 2);
+            const analysisIndex = hasClaimedSeer ? 1 : 0;
+            const conclusionIndex = player.role.name === 'werewolf' ? 3 : 0;
+            
             speechElements.push(
-                openings[Math.floor(Math.random() * openings.length)] +
-                analyses[Math.floor(Math.random() * analyses.length)] +
-                conclusions[Math.floor(Math.random() * conclusions.length)]
+                openings[openingIndex] +
+                analyses[analysisIndex] +
+                conclusions[conclusionIndex]
             );
         } else {
             // 后续天数：基于专业策略的发言
             
-            // 策略1：分析死者情况（狼人视角的伪装分析）
-            if (deadPlayers.length > 0 && Math.random() < 0.5) {
+            // 策略1：分析死者情况（基于角色的理性分析）
+            if (deadPlayers.length > 0) {
                 const lastDead = deadPlayers[deadPlayers.length - 1];
                 const deathAnalyses = [
                     `${lastDead.name}的死亡很可惜，我们失去了一个重要的好人`,
@@ -2670,48 +2806,72 @@ class WerewolfGame {
                     `${lastDead.name}昨天的发言很有道理，可能因此成为目标`,
                     `我们要分析${lastDead.name}的死因，找出狼人的策略`
                 ];
-                speechElements.push(deathAnalyses[Math.floor(Math.random() * deathAnalyses.length)]);
+                // 狼人伪装同情，好人分析原因
+                const analysisIndex = player.role.name === 'werewolf' ? 0 : 
+                    (lastDead.role && ['seer', 'witch', 'hunter'].includes(lastDead.role.name) ? 1 : 2);
+                speechElements.push(deathAnalyses[analysisIndex]);
             }
             
-            // 策略2：倒钩真预言家（高级狼人策略）
-            if (hasClaimedSeer && Math.random() < 0.4) {
+            // 策略2：倒钩真预言家（狼人专用策略）
+            if (hasClaimedSeer && player.role.name === 'werewolf') {
                 const hookSpeeches = [
                     '我认为预言家的分析很有道理，逻辑很清晰',
                     '预言家提供的信息对我们很重要，我倾向于相信',
                     '从发言风格来看，预言家应该是真的',
                     '我一直在观察预言家的表现，感觉比较可信'
                 ];
-                speechElements.push(hookSpeeches[Math.floor(Math.random() * hookSpeeches.length)]);
+                // 狼人根据预言家威胁程度选择倒钩强度
+                const seerThreat = this.players.find(p => p.isAlive && p.identityClaim?.identity === 'seer');
+                const hookIndex = seerThreat && seerThreat.role.name === 'seer' ? 1 : 0;
+                speechElements.push(hookSpeeches[hookIndex]);
             }
             
-            // 策略3：污好人（混淆视听）
-            if (suspiciousPlayers.length > 0 && Math.random() < 0.4) {
-                const goodTargets = suspiciousPlayers.filter(sp => sp.player.role !== 'werewolf');
+            // 策略3：污好人（狼人混淆视听策略）
+            if (suspiciousPlayers.length > 0 && player.role.name === 'werewolf') {
+                const goodTargets = suspiciousPlayers.filter(sp => sp.player.role.name !== 'werewolf');
                 if (goodTargets.length > 0) {
-                    const target = goodTargets[Math.floor(Math.random() * goodTargets.length)];
+                    // 优先污神职角色
+                    const godRoleTargets = goodTargets.filter(sp => ['seer', 'witch', 'hunter'].includes(sp.player.role.name));
+                    const target = godRoleTargets.length > 0 ? godRoleTargets[0] : goodTargets[0];
                     const suspicionSpeeches = [
                         `我注意到${target.player.name}的发言有些问题`,
                         `${target.player.name}的行为模式让我觉得可疑`,
                         `我建议大家重点关注${target.player.name}`,
                         `${target.player.name}可能在隐藏什么`
                     ];
-                    speechElements.push(suspicionSpeeches[Math.floor(Math.random() * suspicionSpeeches.length)]);
+                    // 根据目标角色选择污法强度
+                    const speechIndex = ['seer', 'witch', 'hunter'].includes(target.player.role.name) ? 2 : 0;
+                    speechElements.push(suspicionSpeeches[speechIndex]);
                 }
             }
             
-            // 策略4：制造好人对立（分化策略）
-            const goodPlayers = alivePlayers.filter(p => p.role !== 'werewolf' && p !== aiPlayer);
-            if (goodPlayers.length >= 2 && Math.random() < 0.3) {
-                const player1 = goodPlayers[Math.floor(Math.random() * goodPlayers.length)];
-                const player2 = goodPlayers[Math.floor(Math.random() * goodPlayers.length)];
-                if (player1 !== player2) {
+            // 策略4：制造好人对立（狼人分化策略）
+            const goodPlayers = alivePlayers.filter(p => p.role.name !== 'werewolf' && p !== aiPlayer);
+            if (goodPlayers.length >= 2 && player.role.name === 'werewolf') {
+                // 优先挑拨神职角色之间的关系
+                const godRoles = goodPlayers.filter(p => ['seer', 'witch', 'hunter'].includes(p.role.name));
+                let player1, player2;
+                if (godRoles.length >= 2) {
+                    player1 = godRoles[0];
+                    player2 = godRoles[1];
+                } else if (godRoles.length === 1) {
+                    player1 = godRoles[0];
+                    player2 = goodPlayers.find(p => p !== player1);
+                } else {
+                    player1 = goodPlayers[0];
+                    player2 = goodPlayers[1];
+                }
+                
+                if (player1 && player2) {
                     const divideSpeeches = [
                         `我觉得${player1.name}和${player2.name}的互动有些奇怪`,
                         `${player1.name}总是在关键时刻支持${player2.name}`,
                         `${player1.name}和${player2.name}可能有什么默契`,
                         `我怀疑${player1.name}和${player2.name}之间有问题`
                     ];
-                    speechElements.push(divideSpeeches[Math.floor(Math.random() * divideSpeeches.length)]);
+                    // 根据挑拨对象选择策略
+                    const speechIndex = godRoles.includes(player1) && godRoles.includes(player2) ? 3 : 0;
+                    speechElements.push(divideSpeeches[speechIndex]);
                 }
             }
             
@@ -2724,25 +2884,25 @@ class WerewolfGame {
                 '我们要团结一致，找出真正的狼人',
                 '理性分析比感性判断更重要'
             ];
-            speechElements.push(rationalSpeeches[Math.floor(Math.random() * rationalSpeeches.length)]);
+            // 根据角色选择理性发言风格
+            const rationalIndex = player.role.name === 'werewolf' ? 0 : 
+                (player.role.name === 'seer' ? 2 : 4);
+            speechElements.push(rationalSpeeches[rationalIndex]);
         }
         
         // 组合发言元素
         if (speechElements.length === 1) {
             return speechElements[0];
         } else {
-            // 随机组合2-3个元素
-            const numElements = Math.min(speechElements.length, Math.floor(Math.random() * 2) + 2);
-            const selectedElements = [];
-            const usedIndices = new Set();
+            // 基于角色策略性组合元素
+            const numElements = player.role.name === 'werewolf' ? 
+                Math.min(speechElements.length, 3) : // 狼人发言更复杂
+                Math.min(speechElements.length, 2);  // 好人发言简洁
             
-            for (let i = 0; i < numElements; i++) {
-                let index;
-                do {
-                    index = Math.floor(Math.random() * speechElements.length);
-                } while (usedIndices.has(index));
-                usedIndices.add(index);
-                selectedElements.push(speechElements[index]);
+            const selectedElements = [];
+            // 按顺序选择最重要的发言元素
+            for (let i = 0; i < numElements && i < speechElements.length; i++) {
+                selectedElements.push(speechElements[i]);
             }
             
             return selectedElements.join('。') + '。';
@@ -2773,19 +2933,23 @@ class WerewolfGame {
                     // 2. 留警徽流（查杀情况下的标准流法）
                     const remainingPlayers = alivePlayers.filter(p => p !== aiPlayer && p !== werewolf);
                     if (remainingPlayers.length >= 2) {
-                        const player1 = remainingPlayers[Math.floor(Math.random() * remainingPlayers.length)];
-                        const player2 = remainingPlayers.filter(p => p !== player1)[0];
+                        // 优先选择位置靠前和靠后的玩家作为警徽流
+                        const sortedPlayers = remainingPlayers.sort((a, b) => a.position - b.position);
+                        const player1 = sortedPlayers[0];
+                        const player2 = sortedPlayers[sortedPlayers.length - 1];
                         speechElements.push(`我的警徽流是${player1.name}、${player2.name}，如果都是好人就撕警徽，如果都是查杀就给外置位，一好一坏给好人`);
                     }
                     
-                    // 3. 心路历程
-                    const reasonings = [
-                        `我选择查验${werewolf.name}是因为他昨天的发言有些可疑`,
-                        `${werewolf.name}的行为模式让我觉得需要重点关注`,
-                        `我觉得${werewolf.name}可能是狼人，所以优先查验了他`,
-                        `${werewolf.name}给我的感觉不太好，果然查出来是狼`
-                    ];
-                    speechElements.push(reasonings[Math.floor(Math.random() * reasonings.length)]);
+                    // 3. 心路历程（基于游戏天数选择合适的理由）
+                    let reasoning;
+                    if (this.day === 1) {
+                        reasoning = `我选择查验${werewolf.name}是因为他的位置比较关键，需要确认身份`;
+                    } else if (this.day === 2) {
+                        reasoning = `${werewolf.name}昨天的发言有些可疑，所以我优先查验了他`;
+                    } else {
+                        reasoning = `根据前面的分析，${werewolf.name}最有可能是狼人，果然查出来是狼`;
+                    }
+                    speechElements.push(reasoning);
                     
                 } else {
                     // 金水情况
@@ -2796,8 +2960,10 @@ class WerewolfGame {
                         // 留警徽流
                         const remainingPlayers = alivePlayers.filter(p => p !== aiPlayer && p !== goodPlayer);
                         if (remainingPlayers.length >= 2) {
-                            const player1 = remainingPlayers[Math.floor(Math.random() * remainingPlayers.length)];
-                            const player2 = remainingPlayers.filter(p => p !== player1)[0];
+                            // 选择位置分散的玩家作为警徽流
+                            const sortedPlayers = remainingPlayers.sort((a, b) => a.position - b.position);
+                            const player1 = sortedPlayers[0];
+                            const player2 = sortedPlayers[Math.floor(sortedPlayers.length / 2)];
                             speechElements.push(`我的警徽流是${player1.name}、${player2.name}`);
                         }
                         
@@ -2818,8 +2984,10 @@ class WerewolfGame {
                     // 2. 留警徽流
                     const remainingPlayers = alivePlayers.filter(p => p !== aiPlayer && p !== werewolf);
                     if (remainingPlayers.length >= 2) {
-                        const player1 = remainingPlayers[Math.floor(Math.random() * remainingPlayers.length)];
-                        const player2 = remainingPlayers.filter(p => p !== player1)[0];
+                        // 选择位置分散的玩家作为警徽流
+                        const sortedPlayers = remainingPlayers.sort((a, b) => a.position - b.position);
+                        const player1 = sortedPlayers[0];
+                        const player2 = sortedPlayers[sortedPlayers.length - 1];
                         speechElements.push(`警徽流${player1.name}、${player2.name}，请大家记住`);
                     }
                     
@@ -3350,14 +3518,16 @@ class WerewolfGame {
         // 9人局3狼标准分工
         if (totalWolves === 3) {
             if (playerIndex === 0) {
-                // 第一匹狼：优先考虑悍跳或深水
-                return Math.random() < 0.6 ? 'jumper' : 'deepwater';
+                // 第一匹狼：根据场上神职数量决定策略
+                const godCount = alivePlayers.filter(p => p.claimedRole && ['seer', 'witch', 'hunter'].includes(p.claimedRole)).length;
+                return godCount >= 2 ? 'deepwater' : 'jumper';
             } else if (playerIndex === 1) {
-                // 第二匹狼：冲锋或倒钩
-                return Math.random() < 0.5 ? 'charger' : 'hooker';
+                // 第二匹狼：根据好人与狼人比例决定
+                const ratio = aliveGoodGuys / aliveWerewolves;
+                return ratio > 2 ? 'charger' : 'hooker';
             } else {
-                // 第三匹狼：深水或倒钩
-                return Math.random() < 0.7 ? 'deepwater' : 'hooker';
+                // 第三匹狼：根据游戏天数决定
+                return this.day >= 3 ? 'hooker' : 'deepwater';
             }
         }
         
@@ -3821,19 +3991,177 @@ class WerewolfGame {
     
     // 生成AI发言
     generateAISpeech(speaker) {
+        let speech = '';
+        let claimedRole = null;
+        
+        // 根据角色生成不同的发言
+        if (speaker.role === 'seer') {
+            // 预言家必须跳出并给出验人信息
+            speech = this.generateSeerSpeech(speaker);
+            claimedRole = 'seer';
+        } else if (speaker.role === 'werewolf') {
+            // 狼人发言策略
+            speech = this.generateWerewolfSpeech(speaker);
+            // 狼人可能悍跳预言家，在generateWerewolfSpeech中已设置claimedRole
+        } else if (speaker.role === 'witch') {
+            // 女巫发言策略
+            speech = this.generateWitchSpeech(speaker);
+        } else if (speaker.role === 'hunter') {
+            // 猎人发言策略
+            speech = this.generateHunterSpeech(speaker);
+        } else {
+            // 村民发言策略
+            speech = this.generateVillagerSpeech(speaker);
+        }
+        
+        // 记录身份声明
+        if (claimedRole && !speaker.claimedRole) {
+            speaker.claimedRole = claimedRole;
+            const roleNames = {
+                'seer': '预言家',
+                'witch': '女巫',
+                'hunter': '猎人'
+            };
+            this.addLog(`${speaker.name}声明身份：${roleNames[claimedRole]}`, 'identity-claim');
+        }
+        
+        this.addLog(`${speaker.name}(${speaker.position}号)：${speech}`, 'ai-speech');
+    }
+    
+    // 生成狼人发言
+    generateWerewolfSpeech(speaker) {
+        const alivePlayers = this.players.filter(p => p.isAlive && p !== speaker);
+        const seerClaims = alivePlayers.filter(p => p.claimedRole === 'seer');
+        
+        let speechElements = [];
+        
+        if (this.dayCount === 1) {
+            // 第一天：必须悍跳预言家
+            if (seerClaims.length === 0) {
+                // 悍跳预言家
+                speechElements.push('我是预言家');
+                const goodPlayer = alivePlayers.filter(p => p.role !== 'werewolf')[0];
+                if (goodPlayer) {
+                    speechElements.push(`我昨晚查验了${goodPlayer.name}，他是金水`);
+                    speaker.claimedRole = 'seer';
+                }
+            } else {
+                // 如果已有预言家跳出，则对跳
+                speechElements.push('我才是真正的预言家');
+                const goodPlayer = alivePlayers.filter(p => p.role !== 'werewolf')[0];
+                if (goodPlayer) {
+                    speechElements.push(`我昨晚查验了${goodPlayer.name}，他是金水，刚才那个是假预言家`);
+                    speaker.claimedRole = 'seer';
+                }
+            }
+        } else {
+            // 后续天数：根据局势调整策略
+            if (speaker.claimedRole === 'seer') {
+                // 继续伪装预言家
+                const targetPlayer = alivePlayers[Math.floor(Math.random() * alivePlayers.length)];
+                const isGoodResult = Math.random() < 0.6;
+                if (isGoodResult) {
+                    speechElements.push(`我昨晚查验了${targetPlayer.name}，他是金水`);
+                } else {
+                    speechElements.push(`我昨晚查验了${targetPlayer.name}，他是查杀！`);
+                }
+            } else {
+                // 普通发言，混淆视听
+                const speeches = [
+                    '我觉得昨晚的死亡很可疑',
+                    '从发言分析，我有一些怀疑对象',
+                    '我们需要更仔细地分析逻辑',
+                    '我支持大家的分析'
+                ];
+                speechElements.push(speeches[Math.floor(Math.random() * speeches.length)]);
+            }
+        }
+        
+        return speechElements.join('，');
+    }
+    
+    // 生成女巫发言
+    generateWitchSpeech(speaker) {
+        let speechElements = [];
+        
+        if (this.dayCount === 1) {
+            // 第一天：低调观察
+            const speeches = [
+                '我需要更多信息来判断局势',
+                '大家的发言都很有道理，我在仔细分析',
+                '我会根据逻辑链来做判断',
+                '希望能听到更多有用的信息'
+            ];
+            speechElements.push(speeches[Math.floor(Math.random() * speeches.length)]);
+        } else {
+            // 后续天数：可能暗示身份或给出关键信息
+            if (Math.random() < 0.3) {
+                // 暗示女巫身份
+                speechElements.push('我昨晚得到了一些重要信息');
+                speechElements.push('从昨晚的情况来看，我有一些特殊的观察');
+            } else {
+                // 普通发言
+                const speeches = [
+                    '我觉得昨晚的死亡模式很关键',
+                    '从逻辑上分析，我有一些想法',
+                    '我会支持最有逻辑的分析',
+                    '大家要仔细考虑每个细节'
+                ];
+                speechElements.push(speeches[Math.floor(Math.random() * speeches.length)]);
+            }
+        }
+        
+        return speechElements.join('，');
+    }
+    
+    // 生成猎人发言
+    generateHunterSpeech(speaker) {
+        let speechElements = [];
+        
+        if (this.dayCount === 1) {
+            // 第一天：威慑性发言
+            const speeches = [
+                '我会仔细观察每个人的行为',
+                '如果有人想对我不利，要考虑后果',
+                '我有自己的判断标准',
+                '我会在关键时刻站出来'
+            ];
+            speechElements.push(speeches[Math.floor(Math.random() * speeches.length)]);
+        } else {
+            // 后续天数：可能暗示身份
+            if (Math.random() < 0.4) {
+                // 暗示猎人身份
+                speechElements.push('我建议狼人不要轻举妄动');
+                speechElements.push('我有能力在关键时刻改变局势');
+            } else {
+                // 普通发言
+                const speeches = [
+                    '我会支持最有道理的分析',
+                    '从目前的情况看，我有一些判断',
+                    '我们需要团结一致找出狼人',
+                    '我会在必要时采取行动'
+                ];
+                speechElements.push(speeches[Math.floor(Math.random() * speeches.length)]);
+            }
+        }
+        
+        return speechElements.join('，');
+    }
+    
+    // 生成村民发言
+    generateVillagerSpeech(speaker) {
         const speeches = [
-            '我觉得昨晚的死者很可能是被狼人针对的。',
-            '从发言来看，我怀疑某些人的身份。',
-            '我建议大家仔细分析一下昨晚的情况。',
-            '我觉得我们需要更多信息才能做出判断。',
-            '根据目前的情况，我有一些想法要分享。',
-            '我认为我们应该关注一下行为异常的玩家。',
-            '从逻辑上分析，狼人很可能在我们中间。',
-            '我建议投票给最可疑的那个人。'
+            '我觉得需要仔细分析大家的发言',
+            '从逻辑上看，我有一些怀疑',
+            '我会支持最有道理的投票',
+            '我们村民要团结起来',
+            '我相信真相会水落石出',
+            '大家要仔细听预言家的话',
+            '我觉得某些人的行为很可疑',
+            '我们要相信逻辑和推理'
         ];
         
-        const randomSpeech = speeches[Math.floor(Math.random() * speeches.length)];
-        this.addLog(`${speaker.name}(${speaker.position}号)：${randomSpeech}`, 'ai-speech');
+        return speeches[Math.floor(Math.random() * speeches.length)];
     }
     
     // 开始投票阶段
@@ -3848,7 +4176,7 @@ class WerewolfGame {
         this.renderVoteOptions();
         
         // AI玩家投票
-        setTimeout(() => this.executeAIVotes(), 1000);
+        setTimeout(() => this.executeAIVotes(), 300); // 减少AI投票延迟
     }
     
     // 渲染投票选项
@@ -3943,7 +4271,7 @@ class WerewolfGame {
         const votedCount = Object.values(this.votingResults).reduce((sum, votes) => sum + votes.length, 0);
         
         if (votedCount >= aliveCount) {
-            setTimeout(() => this.processVoteResults(), 1000);
+            setTimeout(() => this.processVoteResults(), 300); // 减少投票结果处理延迟
         }
     }
     
@@ -3952,12 +4280,15 @@ class WerewolfGame {
         this.executeVote(targetId);
     }
     
-    // AI投票
+    // AI投票（优化版本）
     executeAIVotes() {
         const aliveAI = this.players.filter(p => p.isAI && p.isAlive && !p.hasVoted);
         
-        aliveAI.forEach(ai => {
-            const target = this.determineVoteTarget(ai);
+        // 批量处理AI投票，减少单独计算
+        const voteDecisions = this.batchDetermineVoteTargets(aliveAI);
+        
+        voteDecisions.forEach(decision => {
+            const { ai, target, reason } = decision;
             
             if (!this.votingResults[target.id]) {
                 this.votingResults[target.id] = [];
@@ -3965,15 +4296,50 @@ class WerewolfGame {
             this.votingResults[target.id].push(ai.id);
             ai.hasVoted = true;
             
-            // 记录投票策略
-            this.addLog(`${ai.name}投票给${target.name}`, 'vote');
+            // 简化投票日志
+            this.addLog(`${ai.name}投票给${target.name}${reason ? `(${reason})` : ''}`, 'vote');
         });
         
-        // 处理投票结果
-        setTimeout(() => this.processVoteResults(), 2000);
+        // 立即处理投票结果，减少延迟
+        setTimeout(() => this.processVoteResults(), 200);
     }
     
-    // 智能投票决策系统
+    // 批量AI投票决策（性能优化）
+    batchDetermineVoteTargets(aiPlayers) {
+        const alivePlayers = this.players.filter(p => p.isAlive);
+        const villageTeam = alivePlayers.filter(p => p.role.team !== 'werewolf');
+        const werewolfTeam = alivePlayers.filter(p => p.role.name === 'werewolf');
+        
+        // 预计算共享数据，避免重复计算
+        const sharedData = this.calculateSharedVoteData(alivePlayers, villageTeam, werewolfTeam);
+        
+        return aiPlayers.map(ai => {
+            const targets = alivePlayers.filter(p => p.id !== ai.id);
+            
+            if (ai.role.name === 'werewolf') {
+                return this.optimizedWerewolfVoteStrategy(ai, targets, sharedData);
+            } else {
+                return this.optimizedVillageVoteStrategy(ai, targets, sharedData);
+            }
+        });
+    }
+    
+    // 计算共享投票数据
+    calculateSharedVoteData(alivePlayers, villageTeam, werewolfTeam) {
+        return {
+            totalPlayers: alivePlayers.length,
+            villageCount: villageTeam.length,
+            werewolfCount: werewolfTeam.length,
+            gameDay: this.dayCount,
+            currentVotes: { ...this.votingResults },
+            // 预计算威胁等级
+            threatLevels: this.batchCalculateThreatLevels(alivePlayers),
+            // 预计算可疑度
+            suspicionLevels: this.batchCalculateSuspicion(alivePlayers)
+        };
+    }
+    
+    // 智能投票决策系统（保留兼容性）
     determineVoteTarget(aiPlayer) {
         const alivePlayers = this.players.filter(p => p.isAlive && p.id !== aiPlayer.id);
         
@@ -4008,17 +4374,23 @@ class WerewolfGame {
     determineWolfVoteRole(werewolf, aliveWerewolves) {
         const wolfIndex = aliveWerewolves.findIndex(w => w.id === werewolf.id);
         const totalWolves = aliveWerewolves.length;
+        const villageCount = this.players.filter(p => p.isAlive && p.role.team !== 'werewolf').length;
         
         // 根据狼人数量和位置分配角色
         if (totalWolves === 1) {
             return 'charger'; // 只剩一只狼，必须冲锋
         }
         
-        // 多只狼的情况下分工
+        // 多只狼的情况下基于局势分工
         if (wolfIndex === 0) {
-            return Math.random() < 0.4 ? 'charger' : 'hooker';
+            // 第一只狼：局势劣势时冲锋，优势时倒钩
+            return villageCount > totalWolves * 2 ? 'charger' : 'hooker';
         } else if (wolfIndex === 1) {
-            return Math.random() < 0.3 ? 'deepwater' : 'hooker';
+            // 第二只狼：根据神职威胁决定策略
+            const godRoleCount = this.players.filter(p => 
+                p.isAlive && ['seer', 'witch', 'hunter'].includes(p.role.name)
+            ).length;
+            return godRoleCount >= 2 ? 'deepwater' : 'hooker';
         } else {
             return 'deepwater';
         }
@@ -4157,16 +4529,213 @@ class WerewolfGame {
         }
         
         // 兜底：选择最安全的目标
+        const gameData = {
+            aliveWerewolves: this.players.filter(p => p.isAlive && p.role.name === 'werewolf').length,
+            dayNumber: this.dayCount,
+            alivePlayers: this.players.filter(p => p.isAlive)
+        };
         const villagers = villageTeam.filter(p => p.role.name === 'villager');
         if (villagers.length > 0) {
             return villagers.reduce((safest, villager) => 
-                this.calculateThreatLevel(villager) < this.calculateThreatLevel(safest) ? villager : safest
+                this.calculateThreatLevel(villager, gameData) < this.calculateThreatLevel(safest, gameData) ? villager : safest
             );
         }
         
         return villageTeam.reduce((safest, player) => 
-            this.calculateThreatLevel(player) < this.calculateThreatLevel(safest) ? player : safest
+            this.calculateThreatLevel(player, gameData) < this.calculateThreatLevel(safest, gameData) ? player : safest
         );
+    }
+    
+    // 优化的狼人投票策略
+    optimizedWerewolfVoteStrategy(werewolf, targets, sharedData) {
+        const villageTargets = targets.filter(p => p.role.team !== 'werewolf');
+        const wolfRole = this.determineWolfVoteRole(
+            werewolf, 
+            this.players.filter(p => p.isAlive && p.role.name === 'werewolf')
+        );
+        
+        let target, reason;
+        
+        switch (wolfRole) {
+            case 'charger':
+                ({ target, reason } = this.optimizedChargerStrategy(villageTargets, sharedData));
+                break;
+            case 'hooker':
+                ({ target, reason } = this.optimizedHookerStrategy(werewolf, targets, sharedData));
+                break;
+            case 'deepwater':
+                ({ target, reason } = this.optimizedDeepwaterStrategy(villageTargets, sharedData));
+                break;
+            default:
+                ({ target, reason } = this.optimizedDefaultWolfStrategy(villageTargets, sharedData));
+        }
+        
+        return { ai: werewolf, target, reason };
+    }
+    
+    // 优化的村民投票策略
+    optimizedVillageVoteStrategy(villager, targets, sharedData) {
+        const { suspicionLevels, currentVotes, threatLevels } = sharedData;
+        
+        // 快速评分系统
+        const scores = targets.map(target => {
+            let score = 0;
+            const suspicion = suspicionLevels[target.id] || 0;
+            const threat = threatLevels[target.id] || 0;
+            const votes = currentVotes[target.id]?.length || 0;
+            
+            // 基础可疑度评分
+            score += suspicion * 10;
+            
+            // 跟随投票趋势
+            score += votes * 5;
+            
+            // 角色优先级
+            if (target.role.name === 'villager') score += 15;
+            else if (target.role.name === 'hunter') score += 10;
+            else if (target.role.name === 'seer' || target.role.name === 'witch') {
+                score += suspicion > 7 ? 20 : -10; // 只有高度可疑才投神职
+            }
+            
+            return { target, score };
+        });
+        
+        scores.sort((a, b) => b.score - a.score);
+        const chosen = scores[0];
+        
+        let reason = '逻辑推理';
+        if (chosen.score > 50) reason = '高度可疑';
+        else if (currentVotes[chosen.target.id]?.length > 0) reason = '跟随大流';
+        
+        return { ai: villager, target: chosen.target, reason };
+    }
+    
+    // 优化的冲锋狼策略
+    optimizedChargerStrategy(villageTargets, sharedData) {
+        const { threatLevels } = sharedData;
+        
+        // 优先级：预言家 > 女巫 > 活跃村民 > 猎人 > 普通村民
+        const priorities = villageTargets.map(target => {
+            let priority = 0;
+            
+            if (target.role.name === 'seer') priority = 100;
+            else if (target.role.name === 'witch') priority = 80;
+            else if (target.role.name === 'villager' && threatLevels[target.id] > 5) priority = 60;
+            else if (target.role.name === 'hunter') priority = 40;
+            else priority = 20;
+            
+            return { target, priority };
+        });
+        
+        priorities.sort((a, b) => b.priority - a.priority);
+        return { target: priorities[0].target, reason: '冲锋' };
+    }
+    
+    // 优化的倒钩狼策略
+    optimizedHookerStrategy(werewolf, targets, sharedData) {
+        const { suspicionLevels, currentVotes } = sharedData;
+        const villageTargets = targets.filter(p => p.role.team !== 'werewolf');
+        
+        // 寻找最佳跟票目标
+        const bestTarget = villageTargets.reduce((best, target) => {
+            const suspicion = suspicionLevels[target.id] || 0;
+            const votes = currentVotes[target.id]?.length || 0;
+            const score = suspicion * 2 + votes * 3;
+            
+            return score > (best.score || 0) ? { target, score } : best;
+        }, {});
+        
+        return { target: bestTarget.target, reason: '倒钩' };
+    }
+    
+    // 优化的深水狼策略
+    optimizedDeepwaterStrategy(villageTargets, sharedData) {
+        const { currentVotes } = sharedData;
+        
+        // 跟随得票最多的目标
+        const voteLeader = villageTargets.reduce((leader, target) => {
+            const votes = currentVotes[target.id]?.length || 0;
+            return votes > (leader.votes || 0) ? { target, votes } : leader;
+        }, {});
+        
+        if (voteLeader.target) {
+            return { target: voteLeader.target, reason: '深水跟票' };
+        }
+        
+        // 没有明显目标时选择村民
+        const villagers = villageTargets.filter(p => p.role.name === 'villager');
+        const target = villagers.length > 0 ? villagers[0] : villageTargets[0];
+        return { target, reason: '深水保守' };
+    }
+    
+    // 优化的默认狼策略
+    optimizedDefaultWolfStrategy(villageTargets, sharedData) {
+        const { threatLevels } = sharedData;
+        
+        // 选择威胁等级最高的村民
+        const target = villageTargets.reduce((highest, target) => {
+            const threat = threatLevels[target.id] || 0;
+            return threat > (highest.threat || 0) ? { target, threat } : highest;
+        }, {});
+        
+        return { target: target.target || villageTargets[0], reason: '常规' };
+    }
+    
+    // 批量计算威胁等级
+    batchCalculateThreatLevels(players) {
+        const levels = {};
+        const gameData = {
+            aliveWerewolves: this.players.filter(p => p.isAlive && p.role.name === 'werewolf').length,
+            dayNumber: this.dayCount,
+            alivePlayers: this.players.filter(p => p.isAlive)
+        };
+        players.forEach(player => {
+            if (this.calculateThreatLevel) {
+                levels[player.id] = this.calculateThreatLevel(player, gameData);
+            } else {
+                // 基于角色和身份声明计算威胁等级
+                let threat = 0;
+                if (['seer', 'witch', 'hunter'].includes(player.role.name)) {
+                    threat += 8; // 神职角色威胁高
+                }
+                if (player.identityClaim?.identity === 'seer') {
+                    threat += 5; // 声明预言家威胁高
+                }
+                if (player.role.name === 'werewolf') {
+                    threat = 1; // 狼人对狼人威胁低
+                }
+                levels[player.id] = threat;
+            }
+        });
+        return levels;
+    }
+    
+    // 批量计算可疑度
+    batchCalculateSuspicion(players) {
+        const levels = {};
+        players.forEach(player => {
+            if (this.calculateSuspicion) {
+                levels[player.id] = this.calculateSuspicion(null, player);
+            } else {
+                // 基于发言和行为计算可疑度
+                let suspicion = 5; // 基础可疑度
+                if (player.role.name === 'werewolf') {
+                    suspicion = 2; // 狼人对狼人可疑度低
+                } else {
+                    // 好人的可疑度基于身份声明一致性
+                    if (player.identityClaim) {
+                        const claimedRole = player.identityClaim.identity;
+                        if (claimedRole === player.role.name) {
+                            suspicion = 3; // 真实身份声明可疑度低
+                        } else {
+                            suspicion = 7; // 虚假身份声明可疑度高
+                        }
+                    }
+                }
+                levels[player.id] = suspicion;
+            }
+        });
+        return levels;
     }
     
     // 深水狼投票策略
@@ -4250,8 +4819,13 @@ class WerewolfGame {
         }
         
         // 最终兜底
+        const gameData = {
+            aliveWerewolves: this.players.filter(p => p.isAlive && p.role.name === 'werewolf').length,
+            dayNumber: this.dayCount,
+            alivePlayers: this.players.filter(p => p.isAlive)
+        };
         return villageTeam.reduce((safest, player) => 
-            this.calculateThreatLevel(player) < this.calculateThreatLevel(safest) ? player : safest
+            this.calculateThreatLevel(player, gameData) < this.calculateThreatLevel(safest, gameData) ? player : safest
         );
     }
     
@@ -4322,8 +4896,13 @@ class WerewolfGame {
         }
         
         // 兜底策略
+        const gameData = {
+            aliveWerewolves: this.players.filter(p => p.isAlive && p.role.name === 'werewolf').length,
+            dayNumber: this.dayCount,
+            alivePlayers: this.players.filter(p => p.isAlive)
+        };
         return villageTeam.reduce((best, player) => 
-            this.calculateThreatLevel(player) > this.calculateThreatLevel(best) ? player : best
+            this.calculateThreatLevel(player, gameData) > this.calculateThreatLevel(best, gameData) ? player : best
         );
     }
     
@@ -4496,7 +5075,7 @@ class WerewolfGame {
         
         // 进入下一天
         this.dayCount++;
-        setTimeout(() => this.startNightPhase(), 3000);
+        setTimeout(() => this.startNightPhase(), 800); // 减少夜晚阶段开始延迟
     }
     
     // 检查游戏是否结束
@@ -4641,72 +5220,43 @@ class WerewolfGame {
     }
     
     // 显示投票统计
+    // 显示投票统计（优化版）
     showVoteStatistics() {
-        this.addLog('=== 投票统计结果 ===', 'important');
+        // 只统计得票数，简化输出
+        const voteCounts = {};
         
-        // 统计每个玩家的得票情况
-        const voteStats = {};
-        const voterStats = {};
-        
-        // 初始化统计
-        this.players.filter(p => p.isAlive).forEach(player => {
-            voteStats[player.id] = {
-                player: player,
-                votes: [],
-                count: 0
-            };
-        });
-        
-        // 统计投票结果
         Object.entries(this.votingResults).forEach(([targetId, voterIds]) => {
             const targetPlayer = this.players.find(p => p.id === parseInt(targetId));
-            if (targetPlayer && voteStats[targetId]) {
-                voteStats[targetId].count = voterIds.length;
-                voterIds.forEach(voterId => {
-                    const voter = this.players.find(p => p.id === voterId);
-                    if (voter) {
-                        voteStats[targetId].votes.push(voter);
-                        voterStats[voterId] = targetPlayer;
-                    }
-                });
+            if (targetPlayer && voterIds.length > 0) {
+                voteCounts[targetPlayer.name] = voterIds.length;
             }
         });
         
-        // 显示每个人的投票指向
-        this.addLog('各玩家投票指向：', 'normal');
-        this.players.filter(p => p.isAlive).forEach(player => {
-            const target = voterStats[player.id];
-            if (target) {
-                this.addLog(`${player.name}(${player.position}号) → ${target.name}(${target.position}号)`, 'vote-detail');
-            } else {
-                this.addLog(`${player.name}(${player.position}号) → 未投票`, 'vote-detail');
-            }
-        });
-        
-        // 显示得票统计
-        this.addLog('得票统计：', 'normal');
-        const sortedStats = Object.values(voteStats)
-            .filter(stat => stat.count > 0)
-            .sort((a, b) => b.count - a.count);
+        // 只显示得票统计，简化输出
+        const sortedCounts = Object.entries(voteCounts)
+            .sort(([,a], [,b]) => b - a);
             
-        if (sortedStats.length === 0) {
-            this.addLog('无人得票', 'vote-detail');
-        } else {
-            sortedStats.forEach(stat => {
-                const voterNames = stat.votes.map(v => `${v.name}(${v.position}号)`).join('、');
-                this.addLog(`${stat.player.name}(${stat.player.position}号)：${stat.count}票 [${voterNames}]`, 'vote-detail');
+        if (sortedCounts.length > 0) {
+            let voteDisplay = '得票统计：';
+            sortedCounts.forEach(([name, count]) => {
+                voteDisplay += ` ${name}(${count}票)`;
             });
+            this.addLog(voteDisplay, 'important');
+        } else {
+            this.addLog('无人得票', 'important');
         }
-        
-        this.addLog('=== 投票统计结束 ===', 'important');
     }
     
-    // 工具函数：数组洗牌
+    // 工具函数：基于时间戳的数组重排（替代随机洗牌）
     shuffleArray(array) {
         const newArray = [...array];
-        for (let i = newArray.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+        // 基于当前时间戳和数组长度进行确定性重排
+        const seed = Date.now() % 1000;
+        for (let i = 0; i < newArray.length; i++) {
+            const targetIndex = (i + seed) % newArray.length;
+            if (i !== targetIndex) {
+                [newArray[i], newArray[targetIndex]] = [newArray[targetIndex], newArray[i]];
+            }
         }
         return newArray;
     }
