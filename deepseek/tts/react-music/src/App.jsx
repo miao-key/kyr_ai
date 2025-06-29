@@ -3,8 +3,8 @@ import './App.css'
 
 function App() {
   // 火山引擎tts 配置文件
-  const TOKEN = 'QNbYoM70zTWsQg5szdYH54V0POVMYYsP';
-  const APP_ID = '4011980841';
+  const TOKEN = 'user token';
+  const APP_ID = 'user app_id';
   const CLUSTER_ID = 'volcano_tts';
   // 代码可读性高于一切
   const[prompt,setPrompt] = useState('大家好，我是贝利亚');
