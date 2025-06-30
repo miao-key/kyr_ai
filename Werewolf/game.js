@@ -191,6 +191,12 @@ class WerewolfGame {
             });
         }
         
+        // 初始化女巫药剂状态
+        this.witchPotions = {
+            heal: true,  // 解药
+            poison: true // 毒药
+        };
+        
         this.addLog(`游戏开始！共${this.players.length}名玩家参与。`);
     }
     
@@ -331,6 +337,7 @@ class WerewolfGame {
                 await this.seerAction();
                 break;
             case 'witch':
+                console.log('用户玩家是女巫，开始女巫行动');
                 await this.witchAction();
                 break;
             case 'hunter':
@@ -347,36 +354,51 @@ class WerewolfGame {
     
     // 女巫选择行动
     selectWitchAction(action) {
+        console.log('女巫选择行动:', action);
         if (this.witchSelectAction) {
             this.witchSelectAction(action);
+        } else {
+            console.error('witchSelectAction 函数未定义');
         }
     }
 
     // 女巫选择毒人目标
     selectPoisonTarget(targetId) {
+        console.log('女巫选择毒人目标:', targetId);
         if (this.witchSelectTarget) {
             this.witchSelectTarget(targetId);
+        } else {
+            console.error('witchSelectTarget 函数未定义');
         }
     }
     
     // 女巫确认行动
     confirmWitchAction() {
+        console.log('女巫确认行动');
         if (this.witchConfirmAction) {
             this.witchConfirmAction();
+        } else {
+            console.error('witchConfirmAction 函数未定义');
         }
     }
     
     // 女巫取消行动
     cancelWitchAction() {
+        console.log('女巫取消行动');
         if (this.witchCancelAction) {
             this.witchCancelAction();
+        } else {
+            console.error('witchCancelAction 函数未定义');
         }
     }
     
     // 女巫返回主菜单
     backToWitchMenu() {
+        console.log('女巫返回主菜单');
         if (this.witchBackToMenu) {
             this.witchBackToMenu();
+        } else {
+            console.error('witchBackToMenu 函数未定义');
         }
     }
     
@@ -405,13 +427,20 @@ class WerewolfGame {
         const werewolves = this.players.filter(p => p.isAI && p.isAlive && p.role.name === 'werewolf');
         const seer = this.players.find(p => p.isAI && p.isAlive && p.role.name === 'seer');
         const witch = this.players.find(p => p.isAI && p.isAlive && p.role.name === 'witch');
+        const userPlayer = this.players.find(p => !p.isAI);
         
         // AI狼人智能选择目标
         if (werewolves.length > 0 && !this.nightActions.kill) {
+            console.log('AI狼人开始选择目标');
             const target = this.determineWolfKillTarget(werewolves);
             if (target) {
                 this.nightActions.kill = target.id;
+                console.log('AI狼人选择目标:', target.name, '目标ID:', target.id);
+            } else {
+                console.log('AI狼人未找到合适目标');
             }
+        } else {
+            console.log('狼人目标选择跳过 - 狼人数量:', werewolves.length, '已有目标:', this.nightActions.kill);
         }
         
         // AI预言家查验
@@ -423,9 +452,12 @@ class WerewolfGame {
             }
         }
         
-        // AI女巫使用药剂
-        if (witch && this.witchPotions) {
+        // AI女巫使用药剂（只有当用户不是女巫时才执行）
+        if (witch && this.witchPotions && userPlayer && userPlayer.role.name !== 'witch') {
+            console.log('执行AI女巫策略');
             this.executeWitchStrategy(witch);
+        } else if (userPlayer && userPlayer.role.name === 'witch') {
+            console.log('用户是女巫，跳过AI女巫策略');
         }
     }
     
@@ -724,9 +756,11 @@ class WerewolfGame {
     
     // 女巫行动
     async witchAction() {
+        console.log('女巫行动函数开始执行');
         const actionContent = document.getElementById('night-action-content');
+        console.log('获取到 night-action-content 元素:', actionContent);
         
-        // 初始化女巫药剂状态（如果还没有的话）
+        // 确保女巫药剂状态存在（通常在游戏开始时已初始化）
         if (!this.witchPotions) {
             this.witchPotions = {
                 heal: true,  // 解药
@@ -740,6 +774,10 @@ class WerewolfGame {
             let selectedTarget = null;
             const killedPlayer = this.nightActions.kill ? this.players.find(p => p.id === this.nightActions.kill) : null;
             const alivePlayers = this.players.filter(p => p.isAlive && p.role.name !== 'witch');
+            
+            console.log('女巫药剂状态:', this.witchPotions);
+            console.log('今晚被杀玩家:', killedPlayer ? killedPlayer.name : '无');
+            console.log('夜晚行动状态:', this.nightActions);
             
             const updateDisplay = () => {
                 if (selectedAction === 'poison') {
@@ -868,37 +906,7 @@ class WerewolfGame {
         });
     }
     
-    // AI玩家行动
-    executeAIActions() {
-        const werewolves = this.players.filter(p => p.isAI && p.isAlive && p.role.name === 'werewolf');
-        const seer = this.players.find(p => p.isAI && p.isAlive && p.role.name === 'seer');
-        const witch = this.players.find(p => p.isAI && p.isAlive && p.role.name === 'witch');
-        
-        // AI狼人选择目标
-        if (werewolves.length > 0 && !this.nightActions.kill) {
-            const targets = this.players.filter(p => p.isAlive && p.role.team !== 'werewolf');
-            if (targets.length > 0) {
-                // 优先选择神职角色
-                const priorityTarget = targets.find(p => p.claimedRole === 'seer') || 
-                                      targets.find(p => p.claimedRole === 'witch') || 
-                                      targets.find(p => p.claimedRole === 'hunter') || 
-                                      targets.find(p => p.role.name === 'seer') || 
-                                      targets.find(p => p.role.name === 'witch') || 
-                                      targets.find(p => p.role.name === 'hunter') || 
-                                      targets[0];
-                this.nightActions.kill = priorityTarget.id;
-            }
-        }
-        
-        // AI预言家查验
-        if (seer && !this.nightActions.seer) {
-            const targets = this.players.filter(p => p.isAlive && p.id !== seer.id);
-            if (targets.length > 0) {
-                const optimalTarget = this.determineSeerTarget(seer, targets);
-                this.nightActions.seer = optimalTarget.id;
-            }
-        }
-    }
+
     
     // 智能身份声明策略
     shouldClaimWitch(aiPlayer) {
