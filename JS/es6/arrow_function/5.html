@@ -20,6 +20,7 @@
         // 指定this的指向
         b.call(a,1,2)
         b.apply(a,[1,2])
+        // 延迟执行
         const func2 = b.bind(a,1,2)
         func2();
     </script>
