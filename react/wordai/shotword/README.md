@@ -1,0 +1,21 @@
+# AI 单词拍照移动应用
+
+- mobile App
+- css reset
+- 组件划分思维
+  - 功能逻辑划分 图片上传
+  - APP 根组件
+  - PictureCard 子组件
+  - 组件通信
+    - 父组件负责持有状态
+    - 父组件api 请求
+    - 子组件消费数据
+- 目录结构
+  - src/ 开发目录
+  - components/ 组件目录
+    - 一个组件就是一个文件夹
+      - jsx
+      - css
+  - public/ 静态资源目录
+  - libs/ 工具包
+  - .env.local  ai api-key token  等环境变量
