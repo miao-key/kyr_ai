@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>base64ToUrl</title>
+</head>
+<body>
+    <img src="" alt="">
+    <img src="" alt="" id="blobImage" width="200" height="200">
+    <script>
+      // 编译码
+      // base64? google 推出的图片格式 二进制的表达
+      // 字符 base64Data编码 表达图片
+      // a  ascii => binary
+      // 将Base64编码的字符串解码为原始的二进制数据
+    const base64Data = atob('')
+    //   console.log(base64Data)
+    // utf8 编码 特殊类型的数组 0-255 之间的整数
+    const byteArray = new Uint8Array(base64Data.length); 
+    // console.log(byteArray)
+    for(let i = 0; i<base64Data.length; i++){
+        byteArray[i] = base64Data.charCodeAt(i);
+    }
+    // 全是数字
+    // console.log(byteArray)
+    // png,doc,pdf...
+    // 实例化二进制对象 底层二进制对象
+    // html5 里面的王者对象 文件切片
+    const blob = new Blob([byteArray],{ type: 'image/png'});
+    console.log(blob);
+    // html5 URL 对象
+    const imageUrl = URL.createObjectURL(blob);
+    console.log(imageUrl);
+    document.getElementById('blobImage').src = imageUrl;
+    </script>
+</body>
+</html>
