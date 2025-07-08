@@ -19,8 +19,55 @@ export const generateGameState = (players, gamePhase, dayNumber, gameLog) => {
   }
 }
 
-// 检查游戏是否结束 - 屠边胜利条件
+// 增强的游戏状态验证
+export const validateGameState = (players, gamePhase, nightActions) => {
+  const errors = []
+  const warnings = []
+  
+  // 基本验证
+  if (!players || players.length !== 9) {
+    errors.push('玩家数量不正确')
+  }
+  
+  const alivePlayers = players.filter(p => p.isAlive)
+  const werewolves = alivePlayers.filter(p => p.role === 'WEREWOLF')
+  const villagers = alivePlayers.filter(p => p.role !== 'WEREWOLF')
+  
+  // 游戏结束条件检查
+  if (werewolves.length === 0 && gamePhase !== 'game_over') {
+    warnings.push('所有狼人已死亡，游戏应该结束')
+  }
+  
+  if (villagers.length === 0 && gamePhase !== 'game_over') {
+    warnings.push('所有好人已死亡，游戏应该结束')
+  }
+  
+  // 夜晚行动一致性检查
+  if (gamePhase === 'night' && nightActions) {
+    if (nightActions.werewolf_kill) {
+      const target = players.find(p => p.id === nightActions.werewolf_kill)
+      if (!target || !target.isAlive) {
+        errors.push('狼人击杀目标无效')
+      }
+    }
+    
+    if (nightActions.witch_save && nightActions.witch_poison) {
+      if (nightActions.witch_save === nightActions.witch_poison) {
+        errors.push('女巫不能对同一目标同时使用解药和毒药')
+      }
+    }
+  }
+  
+  return { isValid: errors.length === 0, errors, warnings }
+}
+
+// 在关键操作前调用验证
 export const checkGameEnd = (playerList) => {
+  const validation = validateGameState(playerList, 'checking')
+  if (!validation.isValid) {
+    console.error('游戏状态验证失败:', validation.errors)
+  }
+  
   const alivePlayers = playerList.filter(p => p.isAlive)
   const aliveWerewolves = alivePlayers.filter(p => p.role === 'WEREWOLF')
   const aliveVillagers = alivePlayers.filter(p => p.role === 'VILLAGER')

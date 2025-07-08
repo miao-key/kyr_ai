@@ -1,32 +1,151 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo, memo } from 'react'
 import './App.css'
-import { ROLES, GAME_PHASES } from './constants/gameConstants'
+import { ROLES, GAME_PHASES, PLAYER_NAMES } from './constants/gameConstants'
 import { callMoonshotAPI } from './utils/apiUtils'
 import { generateGameState, generateAIPersonality, checkGameEnd, initializePlayers } from './utils/gameUtils'
+import { useGameState } from './hooks/useGameState'
+import { useNightActions } from './hooks/useNightActions'
+
+// 使用memo优化组件渲染
+const PlayerCard = memo(({ player, canSeeRole, isTeammate }) => {
+  return (
+    <div className={`player-card ${!player.isAlive ? 'dead' : ''} ${isTeammate ? 'werewolf-teammate' : ''}`}>
+      <div className="player-name">{player.name}</div>
+      <div className="player-role">
+        {canSeeRole ? ROLES[player.role].name : '未知'}
+        {isTeammate && <span className="teammate-indicator"> 🐺</span>}
+      </div>
+      <div className="player-status">
+        {player.isAlive ? '存活' : '死亡'}
+      </div>
+    </div>
+  )
+})
 
 function App() {
-  const [gamePhase, setGamePhase] = useState(GAME_PHASES.LOBBY)
-  const [players, setPlayers] = useState([])
-  const [currentPlayer, setCurrentPlayer] = useState(null)
-  const [gameLog, setGameLog] = useState([])
-  const [nightActions, setNightActions] = useState({})
-  const [dayNumber, setDayNumber] = useState(1)
+  // 使用统一的状态管理
+  const gameState = useGameState()
+  const nightActionsHook = useNightActions()
+  
+  // 保留必要的本地状态
+  const [customRoles, setCustomRoles] = useState(false)
+  const [selectedRole, setSelectedRole] = useState(null)
+  const [userSpeech, setUserSpeech] = useState('')
+  const [currentActionTimeout, setCurrentActionTimeout] = useState(null)
+  
+  // 添加缺失的本地状态（不与hooks冲突的）
+  const [currentNightRole, setCurrentNightRole] = useState(null)
+  const [nightTimer, setNightTimer] = useState(0)
+  const [nightActionComplete, setNightActionComplete] = useState(false)
+  const [nightPhaseIndex, setNightPhaseIndex] = useState(0)
+  const [seerHasChecked, setSeerHasChecked] = useState(false)
   const [votingResults, setVotingResults] = useState({})
-  const [winner, setWinner] = useState(null)
   const [aiThinking, setAiThinking] = useState(false)
   const [currentSpeaker, setCurrentSpeaker] = useState(null)
   const [dayDiscussion, setDayDiscussion] = useState([])
   const [isProcessingAI, setIsProcessingAI] = useState(false)
-  const [userSpeech, setUserSpeech] = useState('')
   const [waitingForUserSpeech, setWaitingForUserSpeech] = useState(false)
-  const [seerResult, setSeerResult] = useState(null)
-  const [witchUsedSave, setWitchUsedSave] = useState(false)
-  const [witchUsedPoison, setWitchUsedPoison] = useState(false)
-  const [hunterCanShoot, setHunterCanShoot] = useState(false)
-  const [hunterTarget, setHunterTarget] = useState(null)
-  const [customRoles, setCustomRoles] = useState(false)
-  const [selectedRole, setSelectedRole] = useState(null)
   const [votes, setVotes] = useState({})
+  
+  // 使用useRef管理定时器
+  const timeoutRef = useRef(null)
+  const intervalRef = useRef(null)
+  
+  // 清理定时器的hook
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
+    }
+  }, [])
+  
+  // 从hooks中解构状态（只解构实际存在的）
+  const {
+    gamePhase, setGamePhase,
+    players, setPlayers,
+    currentPlayer, setCurrentPlayer,
+    gameLog, setGameLog,
+    dayNumber, setDayNumber,
+    winner, setWinner,
+    addToLog
+  } = gameState
+  
+  const {
+    nightActions, setNightActions,
+    seerResult, setSeerResult,
+    witchUsedSave, setWitchUsedSave,
+    witchUsedPoison, setWitchUsedPoison,
+    hunterCanShoot, setHunterCanShoot,
+    hunterTarget, setHunterTarget,
+    handleNightAction,
+    processNightActions,
+    resetNightState
+  } = nightActionsHook
+
+  // 使用useMemo缓存计算结果
+  const gameStats = useMemo(() => {
+    const alivePlayers = players.filter(p => p.isAlive)
+    const werewolves = alivePlayers.filter(p => p.role === 'WEREWOLF')
+    const villagers = alivePlayers.filter(p => p.role !== 'WEREWOLF')
+    
+    return { alivePlayers, werewolves, villagers }
+  }, [players])
+  
+  // 使用useCallback缓存函数
+  const handlePlayerAction = useCallback((actionType, targetId) => {
+    if (currentNightRole === 'SEER' && actionType === 'seer_check') {
+      executeNightAction('SEER', targetId, currentPlayer)
+    } else if (currentNightRole === 'WEREWOLF' && actionType === 'werewolf_kill') {
+      executeNightAction('WEREWOLF', targetId, currentPlayer)
+    } else if (currentNightRole === 'WITCH') {
+      if (actionType === 'witch_save') {
+        executeNightAction('WITCH', { save: targetId, poison: null }, currentPlayer)
+      } else if (actionType === 'witch_poison') {
+        executeNightAction('WITCH', { save: null, poison: targetId }, currentPlayer)
+      }
+    }
+  }, [currentNightRole, currentPlayer])
+  
+  // 批量状态更新
+  const resetGameState = useCallback(() => {
+    setGamePhase(GAME_PHASES.LOBBY)
+    setPlayers([])
+    setCurrentPlayer(null)
+    setGameLog([])
+    setNightActions({})
+    setDayNumber(1)
+    setVotingResults({})
+    setWinner(null)
+    setAiThinking(false)
+    setCurrentSpeaker(null)
+    setDayDiscussion([])
+    setIsProcessingAI(false)
+    setUserSpeech('')
+    setWaitingForUserSpeech(false)
+    setSeerResult(null)
+    setWitchUsedSave(false)
+    setWitchUsedPoison(false)
+    setHunterCanShoot(false)
+    setHunterTarget(null)
+    setVotes({})
+    setSeerHasChecked(false)
+    setCurrentNightRole(null)
+    setNightTimer(0)
+    setNightActionComplete(false)
+    setNightPhaseIndex(0)
+    resetNightState()
+  }, [
+    setGamePhase, setPlayers, setCurrentPlayer, setGameLog, setNightActions,
+    setDayNumber, setWinner, setSeerResult, setWitchUsedSave, setWitchUsedPoison,
+    setHunterCanShoot, setHunterTarget, resetNightState
+  ])
+
+  // 夜晚行动顺序
+  const NIGHT_ACTION_ORDER = ['WEREWOLF', 'SEER', 'WITCH']
 
   // 生成游戏状态描述
   const getGameState = () => {
@@ -35,7 +154,7 @@ function App() {
 
   // 初始化游戏
   const initializeGame = () => {
-    const newPlayers = initializePlayers(customRoles, selectedRole)
+    const newPlayers = initializePlayers(customRoles, selectedRole, PLAYER_NAMES)
     
     setPlayers(newPlayers)
     setCurrentPlayer(newPlayers.find(p => p.name === '你')) // 找到真人玩家
@@ -47,16 +166,30 @@ function App() {
     setWitchUsedPoison(false)
     setHunterCanShoot(false)
     setSeerResult(null)
+    setSeerHasChecked(false)
+    setNightActions({})
+    setGameLog([])
+    setDayNumber(1)
+    setWinner(null)
+    setAiThinking(false)
+    setCurrentSpeaker(null)
+    setIsProcessingAI(false)
+    setUserSpeech('')
+    setWaitingForUserSpeech(false)
+    setHunterTarget(null)
+    setCurrentNightRole(null)
+    setNightTimer(0)
+    setNightActionComplete(false)
+    setNightPhaseIndex(0)
     addToLog('游戏开始！第1夜降临...')
     
-    // 开始AI夜晚行动
-    setTimeout(() => processAINightActions(newPlayers), 2000)
+    // 开始夜晚行动流程
+    setTimeout(() => {
+      startNightActions()
+    }, 1000)
   }
 
-  // 添加游戏日志
-  const addToLog = (message) => {
-    setGameLog(prev => [...prev, { message, timestamp: new Date().toLocaleTimeString() }])
-  }
+
 
   // 检查游戏是否结束 - 屠边胜利条件
   const handleGameEnd = (playerList = players) => {
@@ -70,7 +203,264 @@ function App() {
     return false
   }
 
-  // AI夜晚行动处理 - 基于高级策略的智能决策
+  // 开始夜晚行动流程
+  const startNightActions = () => {
+    setNightPhaseIndex(0)
+    setCurrentNightRole(null)
+    setNightActionComplete(false)
+    processNextNightRole()
+  }
+
+  // 添加游戏状态验证函数
+  const validateGameState = () => {
+    const alivePlayers = players.filter(p => p.isAlive)
+    const werewolves = alivePlayers.filter(p => p.role === 'WEREWOLF')
+    const villagers = alivePlayers.filter(p => p.role !== 'WEREWOLF')
+    
+    if (werewolves.length === 0 || villagers.length === 0) {
+      console.warn('游戏状态异常：某一方已全部死亡但游戏未结束')
+      return false
+    }
+    
+    return true
+  }
+
+  // 处理下一个夜晚角色行动
+  const processNextNightRole = () => {
+    if (!validateGameState()) {
+      handleGameEnd(players)
+      return
+    }
+    
+    if (nightPhaseIndex >= NIGHT_ACTION_ORDER.length) {
+      // 所有夜晚行动完成，处理夜晚结果
+      processNightActions()
+      return
+    }
+    
+    const roleType = NIGHT_ACTION_ORDER[nightPhaseIndex]
+    const rolePlayer = players.find(p => p.role === roleType && p.isAlive)
+    
+    if (!rolePlayer) {
+      // 该角色玩家已死亡，2秒后跳过
+      addToLog(`${getRoleName(roleType)}已死亡，跳过行动`)
+      setTimeout(() => {
+        setNightPhaseIndex(prev => prev + 1)
+        processNextNightRole()
+      }, 2000)
+      return
+    }
+    
+    setCurrentNightRole(roleType)
+    setNightActionComplete(false)
+    
+    if (rolePlayer.isAI) {
+      // AI玩家行动
+      handleAINightAction(rolePlayer, roleType)
+    } else {
+      // 用户行动，启动10秒倒计时
+      startUserNightTimer(rolePlayer, roleType)
+    }
+  }
+
+  // 获取角色名称
+  const getRoleName = (roleType) => {
+    const roleNames = {
+      'WEREWOLF': '狼人',
+      'SEER': '预言家', 
+      'WITCH': '女巫'
+    }
+    return roleNames[roleType] || roleType
+  }
+
+  // 处理AI夜晚行动
+  const handleAINightAction = (player, roleType) => {
+    if (!player || !player.isAlive) {
+      console.warn('AI玩家无效或已死亡，跳过行动')
+      setNightPhaseIndex(prev => prev + 1)
+      processNextNightRole()
+      return
+    }
+    
+    // 清理之前的定时器
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+    
+    setAiThinking(true)
+    addToLog(`${player.name}(${getRoleName(roleType)})正在思考...`)
+    
+    timeoutRef.current = setTimeout(async () => {
+      try {
+        const action = await generateAINightAction(player, roleType)
+        if (action) {
+          executeNightAction(roleType, action, player)
+        } else {
+          executeDefaultNightAction(roleType, player)
+        }
+      } catch (error) {
+        console.error('AI夜晚行动失败:', error)
+        executeDefaultNightAction(roleType, player)
+      } finally {
+        setAiThinking(false)
+        setNightPhaseIndex(prev => prev + 1)
+        processNextNightRole()
+      }
+    }, 3000)
+  }
+
+  // 启动用户夜晚行动计时器
+  const startUserNightTimer = (userPlayer, roleType) => {
+    addToLog(`轮到${userPlayer.name}(${getRoleName(roleType)})行动，请在10秒内完成选择`)
+    
+    // 清理之前的定时器
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+    }
+    
+    let timeLeft = 10
+    setNightTimer(timeLeft)
+    
+    intervalRef.current = setInterval(() => {
+      timeLeft--
+      setNightTimer(timeLeft)
+      
+      if (timeLeft <= 0 || nightActionComplete) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+        
+        if (!nightActionComplete) {
+          // 超时，执行默认行动
+          executeDefaultNightAction(roleType, userPlayer)
+        }
+        
+        // 进入下一阶段
+        setTimeout(() => {
+          setNightPhaseIndex(prev => prev + 1)
+          processNextNightRole()
+        }, 1000)
+      }
+    }, 1000)
+  }
+
+  // 生成AI夜晚行动决策
+  const generateAINightAction = async (aiPlayer, roleType) => {
+    const alivePlayers = players.filter(p => p.isAlive)
+    
+    switch (roleType) {
+      case 'WEREWOLF':
+        return await generateWerewolfKillTarget(aiPlayer, alivePlayers)
+      case 'SEER':
+        return await generateSeerCheckTarget(aiPlayer, alivePlayers)
+      case 'WITCH':
+        const killTarget = nightActions.werewolf_kill
+        return await generateWitchActions(aiPlayer, alivePlayers, killTarget)
+      default:
+        return null
+    }
+  }
+
+  // 执行夜晚行动
+  const executeNightAction = (roleType, actionData, player) => {
+    // 添加状态验证
+    if (!player || !player.isAlive) {
+      console.warn('尝试执行已死亡玩家的夜晚行动')
+      return
+    }
+    
+    if (currentNightRole !== roleType) {
+      console.warn('夜晚行动角色不匹配')
+      return
+    }
+    
+    switch (roleType) {
+      case 'WEREWOLF':
+        if (actionData) {
+          setNightActions(prev => ({ ...prev, werewolf_kill: actionData }))
+          addToLog(`狼人行动完成`)
+        }
+        break
+        
+      case 'SEER':
+        if (actionData) {
+          const targetPlayer = players.find(p => p.id === actionData)
+          if (targetPlayer) {
+            const isWerewolf = targetPlayer.role === 'WEREWOLF'
+            setSeerResult({
+              playerName: targetPlayer.name,
+              isWerewolf: isWerewolf
+            })
+            setSeerHasChecked(true)
+            addToLog(`预言家行动完成`)
+          }
+        }
+        break
+        
+      case 'WITCH':
+        if (actionData) {
+          if (actionData.save) {
+            setNightActions(prev => ({ ...prev, witch_save: actionData.save }))
+            setWitchUsedSave(true)
+          }
+          if (actionData.poison) {
+            setNightActions(prev => ({ ...prev, witch_poison: actionData.poison }))
+            setWitchUsedPoison(true)
+          }
+          addToLog(`女巫行动完成`)
+        }
+        break
+    }
+    
+    setNightActionComplete(true)
+    
+    // 确保状态更新后再进行下一步
+    setTimeout(() => {
+      setNightPhaseIndex(prev => prev + 1)
+      processNextNightRole()
+    }, 100)
+  }
+
+  // 执行默认夜晚行动（超时处理）
+  const executeDefaultNightAction = (roleType, player) => {
+    switch (roleType) {
+      case 'WEREWOLF':
+        // 随机选择击杀目标
+        const targets = players.filter(p => p.isAlive && p.role !== 'WEREWOLF')
+        if (targets.length > 0) {
+          const randomTarget = targets[Math.floor(Math.random() * targets.length)]
+          executeNightAction(roleType, randomTarget.id, player)
+        }
+        break
+        
+      case 'SEER':
+        // 随机选择查验目标
+        const checkTargets = players.filter(p => p.isAlive && p.id !== player.id)
+        if (checkTargets.length > 0) {
+          const randomTarget = checkTargets[Math.floor(Math.random() * checkTargets.length)]
+          executeNightAction(roleType, randomTarget.id, player)
+        }
+        break
+        
+      case 'WITCH':
+        // 不使用技能
+        executeNightAction(roleType, { save: null, poison: null }, player)
+        break
+    }
+    
+    addToLog(`${player.name}行动超时，执行默认选择`)
+  }
+
+  // 获取角色显示名称
+  const getRoleDisplayName = (role) => {
+    const roleNames = {
+      'WEREWOLF': '狼人',
+      'SEER': '预言家', 
+      'WITCH': '女巫'
+    }
+    return roleNames[role] || role
+  }
+
+  // AI夜晚行动处理 - 基于高级策略的智能决策（保留原有逻辑作为备用）
   const processAINightActions = async (playerList = players) => {
     setIsProcessingAI(true)
     const newNightActions = { ...nightActions }
@@ -122,34 +512,31 @@ function App() {
     }
   }
 
-  // 狼人专业击杀策略 - 基于优先级：女巫>预言家>神职>好人
-  const generateWerewolfKillTarget = async (werewolf, playerList) => {
-    const targets = playerList.filter(p => p.isAlive && p.role !== 'WEREWOLF')
+  // 生成狼人击杀目标
+  const generateWerewolfKillTarget = async (werewolfPlayer, alivePlayers) => {
+    const targets = alivePlayers.filter(p => p.role !== 'WEREWOLF' && p.isAlive)
     if (targets.length === 0) return null
     
-    const gameHistory = gameLog.slice(-15).map(log => log.message).join('\n')
-    const todaySpeeches = dayDiscussion.map(d => `${d.playerName}: ${d.speech}`).join('\n')
-    
-    const messages = [
-      {
-        role: 'system',
-        content: `你是狼人，现在制定夜晚击杀策略。基于专业狼人杀策略：\n\n击杀优先级（从高到低）：\n1. 女巫（最强神职，拥有归票权和双药）\n2. 预言家（特别是已验出狼人的预言家）\n3. 其他神职（猎人要谨慎，避免被反杀）\n4. 影响力大的好人\n5. 坐实身份的好人\n\n战术考虑：\n- 分析白天发言，识别隐藏的神职\n- 避免击杀明显会被女巫救的目标\n- 考虑让预言家成为"验尸官"（验死人）\n- 避免击杀下一天要被投票的好人\n- 分析玩家的逻辑能力和威胁程度\n\n只返回要击杀的玩家姓名，不要解释原因。`
-      },
-      {
-        role: 'user',
-        content: `夜晚击杀阶段 - 第${dayNumber}夜\n\n可击杀目标：${targets.map(p => `${p.name}(${p.isAI ? 'AI' : '真人'})`).join('、')}\n\n今日发言记录：\n${todaySpeeches || '暂无发言'}\n\n游戏历史：\n${gameHistory}\n\n请基于专业击杀策略选择目标（只返回姓名）：`
-      }
-    ]
-    
     try {
-      const response = await callMoonshotAPI(messages, 0.7)
-      const targetName = response.trim()
-      const target = targets.find(p => p.name.includes(targetName) || targetName.includes(p.name))
-      return target ? target.id : getSmartKillTarget(targets)
+      const gameState = getGameState()
+      const prompt = `你是狼人${werewolfPlayer.name}，个性：${werewolfPlayer.personality}。
+      当前游戏状态：${gameState}
+      可击杀目标：${targets.map(p => `${p.name}(${p.isAI ? 'AI' : '真人'})`).join(', ')}
+      
+      请选择最佳击杀目标，只返回目标的ID数字。`
+      
+      const response = await callMoonshotAPI(prompt)
+      const targetId = parseInt(response.trim())
+      
+      if (targets.find(p => p.id === targetId)) {
+        return targetId
+      }
     } catch (error) {
-      console.error('狼人击杀决策失败:', error)
-      return getSmartKillTarget(targets)
+      console.error('AI狼人决策失败:', error)
     }
+    
+    // 降级方案：随机选择
+    return targets[Math.floor(Math.random() * targets.length)].id
   }
 
   // 智能击杀目标选择（降级方案）
@@ -168,83 +555,56 @@ function App() {
     return villagerTargets.length > 0 ? villagerTargets[0].id : targets[0].id
   }
 
-  // 预言家专业查验策略
-  const generateSeerCheckTarget = async (seer, playerList) => {
-    const targets = playerList.filter(p => p.isAlive && p.id !== seer.id)
+  // 生成预言家查验目标
+  const generateSeerCheckTarget = async (seerPlayer, alivePlayers) => {
+    const targets = alivePlayers.filter(p => p.id !== seerPlayer.id && p.isAlive)
     if (targets.length === 0) return null
     
-    const gameHistory = gameLog.slice(-15).map(log => log.message).join('\n')
-    const todaySpeeches = dayDiscussion.map(d => `${d.playerName}: ${d.speech}`).join('\n')
-    
-    const messages = [
-      {
-        role: 'system',
-        content: `你是预言家，制定查验策略。基于专业预言家策略：\n\n查验优先级：\n1. 发言逻辑有问题、前后矛盾的玩家\n2. 行为可疑、过于激进或沉默的玩家\n3. 投票行为异常的玩家\n4. 关键位置的玩家\n5. 影响力大但身份不明的玩家\n\n战术考虑：\n- 避免查验明显的好人\n- 优先查验能获得关键信息的目标\n- 考虑查验结果对明天发言的帮助\n- 分析谁可能是悍跳狼或深水狼\n\n只返回要查验的玩家姓名，不要解释原因。`
-      },
-      {
-        role: 'user',
-        content: `夜晚查验阶段 - 第${dayNumber}夜\n\n可查验目标：${targets.map(p => `${p.name}(${p.isAI ? 'AI' : '真人'})`).join('、')}\n\n今日发言记录：\n${todaySpeeches || '暂无发言'}\n\n游戏历史：\n${gameHistory}\n\n请基于专业查验策略选择目标（只返回姓名）：`
-      }
-    ]
-    
     try {
-      const response = await callMoonshotAPI(messages, 0.7)
-      const targetName = response.trim()
-      const target = targets.find(p => p.name.includes(targetName) || targetName.includes(p.name))
-      return target ? target.id : targets[Math.floor(Math.random() * targets.length)].id
+      const gameState = getGameState()
+      const prompt = `你是预言家${seerPlayer.name}，个性：${seerPlayer.personality}。
+      当前游戏状态：${gameState}
+      可查验目标：${targets.map(p => `${p.name}(${p.isAI ? 'AI' : '真人'})`).join(', ')}
+      
+      请选择最佳查验目标，只返回目标的ID数字。`
+      
+      const response = await callMoonshotAPI(prompt)
+      const targetId = parseInt(response.trim())
+      
+      if (targets.find(p => p.id === targetId)) {
+        return targetId
+      }
     } catch (error) {
-      console.error('预言家查验决策失败:', error)
-      return targets[Math.floor(Math.random() * targets.length)].id
+      console.error('AI预言家决策失败:', error)
     }
+    
+    // 降级方案：随机选择
+    return targets[Math.floor(Math.random() * targets.length)].id
   }
 
-  // 女巫专业用药策略
-  const generateWitchActions = async (witch, playerList, werewolfKillTarget) => {
-    const gameHistory = gameLog.slice(-15).map(log => log.message).join('\n')
-    const todaySpeeches = dayDiscussion.map(d => `${d.playerName}: ${d.speech}`).join('\n')
-    
-    const killedPlayer = werewolfKillTarget ? playerList.find(p => p.id === werewolfKillTarget) : null
-    const alivePlayers = playerList.filter(p => p.isAlive && p.id !== witch.id)
-    
-    const messages = [
-      {
-        role: 'system',
-        content: `你是女巫，制定用药策略。基于专业女巫策略：\n\n解药使用原则：\n1. 优先救神职玩家（预言家、猎人）\n2. 救坐实身份的好人\n3. 避免救可疑的狼人（特别是自刀狼）\n4. 考虑救人后的局势影响\n\n毒药使用原则：\n1. 毒最可疑的狼人\n2. 用于排水，清理狼坑\n3. 毒影响力大的可疑玩家\n4. 考虑毒人后的投票局势\n\n战术考虑：\n- 女巫是好人最强神职，要为团队负责\n- 药剂珍贵，使用要谨慎\n- 分析白天发言和投票行为\n- 考虑对整体局势的影响\n\n请返回JSON格式：{\"save\": \"玩家姓名或null\", \"poison\": \"玩家姓名或null\"}\n如果不使用某种药剂，对应值设为null。`
-      },
-      {
-        role: 'user',
-        content: `夜晚女巫阶段 - 第${dayNumber}夜\n\n${killedPlayer ? `被狼人击杀的玩家：${killedPlayer.name}(${killedPlayer.isAI ? 'AI' : '真人'})` : '无人被狼人击杀'}\n\n可毒杀目标：${alivePlayers.map(p => `${p.name}(${p.isAI ? 'AI' : '真人'})`).join('、')}\n\n今日发言记录：\n${todaySpeeches || '暂无发言'}\n\n游戏历史：\n${gameHistory}\n\n请基于专业女巫策略决定用药（JSON格式）：`
-      }
-    ]
-    
+  // 生成女巫行动决策
+  const generateWitchActions = async (witchPlayer, alivePlayers, killTarget) => {
     try {
-      const response = await callMoonshotAPI(messages, 0.7)
-      const decision = JSON.parse(response.trim())
+      const gameState = getGameState()
+      const canSave = !witchUsedSave && killTarget
+      const canPoison = !witchUsedPoison
       
-      const result = { save: null, poison: null }
-      
-      // 处理救人决策
-      if (decision.save && killedPlayer) {
-        const shouldSave = decision.save.includes(killedPlayer.name) || killedPlayer.name.includes(decision.save)
-        if (shouldSave) {
-          result.save = killedPlayer.id
-        }
+      if (!canSave && !canPoison) {
+        return { save: null, poison: null }
       }
       
-      // 处理毒人决策
-      if (decision.poison) {
-        const target = alivePlayers.find(p => 
-          p.name.includes(decision.poison) || decision.poison.includes(p.name)
-        )
-        if (target) {
-          result.poison = target.id
-        }
-      }
+      const prompt = `你是女巫${witchPlayer.name}，个性：${witchPlayer.personality}。
+      当前游戏状态：${gameState}
+      今晚狼人击杀目标：${killTarget ? players.find(p => p.id === killTarget)?.name : '无'}
+      可用技能：${canSave ? '解药' : ''}${canSave && canPoison ? '、' : ''}${canPoison ? '毒药' : ''}
       
-      return result
+      请决定是否使用技能，格式：{"save": 目标ID或null, "poison": 目标ID或null}`
+      
+      const response = await callMoonshotAPI(prompt)
+      return JSON.parse(response.trim())
     } catch (error) {
-      console.error('女巫用药决策失败:', error)
-      return getSmartWitchActions(killedPlayer, alivePlayers)
+      console.error('AI女巫决策失败:', error)
+      return { save: null, poison: null }
     }
   }
 
@@ -274,42 +634,46 @@ function App() {
     return result
   }
 
-  // 夜晚行动
-  const handleNightAction = (actionType, targetId) => {
-    setNightActions(prev => ({
-      ...prev,
-      [actionType]: targetId
-    }))
+  // 修改原有的handleNightAction函数
+  const handleNightAction = useCallback((actionType, targetId) => {
+    handlePlayerAction(actionType, targetId)
+  }, [handlePlayerAction])
+
+
+
+  // 添加检查夜晚行动是否完成的函数
+  const checkNightActionsComplete = () => {
+    if (!currentPlayer) return false
     
-    // 处理预言家查验
-    if (actionType === 'seer_check') {
-      const targetPlayer = players.find(p => p.id === targetId)
-      if (targetPlayer) {
-        const isWerewolf = targetPlayer.role === 'WEREWOLF'
-        setSeerResult({
-          playerName: targetPlayer.name,
-          isWerewolf: isWerewolf
-        })
-        addToLog(`预言家查验了 ${targetPlayer.name}，结果是：${isWerewolf ? '狼人' : '好人'}`)
-      }
-    }
-    
-    // 处理女巫技能使用状态
-    if (actionType === 'witch_save') {
-      setWitchUsedSave(true)
-      const targetPlayer = players.find(p => p.id === targetId)
-      addToLog(`女巫对 ${targetPlayer?.name} 使用了解药`)
-    }
-    
-    if (actionType === 'witch_poison') {
-      setWitchUsedPoison(true)
-      const targetPlayer = players.find(p => p.id === targetId)
-      addToLog(`女巫对 ${targetPlayer?.name} 使用了毒药`)
+    // 根据当前玩家角色检查必要行动是否完成
+    switch (currentPlayer.role) {
+      case 'WEREWOLF':
+        return nightActions.werewolf_kill !== undefined
+      case 'SEER':
+        return seerHasChecked
+      case 'WITCH':
+        // 女巫可以选择不使用技能，所以总是可以结束
+        return true
+      default:
+        return true
     }
   }
 
   // 处理夜晚结果
   const processNightActions = () => {
+    // 检查必要的夜晚行动是否完成
+    if (!checkNightActionsComplete()) {
+      let missingAction = ''
+      if (currentPlayer?.role === 'WEREWOLF' && !nightActions.werewolf_kill) {
+        missingAction = '狼人必须选择击杀目标'
+      } else if (currentPlayer?.role === 'SEER' && !seerHasChecked) {
+        missingAction = '预言家必须进行查验'
+      }
+      
+      addToLog(`无法结束夜晚：${missingAction}`)
+      return
+    }
+    
     let newPlayers = [...players]
     let killedPlayers = []
     
@@ -347,12 +711,14 @@ function App() {
       setPlayers(newPlayers)
       setNightActions({})
       setSeerResult(null)
+      setSeerHasChecked(false) // 重置预言家查验状态
       return // 暂停游戏流程，等待猎人开枪
     }
     
     setPlayers(newPlayers)
     setNightActions({})
     setSeerResult(null)
+    setSeerHasChecked(false) // 重置预言家查验状态
     
     // 检查游戏是否结束
     setTimeout(() => {
@@ -372,6 +738,11 @@ function App() {
 
   // 开始白天讨论 - 按ID顺序发言
   const startDayDiscussion = async (playerList = players) => {
+    if (!validateGameState()) {
+      handleGameEnd(playerList)
+      return
+    }
+    
     const alivePlayers = playerList.filter(p => p.isAlive).sort((a, b) => a.id - b.id)
     
     // 所有存活玩家按顺序发言
@@ -456,6 +827,11 @@ function App() {
 
   // AI投票逻辑
   const processAIVoting = async () => {
+    if (!validateGameState()) {
+      handleGameEnd(players)
+      return
+    }
+    
     setIsProcessingAI(true)
     const alivePlayers = players.filter(p => p.isAlive)
     const aiPlayers = alivePlayers.filter(p => p.isAI)
@@ -651,6 +1027,11 @@ function App() {
 
   // 处理投票结果
   const processVoting = () => {
+    if (!validateGameState()) {
+      handleGameEnd(players)
+      return
+    }
+    
     const voteCount = {}
     Object.values(votes).forEach(targetId => {
       voteCount[targetId] = (voteCount[targetId] || 0) + 1
@@ -685,12 +1066,15 @@ function App() {
     
     // 如果游戏没有结束，进入下一轮
     if (!gameEnded) {
-      setGamePhase(GAME_PHASES.NIGHT)
-      setDayNumber(prev => prev + 1)
-      addToLog(`第${dayNumber + 1}夜降临...`)
-      
-      // 开始下一轮AI夜晚行动
-      setTimeout(() => processAINightActions(), 2000)
+      // 修复：使用回调确保状态更新完成
+      setDayNumber(prev => {
+        const newDayNumber = prev + 1
+        setGamePhase(GAME_PHASES.NIGHT)
+        addToLog(`第${newDayNumber}夜降临...`)
+        
+        setTimeout(() => startNightActions(), 2000)
+        return newDayNumber
+      })
     }
   }
   
@@ -718,9 +1102,10 @@ function App() {
         } else if (gamePhase === GAME_PHASES.VOTING) {
           // 如果在投票阶段，进入夜晚
           setGamePhase(GAME_PHASES.NIGHT)
-          setDayNumber(prev => prev + 1)
-          addToLog(`第${dayNumber + 1}天夜晚开始`)
-          setTimeout(() => processAINightActions(newPlayers), 2000)
+          const nextDay = dayNumber + 1
+          setDayNumber(nextDay)
+          addToLog(`第${nextDay}天夜晚开始`)
+          setTimeout(() => startNightActions(), 2000)
         }
       }
     }
@@ -820,20 +1205,15 @@ function App() {
                 // 狼人可以看到队友身份
                 const canSeeRole = currentPlayer?.id === player.id || 
                   (currentPlayer?.role === 'WEREWOLF' && player.role === 'WEREWOLF')
+                const isTeammate = currentPlayer?.role === 'WEREWOLF' && player.role === 'WEREWOLF' && player.id !== currentPlayer.id
                 
                 return (
-                  <div key={player.id} className={`player-card ${!player.isAlive ? 'dead' : ''} ${currentPlayer?.role === 'WEREWOLF' && player.role === 'WEREWOLF' && player.id !== currentPlayer.id ? 'werewolf-teammate' : ''}`}>
-                    <div className="player-name">{player.name}</div>
-                    <div className="player-role">
-                      {canSeeRole ? ROLES[player.role].name : '未知'}
-                      {currentPlayer?.role === 'WEREWOLF' && player.role === 'WEREWOLF' && player.id !== currentPlayer.id && (
-                        <span className="teammate-indicator"> 🐺</span>
-                      )}
-                    </div>
-                    <div className="player-status">
-                      {player.isAlive ? '存活' : '死亡'}
-                    </div>
-                  </div>
+                  <PlayerCard
+                    key={player.id}
+                    player={player}
+                    canSeeRole={canSeeRole}
+                    isTeammate={isTeammate}
+                  />
                 )
               })}
             </div>
@@ -852,7 +1232,21 @@ function App() {
           {gamePhase === GAME_PHASES.NIGHT && (
             <div className="night-actions">
               <h3>夜晚行动</h3>
-              {currentPlayer?.role === 'WEREWOLF' && (
+              
+              {/* 显示当前行动角色和倒计时 */}
+              {currentNightRole && (
+                <div className="current-night-phase">
+                  <h4>当前阶段：{getRoleName(currentNightRole)}行动</h4>
+                  {nightTimer > 0 && currentPlayer && !currentPlayer.isAI && (
+                    <div className="night-timer">
+                      <span>剩余时间：{nightTimer}秒</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* 狼人行动界面 */}
+              {currentNightRole === 'WEREWOLF' && currentPlayer?.role === 'WEREWOLF' && (
                 <div className="action-section">
                   <div className="werewolf-team-info">
                     <h4>🐺 狼人团队</h4>
@@ -865,34 +1259,32 @@ function App() {
                       ))}
                     </div>
                   </div>
-                  <h4>选择杀死的玩家 (狼人共同决策)</h4>
+                  <h4>选择杀死的玩家</h4>
                   <div className="target-buttons">
                     {players.filter(p => p.isAlive && p.role !== 'WEREWOLF').map(player => (
                       <button 
                         key={player.id} 
                         onClick={() => handleNightAction('werewolf_kill', player.id)}
-                        className={nightActions.werewolf_kill === player.id ? 'selected' : ''}
+                        disabled={nightActionComplete}
                       >
                         {player.name}
-                        {nightActions.werewolf_kill === player.id && <span className="selected-indicator"> ✓</span>}
                       </button>
                     ))}
                   </div>
-                  {nightActions.werewolf_kill && (
-                    <div className="werewolf-decision">
-                      <p>已选择目标: {players.find(p => p.id === nightActions.werewolf_kill)?.name}</p>
-                      <p className="decision-note">💡 作为狼人，你拥有最终决定权</p>
-                    </div>
-                  )}
                 </div>
               )}
               
-              {currentPlayer?.role === 'SEER' && (
+              {/* 预言家行动界面 */}
+              {currentNightRole === 'SEER' && currentPlayer?.role === 'SEER' && (
                 <div className="action-section">
                   <h4>选择查验的玩家</h4>
                   <div className="target-buttons">
                     {players.filter(p => p.isAlive && p.id !== currentPlayer.id).map(player => (
-                      <button key={player.id} onClick={() => handleNightAction('seer_check', player.id)}>
+                      <button 
+                        key={player.id} 
+                        onClick={() => handleNightAction('seer_check', player.id)}
+                        disabled={nightActionComplete}
+                      >
                         {player.name}
                       </button>
                     ))}
@@ -906,7 +1298,8 @@ function App() {
                 </div>
               )}
               
-              {currentPlayer?.role === 'WITCH' && (
+              {/* 女巫行动界面 */}
+              {currentNightRole === 'WITCH' && currentPlayer?.role === 'WITCH' && (
                 <div className="action-section">
                   <h4>女巫行动</h4>
                   <div className="witch-actions">
@@ -914,26 +1307,36 @@ function App() {
                       <h5>使用解药救人 {witchUsedSave ? '(已使用)' : ''}</h5>
                       <div className="target-buttons">
                         {!witchUsedSave && players.filter(p => p.isAlive).map(player => (
-                          <button key={player.id} onClick={() => handleNightAction('witch_save', player.id)}>
+                          <button 
+                            key={player.id} 
+                            onClick={() => handleNightAction('witch_save', player.id)}
+                            disabled={nightActionComplete}
+                          >
                             {player.name}
                           </button>
                         ))}
-                        {witchUsedSave && <p>本局游戏解药已使用</p>}
                       </div>
                     </div>
                     <div>
                       <h5>使用毒药毒人 {witchUsedPoison ? '(已使用)' : ''}</h5>
                       <div className="target-buttons">
                         {!witchUsedPoison && players.filter(p => p.isAlive && p.id !== currentPlayer.id).map(player => (
-                          <button key={player.id} onClick={() => handleNightAction('witch_poison', player.id)}>
+                          <button 
+                            key={player.id} 
+                            onClick={() => handleNightAction('witch_poison', player.id)}
+                            disabled={nightActionComplete}
+                          >
                             {player.name}
                           </button>
                         ))}
-                        {witchUsedPoison && <p>本局游戏毒药已使用</p>}
                       </div>
                     </div>
                     <div className="witch-skip">
-                      <button className="skip-btn" onClick={() => addToLog('女巫选择不使用技能')}>
+                      <button 
+                        className="skip-btn" 
+                        onClick={() => executeNightAction('WITCH', { save: null, poison: null }, currentPlayer)}
+                        disabled={nightActionComplete}
+                      >
                         跳过行动
                       </button>
                     </div>
@@ -941,9 +1344,12 @@ function App() {
                 </div>
               )}
               
-              <button className="phase-btn" onClick={processNightActions}>
-                结束夜晚
-              </button>
+              {/* 等待其他玩家行动 */}
+              {currentNightRole && (!currentPlayer || currentPlayer.role !== currentNightRole) && (
+                <div className="waiting-phase">
+                  <p>等待{getRoleName(currentNightRole)}完成行动...</p>
+                </div>
+              )}
             </div>
           )}
 
@@ -1068,13 +1474,7 @@ function App() {
               <div className="winner">
                 {winner === 'villagers' ? '🎉 好人阵营胜利！' : '🐺 狼人阵营胜利！'}
               </div>
-              <button className="restart-btn" onClick={() => {
-                setGamePhase(GAME_PHASES.LOBBY)
-                setPlayers([])
-                setGameLog([])
-                setDayNumber(1)
-                setWinner(null)
-              }}>
+              <button className="restart-btn" onClick={resetGameState}>
                 重新开始
               </button>
             </div>
