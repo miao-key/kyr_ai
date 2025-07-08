@@ -109,3 +109,5 @@ export const useNightActions = () => {
     resetNightState
   }
 }
+const [witchUsedSave, setWitchUsedSave] = useState(false)
+const [witchUsedPoison, setWitchUsedPoison] = useState(false)
