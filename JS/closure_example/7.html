@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>立即执行函数</title>
+</head>
+<body>
+    <script>
+        const Counter = (function(){
+            let count = 0; // 自由变量 私有
+            function increment(){
+                return ++count;
+            }
+            function reset(){
+
+            }
+
+            return function(){
+                return {
+                    getCount: function(){
+                        return count;
+                    },
+                    reset: function(){
+                        reset();
+                    }
+                }
+            }
+
+        })();
+
+        const counter1 = Counter();
+        const counter2 = Counter();
+        console.log(counter1.getCount());
+        console.log(counter2.getCount());
+
+
+    </script>
+</body>
+</html>
