@@ -18,6 +18,7 @@ function App() {
     // setTitle("")
     // setState 函数式更新语法
     // 每个更新都基于上一个最新的更新
+    // 界面的更新合并为一次的，
     setCount(prev => prev + 1);
     setCount(prev => prev + 1);
     setCount(prev => prev + 1);
