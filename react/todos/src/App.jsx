@@ -38,7 +38,7 @@ import './App.css'
 function App(){
   // 数据 ->数据状态 数据业务 改变的 数据状态
   const [todos, setTodos] = useState(['吃饭', '喝酒', '打太极']);
-  const [title,setTitle] = useState('ECTU 强者如斯');
+  const [title,setTitle] = useState('斗尊 强者如斯');
   setTimeout(() => {
     setTodos(['吃饭', '喝酒', '打太极', '钓鱼']);
     setTitle('腾讯强者 恐怖如斯');
