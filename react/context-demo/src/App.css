@@ -1,10 +1,4 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
-
+/* 原有样式保持不变 */
 .logo {
   height: 6em;
   padding: 1.5em;
@@ -39,4 +33,73 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* 主题切换样式 - 彻底解决滚动条问题 */
+.app {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Light 主题 */
+.app.light {
+  background-color: #ffffff;
+  color: #213547;
+}
+
+.app.light button {
+  border-radius: 8px;
+  border: 1px solid #646cff;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #f9f9f9;
+  color: #213547;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  margin-top: 1rem;
+}
+
+.app.light button:hover {
+  background-color: #646cff;
+  color: white;
+}
+
+/* Dark 主题 */
+.app.dark {
+  background-color: #242424;
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.app.dark button {
+  border-radius: 8px;
+  border: 1px solid #646cff;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  color: rgba(255, 255, 255, 0.87);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  margin-top: 1rem;
+}
+
+.app.dark button:hover {
+  background-color: #646cff;
+  color: white;
+}
+
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
 }

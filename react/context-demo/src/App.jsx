@@ -8,9 +8,12 @@ function App() {
   console.log(ThemeContext, "//////");
 
   return (
+    <div className={`app ${theme}`}>
     <ThemeContext.Provider value={theme}>
       <Page />
-      <button onClick={() => setTheme("dark")}>切换主题</button>
+      <button onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
+        切换主题 
+      </button>
       {/* <Uncle /> */}
       {/* <Parent>
         <Child>
@@ -20,6 +23,7 @@ function App() {
         </Child>
       </Parent> */}
     </ThemeContext.Provider>
+    </div>
   );
 }
 
