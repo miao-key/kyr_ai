@@ -4,7 +4,6 @@ const Page = () => {
     const theme = useTheme();
     return(
         <>
-            {theme}
             <Child />
         </>
     )
