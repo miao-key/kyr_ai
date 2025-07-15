@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音游 - 钢琴打击</title>
+    <style>
+        /* 基础样式 */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* 游戏容器 */
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background-color: #1a1a1a;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            display: flex;
+            overflow: hidden;
+        }
+        
+        /* 轨道样式 */
+        .track {
+            position: relative;
+            height: 100%;
+            flex-grow: 1;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            transition: background-color 0.2s;
+        }
+        
+        /* 轨道高亮效果 */
+        .track.active {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* 轨道标签 */
+        .track-label {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+            background-color: #333;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            z-index: 3;
+        }
+        
+        /* 音符样式 */
+        .note {
+            position: absolute;
+            width: 60px; /* 固定宽度替代百分比 */
+            height: 30px;
+            background: linear-gradient(to bottom, #5e60ce, #5390d9);
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(83, 144, 217, 0.8);
+            z-index: 2;
+            transform: translateX(-50%); /* 水平居中 */
+            /* 使用直接的top动画，而不是animation属性 */
+            top: -50px;
+            transition: top 3s linear;
+            pointer-events: none; /* 确保音符不阻碍点击事件 */
+        }
+        
+        /* 添加创建音符时的class */
+        .note.falling {
+            top: calc(100% + 30px); /* 确保完全落下到屏幕外 */
+        }
+        
+        /* 大音符 */
+        .note.large {
+            height: 40px;
+            width: 70px;
+            background: linear-gradient(to bottom, #7400b8, #6930c3);
+            box-shadow: 0 0 15px rgba(116, 0, 184, 0.8);
+        }
+        
+        /* 长音符 */
+        .note.long {
+            background: linear-gradient(to bottom, #48bfe3, #56cfe1);
+            box-shadow: 0 0 10px rgba(72, 191, 227, 0.8);
+        }
+        
+        /* 轨道高亮效果 */
+        .track.active .track-label {
+            background-color: #5e60ce;
+            transform: translateX(-50%) scale(1.1);
+            box-shadow: 0 0 15px rgba(83, 144, 217, 0.8);
+        }
+        
+        /* 判定线 */
+        #judgement-line {
+            position: absolute;
+            bottom: 100px;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0));
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 20px rgba(83, 144, 217, 0.5);
+            z-index: 4;
+        }
+        
+        /* 判定文本 */
+        #judgement-text {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        /* 命中反馈 */
+        .note.hit {
+            opacity: 0;
+            transform: translateX(-50%) scale(1.5);
+            transition: all 0.2s ease-out;
+        }
+        
+        /* 不同命中等级的效果 */
+        .note.perfect {
+            background: linear-gradient(to bottom, #60d394, #83e377);
+            box-shadow: 0 0 20px rgba(96, 211, 148, 0.9);
+        }
+        
+        .note.good {
+            background: linear-gradient(to bottom, #ffca3a, #ffd166);
+            box-shadow: 0 0 20px rgba(255, 202, 58, 0.9);
+        }
+        
+        .note.barely {
+            background: linear-gradient(to bottom, #ff9e00, #ff9100);
+            box-shadow: 0 0 20px rgba(255, 158, 0, 0.9);
+        }
+        
+        /* 游戏界面元素 */
+        .game-interface {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+            color: white;
+            font-size: 16px;
+        }
+        
+        /* 控制按钮 */
+        #controls-container {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .control-button {
+            padding: 10px 20px;
+            background-color: #4361ee;
+            /* color: white; */
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .control-button:hover {
+            background-color: #3a56d4;
+        }
+        
+        .control-button.debug {
+            background-color: #d90429;
+        }
+        
+        /* 调试面板 */
+        #debug-panel {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 100;
+            max-width: 300px;
+            max-height: 200px;
+            overflow: auto;
+        }
+        
+        /* 确保所有元素布局正常 */
+        * {
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <h1>钢琴打击 - 音游</h1>
+    <div id="game-container">
+        <!-- 游戏轨道将通过JS动态创建 -->
+        <!-- 判定线 -->
+        <div id="judgement-line"></div>
+    </div>
+    
+    <!-- 控制按钮 -->
+    <div id="controls-container"></div>
+    
+    <!-- 调试面板 -->
+    <div id="debug-panel" style="display: none;">
+        <h3>调试信息</h3>
+        <div id="debug-info"></div>
+    </div>
+    
+    <!-- 加载音频管理器 -->
+    <script src="soundManager.js"></script>
+    
+    <!-- 游戏主逻辑 -->
+    <script src="game.js"></script>
+    
+    <!-- 初始化脚本 -->
+    <script src="init.js"></script>
+    
+    <!-- 内联脚本确保基础元素显示 -->
+    <script>
+        // 确保游戏容器可见
+        document.addEventListener('DOMContentLoaded', function() {
+            const gameContainer = document.getElementById('game-container');
+            if (gameContainer) {
+                gameContainer.style.display = 'flex';
+                gameContainer.style.visibility = 'visible';
+                console.log('游戏容器已设置为可见');
+            }
+            
+            // 检查是否要显示调试面板
+            const debugMode = true; // 可以根据需要关闭
+            if (debugMode) {
+                const debugPanel = document.getElementById('debug-panel');
+                if (debugPanel) {
+                    debugPanel.style.display = 'block';
+                }
+                
+                // 添加调试信息
+                logDebugInfo('游戏初始化中...');
+            }
+            
+            // 创建测试按钮
+            const controlsContainer = document.getElementById('controls-container');
+            if (controlsContainer) {
+                const testButton = document.createElement('button');
+                testButton.textContent = '创建测试音符';
+                testButton.className = 'control-button debug';
+                testButton.onclick = function() {
+                    if (window.debugCreateNote) {
+                        const randomTrack = Math.floor(Math.random() * 7);
+                        window.debugCreateNote(randomTrack);
+                    } else {
+                        logDebugInfo('调试函数未找到');
+                    }
+                };
+                controlsContainer.appendChild(testButton);
+            }
+        });
+        
+        // 调试日志函数
+        function logDebugInfo(message) {
+            const debugInfo = document.getElementById('debug-info');
+            if (debugInfo) {
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = document.createElement('div');
+                logEntry.textContent = `[${timestamp}] ${message}`;
+                debugInfo.appendChild(logEntry);
+                
+                // 保持最新消息可见
+                debugInfo.scrollTop = debugInfo.scrollHeight;
+                
+                // 限制日志条目数
+                while (debugInfo.children.length > 50) {
+                    debugInfo.removeChild(debugInfo.firstChild);
+                }
+            }
+            console.log(message); // 同时输出到控制台
+        }
+        
+        // 将调试日志函数添加到全局
+        window.logDebugInfo = logDebugInfo;
+    </script>
+</body>
+</html>

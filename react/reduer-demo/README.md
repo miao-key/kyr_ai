@@ -1,12 +1,25 @@
-# React + Vite
+# reducer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+- 聊聊组件通信
+    单向数据流 跨层级
+    - 父子组件props通信
+    - 子父组件通信-自定义事件props传递
+    - 兄弟组件通信 通过父组件中转
+    跨层级 全局通信
+    - useContext + useReducer
+    - redux
 
-Currently, two official plugins are available:
+- useContext + createContext 打理复杂的全局跨层级共享
+    力不从心了
+- useReducer 全局状态**管理**
+    - 多状态
+    - 俄罗斯套娃
+    - 公司一样 制定一个制度
+      - 单纯 reducer 纯函数
+- 纯函数和规定
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## useReducer
+- useState 响应式状态
+- 响应式状态管理
+    上手段
+    
