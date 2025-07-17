@@ -1,0 +1,115 @@
+:root {
+  --primary-color: #007bff;
+  --secondary-color: #6c757d;
+  --success-color: #28a745;
+  --danger-color: #dc3545;
+  --light-color: #f8f9fa;
+  --dark-color: #343a40;
+  --border-color: #dee2e6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f0f2f5;
+  color: #333;
+  line-height: 1.6;
+}
+
+.App {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.game-container {
+  background-color: var(--light-color);
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.game-header {
+  background-color: var(--dark-color);
+  color: white;
+  padding: 15px 20px;
+  text-align: center;
+}
+
+.game-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.game-phase {
+  font-size: 1.2rem;
+  margin-top: 5px;
+  font-weight: 300;
+}
+
+.game-main {
+  display: flex;
+  padding: 20px;
+  gap: 20px;
+}
+
+.game-sidebar {
+  flex: 0 0 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.game-content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 白天讨论阶段样式 */
+.day-discussion {
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.day-discussion h2 {
+  color: var(--dark-color);
+  margin-top: 0;
+}
+
+.next-phase-button {
+  display: block;
+  margin: 20px auto 0;
+  padding: 10px 20px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.next-phase-button:hover {
+  background-color: #0069d9;
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+  .game-main {
+    flex-direction: column;
+  }
+  
+  .game-sidebar {
+    flex: none;
+    width: 100%;
+  }
+}
