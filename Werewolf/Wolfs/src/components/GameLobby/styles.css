@@ -1,0 +1,156 @@
+.game-lobby {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f5f5f5;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.game-lobby h1, .game-lobby h2 {
+  text-align: center;
+  color: #333;
+}
+
+.game-lobby h1 {
+  margin-bottom: 10px;
+  font-size: 2rem;
+}
+
+.game-lobby h2 {
+  margin-bottom: 30px;
+  font-size: 1.5rem;
+  color: #555;
+}
+
+.player-setup {
+  margin-bottom: 30px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: bold;
+  color: #333;
+}
+
+.form-group input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.role-selection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.role-button {
+  padding: 8px 15px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.role-button:hover {
+  background-color: #f0f0f0;
+}
+
+.role-button.selected {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.help-text {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 5px;
+}
+
+.info-button {
+  background-color: transparent;
+  border: none;
+  color: #007bff;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 5px 0;
+  font-size: 0.9rem;
+}
+
+.role-info {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #fff;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+}
+
+.role-info h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.role-info ul {
+  padding-left: 20px;
+}
+
+.role-info li {
+  margin-bottom: 8px;
+}
+
+.game-rules {
+  margin-top: 30px;
+  padding: 15px;
+  background-color: #fff;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+}
+
+.game-rules h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.game-rules ul {
+  padding-left: 20px;
+}
+
+.game-rules li {
+  margin-bottom: 8px;
+}
+
+.start-game-button {
+  display: block;
+  width: 200px;
+  margin: 0 auto;
+  padding: 12px 0;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.start-game-button:hover {
+  background-color: #218838;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 0.9rem;
+  margin-top: 5px;
+} 

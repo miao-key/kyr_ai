@@ -1,0 +1,95 @@
+.player-list-container {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.player-list-container h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.player-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.player-item {
+  position: relative;
+  width: calc(33.333% - 10px);
+  padding: 10px;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.player-item:hover {
+  background-color: #e9ecef;
+  transform: translateY(-2px);
+}
+
+.player-item.is-human {
+  background-color: #e3f2fd;
+  border-color: #90caf9;
+}
+
+.player-item.is-dead {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  opacity: 0.7;
+}
+
+.player-item.is-selected {
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+  box-shadow: 0 0 0 2px #28a745;
+}
+
+.player-name {
+  font-weight: bold;
+  margin-bottom: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.player-role {
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.human-tag {
+  font-size: 0.8rem;
+  padding: 2px 6px;
+  background-color: #007bff;
+  color: white;
+  border-radius: 10px;
+}
+
+.dead-tag {
+  font-size: 0.8rem;
+  padding: 2px 6px;
+  background-color: #dc3545;
+  color: white;
+  border-radius: 10px;
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+  .player-item {
+    width: calc(50% - 10px);
+  }
+}
+
+@media (max-width: 480px) {
+  .player-item {
+    width: 100%;
+  }
+} 

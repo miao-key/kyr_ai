@@ -1,0 +1,156 @@
+.voting-container {
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.voting-container h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #333;
+}
+
+.voting-active {
+  margin-bottom: 20px;
+}
+
+.voting-instruction {
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+  color: #555;
+}
+
+.vote-button {
+  display: block;
+  margin: 20px auto;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s;
+}
+
+.vote-button:hover:not(:disabled) {
+  background-color: #0069d9;
+}
+
+.vote-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.current-votes {
+  margin-top: 30px;
+}
+
+.current-votes h3 {
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.vote-list {
+  list-style: none;
+  padding: 0;
+}
+
+.vote-item {
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  border-left: 3px solid #6c757d;
+}
+
+/* 投票结果样式 */
+.voting-results {
+  text-align: center;
+}
+
+.voting-results h3 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.results-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: center;
+  margin-bottom: 25px;
+}
+
+.result-item {
+  flex: 0 0 calc(33.333% - 15px);
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  transition: all 0.3s;
+}
+
+.result-item.eliminated {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
+}
+
+.result-name {
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+
+.result-votes {
+  font-size: 1.2rem;
+  color: #007bff;
+  margin-bottom: 8px;
+}
+
+.result-item.eliminated .result-votes {
+  color: #dc3545;
+}
+
+.result-voters {
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.eliminated-announcement {
+  margin: 25px 0;
+  padding: 15px;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 5px;
+}
+
+.eliminated-announcement h3 {
+  margin: 0;
+  color: #dc3545;
+  font-size: 1.4rem;
+}
+
+.next-phase-message {
+  margin-top: 20px;
+  font-style: italic;
+  color: #6c757d;
+}
+
+@media (max-width: 768px) {
+  .result-item {
+    flex: 0 0 calc(50% - 15px);
+  }
+}
+
+@media (max-width: 480px) {
+  .result-item {
+    flex: 0 0 100%;
+  }
+} 
