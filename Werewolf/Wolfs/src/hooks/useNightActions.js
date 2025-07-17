@@ -13,17 +13,14 @@ const useNightActions = (
   seerCheck,
   witchAction,
   nextPhase,
-  addGameLog
+  addGameLog,
+  witchPowers
 ) => {
   // 当前行动角色
   const [currentActionRole, setCurrentActionRole] = useState(null);
   
   // 预言家查验结果
   const [seerCheckResult, setSeerCheckResult] = useState(null);
-  
-  // 女巫使用技能情况
-  const [witchSaveUsed, setWitchSaveUsed] = useState(false);
-  const [witchPoisonUsed, setWitchPoisonUsed] = useState(false);
   
   // 重置夜晚状态
   const resetNightState = useCallback(() => {
@@ -81,13 +78,27 @@ const useNightActions = (
   const handleWolfKill = useCallback((targetId) => {
     if (currentActionRole !== ROLE_TYPES.WEREWOLF) return;
     
+    // 确保目标玩家存活
+    const targetPlayer = players.find(p => p.id === targetId && p.status === PLAYER_STATUS.ALIVE);
+    if (!targetPlayer) {
+      addGameLog('选择的目标已经死亡，请重新选择');
+      return;
+    }
+    
     wolfKill(targetId);
     proceedToNextRole();
-  }, [currentActionRole, wolfKill, proceedToNextRole]);
+  }, [currentActionRole, wolfKill, proceedToNextRole, players, addGameLog]);
   
   // 执行预言家查验
   const handleSeerCheck = useCallback((targetId) => {
     if (currentActionRole !== ROLE_TYPES.SEER) return;
+    
+    // 确保目标玩家存在
+    const targetPlayer = players.find(p => p.id === targetId);
+    if (!targetPlayer) {
+      addGameLog('选择的目标不存在，请重新选择');
+      return;
+    }
     
     const isWolf = seerCheck(targetId);
     setSeerCheckResult({
@@ -96,21 +107,35 @@ const useNightActions = (
     });
     
     proceedToNextRole();
-  }, [currentActionRole, seerCheck, proceedToNextRole]);
+  }, [currentActionRole, seerCheck, proceedToNextRole, players, addGameLog]);
   
   // 执行女巫行动
   const handleWitchAction = useCallback((actionType, targetId) => {
     if (currentActionRole !== ROLE_TYPES.WITCH) return;
     
-    if (actionType === 'save') {
-      setWitchSaveUsed(true);
-    } else if (actionType === 'poison') {
-      setWitchPoisonUsed(true);
+    // 检查女巫是否已经使用过对应的技能
+    if (actionType === 'save' && witchPowers.usedSave) {
+      addGameLog('解药已经用过了，无法再次使用');
+      return;
+    }
+    
+    if (actionType === 'poison' && witchPowers.usedPoison) {
+      addGameLog('毒药已经用过了，无法再次使用');
+      return;
+    }
+    
+    // 确保目标玩家存在（毒药）
+    if (actionType === 'poison') {
+      const targetPlayer = players.find(p => p.id === targetId && p.status === PLAYER_STATUS.ALIVE);
+      if (!targetPlayer) {
+        addGameLog('选择的目标不存在或已经死亡，请重新选择');
+        return;
+      }
     }
     
     witchAction(actionType, targetId);
     proceedToNextRole();
-  }, [currentActionRole, witchAction, proceedToNextRole]);
+  }, [currentActionRole, witchAction, proceedToNextRole, witchPowers, players, addGameLog]);
   
   // 跳过当前角色的行动
   const skipCurrentAction = useCallback(() => {
@@ -127,17 +152,31 @@ const useNightActions = (
     return humanPlayer.role === currentActionRole;
   }, [humanPlayer, currentActionRole]);
   
+  // 女巫是否可以用解药
+  const canWitchUseSavePotion = useCallback(() => {
+    if (!witchPowers) return false;
+    return !witchPowers.usedSave;
+  }, [witchPowers]);
+  
+  // 女巫是否可以用毒药
+  const canWitchUsePoisonPotion = useCallback(() => {
+    if (!witchPowers) return false;
+    return !witchPowers.usedPoison;
+  }, [witchPowers]);
+  
   return {
     currentActionRole,
     seerCheckResult,
-    witchSaveUsed,
-    witchPoisonUsed,
+    witchSaveUsed: witchPowers ? witchPowers.usedSave : false,
+    witchPoisonUsed: witchPowers ? witchPowers.usedPoison : false,
     startNight,
     handleWolfKill,
     handleSeerCheck,
     handleWitchAction,
     skipCurrentAction,
-    canHumanPlayerAct
+    canHumanPlayerAct,
+    canWitchUseSavePotion,
+    canWitchUsePoisonPotion
   };
 };
 
