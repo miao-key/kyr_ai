@@ -85,6 +85,41 @@ body {
   margin-top: 0;
 }
 
+.human-discussion {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 5px;
+  text-align: left;
+}
+
+.chat-input {
+  display: flex;
+  margin-top: 10px;
+}
+
+.chat-input input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  margin-right: 10px;
+}
+
+.chat-input button {
+  padding: 10px 15px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.chat-input button:hover {
+  background-color: #0069d9;
+}
+
 .next-phase-button {
   display: block;
   margin: 20px auto 0;
@@ -100,6 +135,53 @@ body {
 
 .next-phase-button:hover {
   background-color: #0069d9;
+}
+
+/* 状态指示器 */
+.status-indicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+.status-indicator.alive {
+  background-color: var(--success-color);
+}
+
+.status-indicator.dead {
+  background-color: var(--danger-color);
+}
+
+/* 投票样式 */
+.player-voted {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #e9ecef;
+  border-radius: 5px;
+  color: #495057;
+}
+
+.tie-announcement {
+  margin: 25px 0;
+  padding: 15px;
+  background-color: #e9ecef;
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+}
+
+.tie-announcement h3 {
+  margin: 0;
+  color: #495057;
+  font-size: 1.4rem;
+}
+
+/* 角色描述 */
+.role-description {
+  margin-top: 15px;
+  font-style: italic;
+  color: #6c757d;
 }
 
 /* 响应式布局 */

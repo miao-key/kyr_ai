@@ -1,12 +1,88 @@
-# React + Vite
+# Wolfs - 狼人杀游戏
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+这是一个使用React开发的9人标准局无警徽流狼人杀游戏。游戏中有1个真人玩家和8个AI玩家。
 
-Currently, two official plugins are available:
+## 游戏规则
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **游戏配置**：9人标准局 (3狼、3民、1预言家、1女巫、1猎人)
+- **游戏流程**：夜晚行动 -> 白天讨论 -> 投票淘汰 -> 胜负判定
+- **胜利条件**：
+  - 好人阵营：杀死所有狼人
+  - 狼人阵营：狼人数量大于等于好人数量
 
-## Expanding the ESLint configuration
+### 角色介绍
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1. **狼人**：每晚可以选择一名玩家进行击杀。
+2. **预言家**：每晚可以查验一名玩家的身份是好人还是狼人。
+3. **女巫**：拥有一瓶解药和一瓶毒药。解药可以救活当晚被狼人杀死的人（包括自己），毒药可以毒死一名玩家。每种药只能使用一次。
+4. **猎人**：被杀时可以开枪带走一名玩家。
+5. **村民**：没有特殊技能，需要通过推理找出狼人。
+
+## 项目特点
+
+- 完整的游戏逻辑实现
+- 人机交互界面，支持1个真人玩家
+- 基础AI决策逻辑
+- 白天讨论阶段支持聊天发言
+- 投票机制
+- 女巫技能使用
+- 预言家查验功能
+- 游戏日志记录
+- 游戏结果展示
+
+## 如何运行
+
+1. 确保已安装Node.js和npm/pnpm
+2. 安装依赖：
+   ```
+   pnpm install
+   ```
+3. 运行开发服务器：
+   ```
+   pnpm dev
+   ```
+4. 打开浏览器访问：http://localhost:5173
+
+## 游戏玩法
+
+1. 在游戏大厅设置你的名字，可以选择角色（也可以随机分配）
+2. 游戏开始后，按照夜晚->白天讨论->投票的流程进行
+3. 根据你的角色，在夜晚执行相应的技能
+4. 在白天讨论阶段，可以在聊天框中输入发言
+5. 投票阶段，选择一名玩家进行投票
+6. 游戏结束时，会显示获胜阵营和所有玩家的身份
+
+## 项目结构
+
+```
+src/
+  ├── components/           # 组件目录
+  │   ├── GameLobby/        # 游戏大厅
+  │   ├── PlayerList/       # 玩家列表
+  │   ├── GameLog/          # 游戏日志
+  │   ├── NightActions/     # 夜晚行动
+  │   ├── Voting/           # 投票
+  │   └── GameOver/         # 游戏结束
+  ├── constants/            # 常量定义
+  │   └── gameConstants.js  # 游戏常量
+  ├── hooks/                # 自定义钩子
+  │   ├── useGameState.js   # 游戏状态管理
+  │   ├── useNightActions.js # 夜晚行动管理
+  │   └── useAI.js          # AI决策逻辑
+  ├── utils/                # 工具函数
+  │   └── gameUtils.js      # 游戏工具函数
+  ├── App.jsx               # 主组件
+  └── main.jsx              # 入口文件
+```
+
+## 未来改进方向
+
+- 增强AI决策逻辑，使AI玩家更智能
+- 添加更多角色和技能
+- 支持多人在线对战
+- 添加游戏音效和动画
+- 优化用户界面和体验
+
+## 许可证
+
+MIT
