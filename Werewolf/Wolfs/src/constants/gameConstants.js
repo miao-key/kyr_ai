@@ -11,9 +11,9 @@ export const ROLE_TYPES = {
 export const GAME_PHASES = {
   LOBBY: 'lobby',           // 游戏大厅
   NIGHT: 'night',           // 夜晚
-  DAY_DISCUSSION: 'day_discussion', // 白天讨论
-  DAY_VOTE: 'day_vote',     // 白天投票
-  GAME_OVER: 'game_over',   // 游戏结束
+  DAY_DISCUSSION: 'day',    // 白天讨论
+  DAY_VOTE: 'voting',       // 白天投票
+  GAME_OVER: 'gameOver',    // 游戏结束
 };
 
 // 夜晚行动顺序
@@ -37,8 +37,8 @@ export const PLAYER_STATUS = {
 
 // 游戏结果
 export const GAME_RESULTS = {
-  VILLAGER_WIN: 'villager_win',   // 村民获胜
-  WEREWOLF_WIN: 'werewolf_win',   // 狼人获胜
+  VILLAGER_WIN: 'villagers',   // 村民获胜
+  WEREWOLF_WIN: 'werewolves',   // 狼人获胜
 };
 
 // 9人标准局配置

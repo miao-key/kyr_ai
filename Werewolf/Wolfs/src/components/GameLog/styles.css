@@ -1,72 +1,197 @@
 .game-log-container {
-  padding: 15px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
+  padding: 1.5rem;
+  background: rgba(20, 20, 35, 0.7);
+  border-radius: var(--border-radius-medium);
+  box-shadow: var(--medium-shadow);
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.game-log-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('/log-pattern.svg');
+  background-size: 80px;
+  opacity: 0.03;
+  z-index: 0;
 }
 
 .game-log-container h3 {
   margin-top: 0;
-  margin-bottom: 15px;
-  color: #333;
-  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: var(--light-text);
+  font-size: 1.3rem;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.game-log-container h3 i {
+  margin-right: 0.5rem;
+  color: var(--primary-color);
+}
+
+.day-counter {
+  background: rgba(124, 77, 255, 0.2);
+  color: var(--primary-light);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
 .game-logs {
-  max-height: 250px;
+  max-height: 300px;
   overflow-y: auto;
-  padding-right: 10px;
+  padding-right: 0.75rem;
   scrollbar-width: thin;
+  position: relative;
+  z-index: 1;
+  margin-top: 1rem;
 }
 
 .game-logs::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 .game-logs::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: rgba(241, 241, 241, 0.1);
   border-radius: 10px;
 }
 
 .game-logs::-webkit-scrollbar-thumb {
-  background: #888;
+  background: rgba(124, 77, 255, 0.3);
   border-radius: 10px;
 }
 
 .game-logs::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: rgba(124, 77, 255, 0.5);
 }
 
 .log-item {
-  padding: 8px 0;
-  border-bottom: 1px solid #eee;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: var(--border-radius-small);
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid transparent;
   line-height: 1.4;
+  transition: all var(--transition-normal);
   display: flex;
+  align-items: flex-start;
+  position: relative;
+  overflow: hidden;
+  animation: fadeIn 0.3s ease-out;
 }
 
 .log-item:last-child {
-  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.log-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateX(2px);
 }
 
 .log-item.current-day {
-  background-color: #f8f9fa;
+  background: rgba(124, 77, 255, 0.1);
+  border-left-color: var(--primary-color);
 }
 
 .log-day {
-  font-weight: bold;
-  color: #555;
+  font-weight: 600;
+  color: var(--primary-light);
   min-width: 80px;
-  margin-right: 10px;
+  margin-right: 1rem;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+}
+
+.log-day i {
+  margin-right: 0.5rem;
+  font-size: 0.8rem;
 }
 
 .log-message {
   flex: 1;
+  color: var(--light-text);
+}
+
+/* 根据消息类型添加不同的样式 */
+.log-item.system-message {
+  border-left-color: #607d8b;
+}
+
+.log-item.death-message {
+  border-left-color: var(--dead-color);
+}
+
+.log-item.death-message .log-message {
+  color: #ffcdd2;
+}
+
+.log-item.wolf-message {
+  border-left-color: var(--werewolf-color);
+}
+
+.log-item.seer-message {
+  border-left-color: var(--seer-color);
+}
+
+.log-item.witch-message {
+  border-left-color: var(--witch-color);
+}
+
+.log-item.hunter-message {
+  border-left-color: var(--hunter-color);
+}
+
+.log-item.vote-message {
+  border-left-color: #ffca28;
+}
+
+.log-item.phase-change {
+  border-left-color: var(--primary-color);
+  background: rgba(124, 77, 255, 0.1);
+  font-weight: 600;
+}
+
+.log-item.game-over {
+  background: linear-gradient(90deg, rgba(124, 77, 255, 0.2), rgba(255, 87, 34, 0.2));
+  border-left-color: var(--secondary-color);
+  font-weight: bold;
+}
+
+.log-item.player-chat {
+  border-left-color: #00bcd4;
+}
+
+.player-name-in-log {
+  font-weight: 600;
+  color: var(--primary-light);
 }
 
 .no-logs {
   text-align: center;
-  color: #6c757d;
-  padding: 20px;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 2rem 1rem;
   font-style: italic;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.no-logs i {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+  opacity: 0.3;
 } 

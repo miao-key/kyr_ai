@@ -4,16 +4,18 @@ import {
   ROLE_TYPES, 
   PLAYER_STATUS, 
   GAME_CONFIG,
-  GAME_RESULTS
+  GAME_RESULTS,
+  NIGHT_ACTION_ORDER
 } from '../constants/gameConstants';
 import { generateAIPlayers } from '../utils/gameUtils';
 
-const useGameState = (humanPlayerName = '玩家') => {
+const useGameState = () => {
   // 游戏阶段状态
   const [gamePhase, setGamePhase] = useState(GAME_PHASES.LOBBY);
   
   // 游戏天数
   const [day, setDay] = useState(0);
+  const [currentDay, setCurrentDay] = useState(1);
   
   // 所有玩家（包括AI和人类玩家）
   const [players, setPlayers] = useState([]);
@@ -22,13 +24,14 @@ const useGameState = (humanPlayerName = '玩家') => {
   const [humanPlayer, setHumanPlayer] = useState(null);
   
   // 游戏日志
-  const [gameLogs, setGameLogs] = useState([]);
+  const [logs, setLogs] = useState([]);
   
   // 游戏结果
-  const [gameResult, setGameResult] = useState(null);
+  const [gameWinner, setGameWinner] = useState(null);
   
   // 夜晚被杀玩家
   const [killedAtNight, setKilledAtNight] = useState(null);
+  const [nightVictim, setNightVictim] = useState(null);
   
   // 女巫技能使用状态
   const [witchPowers, setWitchPowers] = useState({
@@ -36,27 +39,44 @@ const useGameState = (humanPlayerName = '玩家') => {
     usedPoison: false
   });
   
-  // 初始化游戏
-  const initializeGame = useCallback((playerName = '玩家', humanPlayerRole = null) => {
-    // 生成8个AI玩家和1个人类玩家
-    const { allPlayers, humanPlayerData } = generateAIPlayers(playerName || humanPlayerName, humanPlayerRole);
-    
-    setPlayers(allPlayers);
-    setHumanPlayer(humanPlayerData);
-    setDay(1); // 第一天
-    setGamePhase(GAME_PHASES.NIGHT); // 从夜晚开始
-    setGameLogs([{ day: 1, message: '游戏开始，天黑请闭眼' }]);
-    setGameResult(null);
-    setKilledAtNight(null);
-    setWitchPowers({
-      usedSave: false,
-      usedPoison: false
-    });
-  }, [humanPlayerName]);
+  // 投票相关状态
+  const [votedPlayer, setVotedPlayer] = useState(null);
+  const [hasHumanVoted, setHasHumanVoted] = useState(false);
+  const [eliminatedPlayer, setEliminatedPlayer] = useState(null);
+  
+  // 当前行动角色
+  const [currentRole, setCurrentRole] = useState(null);
+  const [currentTurn, setCurrentTurn] = useState(null);
+  
+  // 预言家和女巫行动状态
+  const [targetPlayer, setTargetPlayer] = useState(null);
+  const [isSaved, setIsSaved] = useState(false);
+  const [canSave, setCanSave] = useState(true);
+  const [canPoison, setCanPoison] = useState(true);
+  const [poisonTarget, setPoisonTarget] = useState(null);
+  
+  // 讨论阶段状态
+  const [currentMessage, setCurrentMessage] = useState('');
+  const [isCountdownActive, setIsCountdownActive] = useState(false);
+  const [discussionTimeRemaining, setDiscussionTimeRemaining] = useState(60);
+  const [timeRemaining, setTimeRemaining] = useState(30);
+  
+  // 活跃玩家列表
+  const [activePlayers, setActivePlayers] = useState([]);
+  
+  // 游戏是否已开始
+  const [isGameStarted, setIsGameStarted] = useState(false);
+  
+  // 玩家信息
+  const [playerName, setPlayerName] = useState('玩家');
+  const [selectedHumanRole, setSelectedHumanRole] = useState('random');
+  
+  // 夜晚行动顺序
+  const [nightActionIndex, setNightActionIndex] = useState(0);
   
   // 添加游戏日志
   const addGameLog = useCallback((message) => {
-    setGameLogs(prev => [...prev, { day, message }]);
+    setLogs(prev => [...prev, { day, message }]);
   }, [day]);
   
   // 检查游戏是否结束
@@ -67,7 +87,7 @@ const useGameState = (humanPlayerName = '玩家') => {
     
     // 狼人全部死亡，好人获胜
     if (aliveWolves === 0) {
-      setGameResult(GAME_RESULTS.VILLAGER_WIN);
+      setGameWinner('villagers');
       setGamePhase(GAME_PHASES.GAME_OVER);
       addGameLog('游戏结束，村民阵营获胜！');
       return true;
@@ -75,7 +95,7 @@ const useGameState = (humanPlayerName = '玩家') => {
     
     // 狼人数量大于等于好人，狼人获胜
     if (aliveWolves >= aliveVillagers) {
-      setGameResult(GAME_RESULTS.WEREWOLF_WIN);
+      setGameWinner('werewolves');
       setGamePhase(GAME_PHASES.GAME_OVER);
       addGameLog('游戏结束，狼人阵营获胜！');
       return true;
@@ -96,12 +116,122 @@ const useGameState = (humanPlayerName = '玩家') => {
     if (humanPlayer && humanPlayer.id === playerId) {
       setHumanPlayer(prev => ({ ...prev, status: newStatus }));
     }
+    
+    // 更新活跃玩家列表
+    if (newStatus === PLAYER_STATUS.DEAD) {
+      setActivePlayers(prev => prev.filter(p => p.id !== playerId));
+    }
   }, [humanPlayer]);
+  
+  // 初始化夜晚角色
+  const initializeNightRole = useCallback(() => {
+    const currentNightRole = NIGHT_ACTION_ORDER[nightActionIndex];
+    setCurrentRole(currentNightRole);
+    
+    // 如果是人类玩家的角色，设置currentTurn为人类玩家ID
+    if (humanPlayer && humanPlayer.role === currentNightRole && humanPlayer.status === PLAYER_STATUS.ALIVE) {
+      setCurrentTurn(humanPlayer.id);
+      addGameLog(`${currentNightRole === ROLE_TYPES.WEREWOLF ? '狼人' : currentNightRole === ROLE_TYPES.SEER ? '预言家' : '女巫'}请睁眼`);
+    } else {
+      // 否则找到第一个符合条件的AI玩家
+      const aiPlayer = players.find(p => p.role === currentNightRole && p.status === PLAYER_STATUS.ALIVE);
+      if (aiPlayer) {
+        setCurrentTurn(aiPlayer.id);
+        addGameLog(`${currentNightRole === ROLE_TYPES.WEREWOLF ? '狼人' : currentNightRole === ROLE_TYPES.SEER ? '预言家' : '女巫'}请睁眼`);
+      } else {
+        // 如果没有符合条件的玩家，进入下一个角色
+        handleNextNightRole();
+      }
+    }
+  }, [nightActionIndex, humanPlayer, players, addGameLog]);
+  
+  // 处理下一个夜晚角色
+  const handleNextNightRole = useCallback(() => {
+    const nextIndex = nightActionIndex + 1;
+    
+    if (nextIndex < NIGHT_ACTION_ORDER.length) {
+      setNightActionIndex(nextIndex);
+      setTargetPlayer(null); // 重置目标玩家
+    } else {
+      // 所有角色行动完毕，夜晚结束
+      handleNightEnd();
+      setNightActionIndex(0); // 重置夜晚行动索引
+    }
+  }, [nightActionIndex]);
+  
+  // 初始化游戏
+  const initializeGame = useCallback((playerName = '玩家', humanPlayerRole = null) => {
+    // 生成8个AI玩家和1个人类玩家
+    const { allPlayers, humanPlayerData } = generateAIPlayers(playerName, humanPlayerRole);
+    
+    setPlayers(allPlayers);
+    setHumanPlayer(humanPlayerData);
+    setDay(1);
+    setCurrentDay(1);
+    setGamePhase(GAME_PHASES.NIGHT); // 从夜晚开始
+    setLogs([{ day: 1, message: '游戏开始，天黑请闭眼' }]);
+    setGameWinner(null);
+    setKilledAtNight(null);
+    setNightVictim(null);
+    setWitchPowers({
+      usedSave: false,
+      usedPoison: false
+    });
+    setActivePlayers(allPlayers);
+    setIsGameStarted(true);
+    setNightActionIndex(0); // 重置夜晚行动索引
+    
+    // 初始化第一个夜晚角色
+    setTimeout(() => {
+      initializeNightRole();
+    }, 1000);
+  }, [initializeNightRole]);
+  
+  // 开始游戏
+  const startGame = useCallback((name, role) => {
+    setPlayerName(name);
+    setSelectedHumanRole(role);
+    initializeGame(name, role);
+  }, [initializeGame]);
+  
+  // 重新开始游戏
+  const restartGame = useCallback(() => {
+    setGamePhase(GAME_PHASES.LOBBY);
+    setDay(0);
+    setCurrentDay(1);
+    setPlayers([]);
+    setHumanPlayer(null);
+    setLogs([]);
+    setGameWinner(null);
+    setKilledAtNight(null);
+    setNightVictim(null);
+    setWitchPowers({
+      usedSave: false,
+      usedPoison: false
+    });
+    setVotedPlayer(null);
+    setHasHumanVoted(false);
+    setEliminatedPlayer(null);
+    setCurrentRole(null);
+    setCurrentTurn(null);
+    setTargetPlayer(null);
+    setIsSaved(false);
+    setCanSave(true);
+    setCanPoison(true);
+    setPoisonTarget(null);
+    setCurrentMessage('');
+    setIsCountdownActive(false);
+    setDiscussionTimeRemaining(60);
+    setTimeRemaining(30);
+    setActivePlayers([]);
+    setIsGameStarted(false);
+    setNightActionIndex(0);
+  }, []);
   
   // 处理夜晚结束
   const handleNightEnd = useCallback(() => {
     // 如果有被杀的玩家且没有被女巫救，则更新状态
-    if (killedAtNight) {
+    if (killedAtNight && !isSaved) {
       const killedPlayer = players.find(p => p.id === killedAtNight);
       if (killedPlayer) {
         // 检查是否有特殊角色死亡逻辑（如猎人）
@@ -115,163 +245,200 @@ const useGameState = (humanPlayerName = '玩家') => {
         // 如果是猎人，应该有开枪的机会（这部分逻辑可以扩展）
         if (isHunter) {
           addGameLog('猎人可以选择带走一名玩家');
-          // 猎人技能处理逻辑可以在这里添加
         }
       }
     }
     
     // 清空夜晚被杀信息，准备下一个阶段
     setKilledAtNight(null);
-  }, [killedAtNight, players, addGameLog, updatePlayerStatus]);
-  
-  // 进入下一阶段
-  const nextPhase = useCallback(() => {
-    // 检查游戏是否结束
-    if (checkGameOver()) return;
+    setNightVictim(null);
+    setIsSaved(false);
     
-    switch (gamePhase) {
-      case GAME_PHASES.LOBBY:
-        setGamePhase(GAME_PHASES.NIGHT);
-        addGameLog('天黑请闭眼');
-        break;
-        
-      case GAME_PHASES.NIGHT:
-        // 夜晚结束，处理夜晚死亡
-        handleNightEnd();
-        
-        // 检查游戏是否结束
-        if (checkGameOver()) return;
-        
-        setGamePhase(GAME_PHASES.DAY_DISCUSSION);
-        addGameLog('天亮了，进入讨论阶段');
-        break;
-        
-      case GAME_PHASES.DAY_DISCUSSION:
-        setGamePhase(GAME_PHASES.DAY_VOTE);
-        addGameLog('讨论结束，进入投票阶段');
-        break;
-        
-      case GAME_PHASES.DAY_VOTE:
-        // 投票结束，进入新的一天
-        setDay(prev => prev + 1);
-        setGamePhase(GAME_PHASES.NIGHT);
-        addGameLog(`第${day}天结束，天黑请闭眼`);
-        break;
-        
-      default:
-        break;
-    }
-  }, [gamePhase, day, addGameLog, checkGameOver, handleNightEnd]);
+    // 进入白天阶段
+    setGamePhase(GAME_PHASES.DAY_DISCUSSION);
+    addGameLog('天亮了，进入讨论阶段');
+    
+    // 检查游戏是否结束
+    checkGameOver();
+  }, [killedAtNight, isSaved, players, addGameLog, updatePlayerStatus, checkGameOver]);
   
-  // 狼人杀人
-  const wolfKill = useCallback((targetId) => {
-    setKilledAtNight(targetId);
-    const targetPlayer = players.find(p => p.id === targetId);
-    addGameLog(`狼人选择了${targetPlayer?.name || '未知玩家'}`);
-  }, [players, addGameLog]);
-  
-  // 女巫救人/毒人
-  const witchAction = useCallback((actionType, targetId) => {
-    if (actionType === 'save') {
-      if (witchPowers.usedSave) {
-        addGameLog('女巫的解药已经用过了');
-        return;
-      }
-      
-      setKilledAtNight(null); // 清除被杀的玩家
-      setWitchPowers(prev => ({ ...prev, usedSave: true }));
-      addGameLog('女巫使用了解药');
-    } else if (actionType === 'poison') {
-      if (witchPowers.usedPoison) {
-        addGameLog('女巫的毒药已经用过了');
-        return;
-      }
-      
-      updatePlayerStatus(targetId, PLAYER_STATUS.DEAD);
-      setWitchPowers(prev => ({ ...prev, usedPoison: true }));
-      const targetPlayer = players.find(p => p.id === targetId);
-      addGameLog(`女巫使用了毒药，${targetPlayer?.name || '未知玩家'}中毒身亡`);
-    }
-  }, [players, updatePlayerStatus, addGameLog, witchPowers]);
-  
-  // 预言家查验
-  const seerCheck = useCallback((targetId) => {
+  // 处理预言家查验
+  const handleSeerCheck = useCallback((targetId) => {
     const targetPlayer = players.find(p => p.id === targetId);
     const isWolf = targetPlayer?.role === ROLE_TYPES.WEREWOLF;
     addGameLog(`预言家查验了${targetPlayer?.name || '未知玩家'}`);
+    handleNextNightRole();
     return isWolf;
-  }, [players, addGameLog]);
+  }, [players, addGameLog, handleNextNightRole]);
   
-  // 白天投票
-  const dayVote = useCallback((votes) => {
-    // 计票
-    const voteCount = {};
-    votes.forEach(vote => {
-      if (!voteCount[vote.targetId]) {
-        voteCount[vote.targetId] = 0;
-      }
-      voteCount[vote.targetId]++;
-    });
-    
-    // 找到票数最多的玩家
-    let maxVotes = 0;
-    let eliminatedPlayerId = null;
-    let isTie = false;
-    
-    Object.entries(voteCount).forEach(([playerId, count]) => {
-      if (count > maxVotes) {
-        maxVotes = count;
-        eliminatedPlayerId = playerId;
-        isTie = false;
-      } else if (count === maxVotes) {
-        isTie = true; // 平票情况
-      }
-    });
-    
-    if (isTie) {
-      addGameLog('投票结果为平票，无人出局');
-      return null;
+  // 处理女巫救人
+  const handleWitchSave = useCallback(() => {
+    if (canSave) {
+      setIsSaved(true);
+      setCanSave(false);
+      addGameLog('女巫使用了解药');
     }
-    
-    if (eliminatedPlayerId) {
-      updatePlayerStatus(eliminatedPlayerId, PLAYER_STATUS.DEAD);
-      const eliminatedPlayer = players.find(p => p.id === eliminatedPlayerId);
-      addGameLog(`${eliminatedPlayer?.name || '未知玩家'}被投票出局`);
+    handleNextNightRole();
+  }, [canSave, addGameLog, handleNextNightRole]);
+  
+  // 处理女巫毒人
+  const handleWitchPoison = useCallback((targetId) => {
+    if (canPoison) {
+      const targetPlayer = players.find(p => p.id === targetId);
+      updatePlayerStatus(targetId, PLAYER_STATUS.DEAD);
+      setCanPoison(false);
+      addGameLog(`女巫使用了毒药，${targetPlayer?.name || '未知玩家'}中毒身亡`);
+    }
+    handleNextNightRole();
+  }, [canPoison, players, updatePlayerStatus, addGameLog, handleNextNightRole]);
+  
+  // 跳过女巫行动
+  const skipWitchAction = useCallback(() => {
+    addGameLog('女巫选择不使用药水');
+    handleNextNightRole();
+  }, [addGameLog, handleNextNightRole]);
+  
+  // 处理狼人杀人
+  const handleWolfKill = useCallback((targetId) => {
+    setKilledAtNight(targetId);
+    setNightVictim(targetId);
+    const targetPlayer = players.find(p => p.id === targetId);
+    addGameLog(`狼人选择了${targetPlayer?.name || '未知玩家'}`);
+    handleNextNightRole();
+  }, [players, addGameLog, handleNextNightRole]);
+  
+  // 处理白天讨论
+  const handleDayDiscussion = useCallback(() => {
+    setGamePhase(GAME_PHASES.VOTING);
+    addGameLog('讨论结束，进入投票阶段');
+  }, [addGameLog]);
+  
+  // 处理投票
+  const handleVoting = useCallback(() => {
+    if (votedPlayer) {
+      const targetPlayer = players.find(p => p.id === votedPlayer);
+      addGameLog(`${humanPlayer?.name || '玩家'} 投票给了 ${targetPlayer?.name || '未知玩家'}`);
+      setHasHumanVoted(true);
+      
+      // 处理投票结果
+      updatePlayerStatus(votedPlayer, PLAYER_STATUS.DEAD);
+      setEliminatedPlayer(votedPlayer);
+      addGameLog(`${targetPlayer?.name || '未知玩家'}被投票出局`);
       
       // 检查是否为猎人，如果是则可以开枪
-      if (eliminatedPlayer && eliminatedPlayer.role === ROLE_TYPES.HUNTER) {
+      if (targetPlayer && targetPlayer.role === ROLE_TYPES.HUNTER) {
         addGameLog('猎人可以选择带走一名玩家');
-        // 猎人技能处理逻辑可以在这里添加
+      }
+      
+      // 检查游戏是否结束
+      if (!checkGameOver()) {
+        // 进入下一天
+        setDay(prev => prev + 1);
+        setCurrentDay(prev => prev + 1);
+        setGamePhase(GAME_PHASES.NIGHT);
+        addGameLog(`第${day}天结束，天黑请闭眼`);
+        
+        // 重置夜晚行动索引并初始化第一个夜晚角色
+        setNightActionIndex(0);
+        setTimeout(() => {
+          initializeNightRole();
+        }, 1000);
       }
     }
+  }, [votedPlayer, players, humanPlayer, addGameLog, updatePlayerStatus, checkGameOver, day, initializeNightRole]);
+  
+  // 完成投票
+  const finishVoting = useCallback(() => {
+    handleVoting();
+  }, [handleVoting]);
+  
+  // 进入下一阶段
+  const handleNextPhase = useCallback(() => {
+    // 进入下一天
+    setDay(prev => prev + 1);
+    setCurrentDay(prev => prev + 1);
+    setGamePhase(GAME_PHASES.NIGHT);
+    addGameLog(`第${day}天结束，天黑请闭眼`);
     
-    return eliminatedPlayerId;
-  }, [players, updatePlayerStatus, addGameLog]);
+    // 重置投票相关状态
+    setVotedPlayer(null);
+    setHasHumanVoted(false);
+    setEliminatedPlayer(null);
+    
+    // 重置夜晚行动索引并初始化第一个夜晚角色
+    setNightActionIndex(0);
+    setTimeout(() => {
+      initializeNightRole();
+    }, 1000);
+  }, [day, addGameLog, initializeNightRole]);
+  
+  // 发送消息
+  const sendMessage = useCallback(() => {
+    if (currentMessage.trim()) {
+      addGameLog(`${humanPlayer?.name || '玩家'} 说: ${currentMessage}`);
+      setCurrentMessage('');
+    }
+  }, [currentMessage, humanPlayer, addGameLog]);
   
   // 使用useEffect来自动检查游戏是否结束
   useEffect(() => {
     if (gamePhase !== GAME_PHASES.LOBBY && gamePhase !== GAME_PHASES.GAME_OVER) {
       checkGameOver();
     }
+    
+    // 更新活跃玩家列表
+    setActivePlayers(players.filter(p => p.status === PLAYER_STATUS.ALIVE));
   }, [players, checkGameOver, gamePhase]);
+  
+  // 使用useEffect监听夜晚角色变化
+  useEffect(() => {
+    if (gamePhase === GAME_PHASES.NIGHT && nightActionIndex < NIGHT_ACTION_ORDER.length) {
+      initializeNightRole();
+    }
+  }, [gamePhase, nightActionIndex, initializeNightRole]);
   
   return {
     gamePhase,
-    day,
+    currentDay,
     players,
-    humanPlayer,
-    gameLogs,
-    gameResult,
-    killedAtNight,
-    witchPowers,
-    initializeGame,
-    nextPhase,
-    updatePlayerStatus,
-    wolfKill,
-    witchAction,
-    seerCheck,
-    dayVote,
-    addGameLog,
+    logs,
+    gameWinner,
+    nightVictim,
+    votedPlayer,
+    setVotedPlayer,
+    hasHumanVoted,
+    eliminatedPlayer,
+    currentRole,
+    currentTurn,
+    targetPlayer,
+    setTargetPlayer,
+    isSaved,
+    canSave,
+    canPoison,
+    poisonTarget,
+    setPoisonTarget,
+    currentMessage,
+    setCurrentMessage,
+    isCountdownActive,
+    discussionTimeRemaining,
+    timeRemaining,
+    activePlayers,
+    playerName,
+    setPlayerName,
+    selectedHumanRole,
+    setSelectedHumanRole,
+    startGame,
+    restartGame,
+    handleNightEnd,
+    handleSeerCheck,
+    handleWitchSave,
+    handleWitchPoison,
+    skipWitchAction,
+    handleWolfKill,
+    handleDayDiscussion,
+    finishVoting,
+    handleNextPhase,
+    sendMessage,
   };
 };
 

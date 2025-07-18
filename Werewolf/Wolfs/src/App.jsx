@@ -1,265 +1,190 @@
-import { useState, useEffect } from 'react';
-import { GAME_PHASES } from './constants/gameConstants';
-import useGameState from './hooks/useGameState';
-import useNightActions from './hooks/useNightActions';
-import useAI from './hooks/useAI';
-
+import { useState } from 'react';
+import './App.css';
 import GameLobby from './components/GameLobby';
 import PlayerList from './components/PlayerList';
 import GameLog from './components/GameLog';
 import NightActions from './components/NightActions';
 import Voting from './components/Voting';
 import GameOver from './components/GameOver';
-
-import './App.css';
+import useGameState from './hooks/useGameState';
 
 function App() {
-  // 游戏状态管理
   const {
     gamePhase,
-    day,
     players,
-    humanPlayer,
-    gameLogs,
-    gameResult,
-    killedAtNight,
-    witchPowers,
-    initializeGame,
-    nextPhase,
-    updatePlayerStatus,
-    wolfKill,
-    witchAction,
-    seerCheck,
-    dayVote,
-    addGameLog
-  } = useGameState();
-  
-  // 夜晚行动管理
-  const {
-    currentActionRole,
-    seerCheckResult,
-    witchSaveUsed,
-    witchPoisonUsed,
-    startNight,
-    handleWolfKill,
+    currentDay,
+    logs,
+    handleDayDiscussion,
+    startGame,
+    restartGame,
+    currentMessage,
+    setCurrentMessage,
+    sendMessage,
+    votedPlayer,
+    setVotedPlayer,
+    finishVoting,
+    hasHumanVoted,
+    targetPlayer,
+    setTargetPlayer,
     handleSeerCheck,
-    handleWitchAction,
-    skipCurrentAction,
-    canHumanPlayerAct,
-    canWitchUseSavePotion,
-    canWitchUsePoisonPotion
-  } = useNightActions(
-    players,
-    humanPlayer,
-    gamePhase,
-    wolfKill,
-    seerCheck,
-    witchAction,
-    nextPhase,
-    addGameLog,
-    witchPowers
-  );
-  
-  // AI决策管理
-  const {
-    getWolfDecision,
-    getSeerDecision,
-    getWitchDecision,
-    getAIDiscussion,
-    getVoteDecision
-  } = useAI(players, gamePhase, day, killedAtNight);
-  
+    handleWitchSave,
+    handleWitchPoison,
+    skipWitchAction,
+    handleWolfKill,
+    isSaved,
+    canSave,
+    canPoison,
+    poisonTarget,
+    setPoisonTarget,
+    currentRole,
+    currentTurn,
+    handleNightEnd,
+    nightVictim,
+    gameWinner,
+    activePlayers,
+    eliminatedPlayer,
+    handleNextPhase,
+    timeRemaining,
+    isCountdownActive,
+    discussionTimeRemaining
+  } = useGameState();
+
   // 处理游戏开始
   const handleStartGame = (playerName, selectedRole) => {
-    initializeGame(playerName, selectedRole);
+    startGame(playerName, selectedRole);
   };
-  
-  // 处理日间投票完成
-  const handleVoteComplete = (votes) => {
-    // 执行投票逻辑
-    dayVote(votes);
-    
-    // 延迟进入下一阶段
-    setTimeout(() => {
-      nextPhase();
-    }, 3000);
-  };
-  
-  // 处理重新开始游戏
-  const handlePlayAgain = () => {
-    window.location.reload();
-  };
-  
-  // 白天讨论阶段AI自动讨论
-  const [discussionTimerActive, setDiscussionTimerActive] = useState(false);
-  const [discussionTime, setDiscussionTime] = useState(30); // 讨论时间30秒
-  
-  useEffect(() => {
-    if (gamePhase === GAME_PHASES.DAY_DISCUSSION && !discussionTimerActive) {
-      setDiscussionTimerActive(true);
-      setDiscussionTime(30);
-    } else if (gamePhase !== GAME_PHASES.DAY_DISCUSSION) {
-      setDiscussionTimerActive(false);
-    }
-  }, [gamePhase]);
-  
-  // 倒计时
-  useEffect(() => {
-    let timer;
-    if (discussionTimerActive && discussionTime > 0) {
-      timer = setTimeout(() => {
-        setDiscussionTime(prev => prev - 1);
-      }, 1000);
-    } else if (discussionTimerActive && discussionTime === 0) {
-      nextPhase(); // 讨论时间结束，进入投票阶段
-    }
-    
-    return () => {
-      if (timer) {
-        clearTimeout(timer);
-      }
-    };
-  }, [discussionTimerActive, discussionTime, nextPhase]);
-  
-  // AI讨论发言
-  useEffect(() => {
-    if (gamePhase === GAME_PHASES.DAY_DISCUSSION) {
-      // 每隔几秒钟让一个AI随机发言
-      const speakInterval = setInterval(() => {
-        const aliveAiPlayers = players.filter(p => !p.isHuman && p.status === 'alive');
-        if (aliveAiPlayers.length > 0) {
-          const randomPlayer = aliveAiPlayers[Math.floor(Math.random() * aliveAiPlayers.length)];
-          const discussion = getAIDiscussion(randomPlayer.id);
-          if (discussion) {
-            addGameLog(`${randomPlayer.name} 说: ${discussion}`);
-          }
-        }
-      }, 5000);
-      
-      return () => {
-        clearInterval(speakInterval);
-      };
-    }
-  }, [gamePhase, players, getAIDiscussion, addGameLog]);
-  
-  // 监听游戏阶段变化
-  useEffect(() => {
-    if (gamePhase === GAME_PHASES.NIGHT) {
-      startNight();
-    }
-  }, [gamePhase, startNight]);
-  
-  // 根据游戏阶段渲染不同的内容
-  const renderGameContent = () => {
-    switch (gamePhase) {
-      case GAME_PHASES.LOBBY:
-        return <GameLobby onStartGame={handleStartGame} />;
-        
-      case GAME_PHASES.GAME_OVER:
-        return (
-          <GameOver
-            gameResult={gameResult}
-            players={players}
-            humanPlayer={humanPlayer}
-            onPlayAgain={handlePlayAgain}
-          />
-        );
-        
-      default:
-        return (
-          <div className="game-container">
-            <div className="game-header">
-              <h1>狼人杀 - 第{day}天</h1>
-              <div className="game-phase">
-                {gamePhase === GAME_PHASES.NIGHT && '夜晚阶段'}
-                {gamePhase === GAME_PHASES.DAY_DISCUSSION && `白天讨论阶段 (${discussionTime}秒)`}
-                {gamePhase === GAME_PHASES.DAY_VOTE && '投票阶段'}
-              </div>
-            </div>
-            
-            <div className="game-main">
-              <div className="game-sidebar">
-                <PlayerList 
-                  players={players} 
-                  humanPlayer={humanPlayer}
-                  gamePhase={gamePhase}
-                  canSelect={false}
-                />
-                
-                <GameLog logs={gameLogs} day={day} />
-              </div>
-              
-              <div className="game-content">
-                <NightActions
-                  gamePhase={gamePhase}
-                  players={players}
-                  humanPlayer={humanPlayer}
-                  currentActionRole={currentActionRole}
-                  killedAtNight={killedAtNight}
-                  witchSaveUsed={witchSaveUsed}
-                  witchPoisonUsed={witchPoisonUsed}
-                  onWolfKill={handleWolfKill}
-                  onSeerCheck={handleSeerCheck}
-                  onWitchAction={handleWitchAction}
-                  onSkipAction={skipCurrentAction}
-                  seerCheckResult={seerCheckResult}
-                  canWitchUseSavePotion={canWitchUseSavePotion}
-                  canWitchUsePoisonPotion={canWitchUsePoisonPotion}
-                />
-                
-                {gamePhase === GAME_PHASES.DAY_DISCUSSION && (
-                  <div className="day-discussion">
-                    <h2>白天讨论阶段</h2>
-                    <p>玩家们正在讨论昨晚发生的事情...</p>
-                    {humanPlayer && humanPlayer.status === 'alive' && (
-                      <div className="human-discussion">
-                        <p>你可以在讨论阶段发言:</p>
-                        <div className="chat-input">
-                          <input 
-                            type="text" 
-                            id="discussion-input"
-                            placeholder="输入你的发言..."
-                          />
-                          <button 
-                            onClick={() => {
-                              const input = document.getElementById('discussion-input');
-                              if (input && input.value.trim()) {
-                                addGameLog(`${humanPlayer.name} 说: ${input.value}`);
-                                input.value = '';
-                              }
-                            }}
-                          >
-                            发言
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                    <button 
-                      className="next-phase-button"
-                      onClick={nextPhase}
-                    >
-                      结束讨论，开始投票
-                    </button>
-                  </div>
-                )}
-                
-                <Voting
-                  gamePhase={gamePhase}
-                  players={players}
-                  humanPlayer={humanPlayer}
-                  onVote={(targetId) => addGameLog(`${humanPlayer?.name || '玩家'} 投票给了 ${players.find(p => p.id === targetId)?.name || '未知玩家'}`)}
-                  onVoteComplete={handleVoteComplete}
-                />
-              </div>
-            </div>
-          </div>
-        );
-    }
-  };
-  
+
   return (
     <div className="App">
-      {renderGameContent()}
+      {gamePhase === 'lobby' ? (
+        <>
+          <h1 className="app-title">
+            <i className="fas fa-moon"></i> 狼人杀 - 9人局
+          </h1>
+          <GameLobby onStartGame={handleStartGame} />
+        </>
+      ) : (
+        <div className="game-container">
+          <header className="game-header">
+            <h1>
+              {gamePhase === 'night' && <i className="fas fa-moon"></i>}
+              {gamePhase === 'day' && <i className="fas fa-sun"></i>}
+              {gamePhase === 'voting' && <i className="fas fa-vote-yea"></i>}
+              {gamePhase === 'gameOver' && <i className="fas fa-trophy"></i>}
+              {' '}
+              狼人杀 - 第{currentDay}天
+            </h1>
+            <div className="game-phase">
+              {gamePhase === 'night' && "夜晚阶段"}
+              {gamePhase === 'day' && "白天讨论阶段"}
+              {gamePhase === 'voting' && "投票阶段"}
+              {gamePhase === 'gameOver' && "游戏结束"}
+            </div>
+          </header>
+
+          <div className="game-main">
+            <div className="game-sidebar">
+              <PlayerList
+                players={players}
+                currentTurn={currentTurn}
+                currentRole={currentRole}
+                gamePhase={gamePhase}
+                selectedPlayer={gamePhase === 'voting' ? votedPlayer : targetPlayer}
+                onPlayerSelect={gamePhase === 'voting' ? setVotedPlayer : setTargetPlayer}
+                isSelectionEnabled={
+                  (gamePhase === 'night' && ['werewolf', 'seer', 'witch'].includes(currentRole)) || 
+                  (gamePhase === 'voting' && !hasHumanVoted)
+                }
+              />
+              <GameLog logs={logs} currentDay={currentDay} />
+            </div>
+
+            <div className="game-content">
+              {gamePhase === 'night' && (
+                <NightActions
+                  currentRole={currentRole}
+                  players={players}
+                  targetPlayer={targetPlayer}
+                  setTargetPlayer={setTargetPlayer}
+                  handleSeerCheck={handleSeerCheck}
+                  handleWitchSave={handleWitchSave}
+                  handleWitchPoison={handleWitchPoison}
+                  skipWitchAction={skipWitchAction}
+                  handleWolfKill={handleWolfKill}
+                  isSaved={isSaved}
+                  canSave={canSave}
+                  canPoison={canPoison}
+                  poisonTarget={poisonTarget}
+                  setPoisonTarget={setPoisonTarget}
+                  handleNightEnd={handleNightEnd}
+                  nightVictim={nightVictim}
+                />
+              )}
+
+              {gamePhase === 'day' && (
+                <div className="day-discussion">
+                  <h2>
+                    <i className="fas fa-comments"></i> 白天讨论
+                  </h2>
+                  
+                  {isCountdownActive && (
+                    <div className="discussion-timer">
+                      <i className="fas fa-hourglass-half"></i>
+                      剩余时间: {Math.floor(discussionTimeRemaining / 60)}:{(discussionTimeRemaining % 60).toString().padStart(2, '0')}
+                    </div>
+                  )}
+
+                  <div className="human-discussion">
+                    <p><strong>你的发言:</strong></p>
+                    <div className="chat-input">
+                      <input
+                        type="text"
+                        value={currentMessage}
+                        onChange={(e) => setCurrentMessage(e.target.value)}
+                        placeholder="输入你的发言..."
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && currentMessage.trim()) {
+                            sendMessage();
+                          }
+                        }}
+                      />
+                      <button onClick={sendMessage} disabled={!currentMessage.trim()}>
+                        <i className="fas fa-paper-plane"></i> 发送
+                      </button>
+                    </div>
+                  </div>
+
+                  <button className="next-phase-button" onClick={handleDayDiscussion}>
+                    <i className="fas fa-arrow-right"></i> 进入投票阶段
+                  </button>
+                </div>
+              )}
+
+              {gamePhase === 'voting' && (
+                <Voting
+                  players={activePlayers}
+                  votedPlayer={votedPlayer}
+                  setVotedPlayer={setVotedPlayer}
+                  finishVoting={finishVoting}
+                  hasHumanVoted={hasHumanVoted}
+                  eliminatedPlayer={eliminatedPlayer}
+                  handleNextPhase={handleNextPhase}
+                  timeRemaining={timeRemaining}
+                />
+              )}
+
+              {gamePhase === 'gameOver' && (
+                <GameOver
+                  winner={gameWinner}
+                  players={players}
+                  restartGame={restartGame}
+                  logs={logs}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
