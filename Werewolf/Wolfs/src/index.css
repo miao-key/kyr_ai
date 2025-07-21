@@ -6,7 +6,7 @@
   font-weight: 400;
 
   color-scheme: light dark;
-  color: var(--dark-text);
+  color: var(--light-text);
   background-image: url('/bg-texture.png');
   background-color: #1a1a2e;
 
@@ -16,13 +16,6 @@
   -moz-osx-font-smoothing: grayscale;
   
   --header-height: 60px;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: var(--dark-text);
-    background-color: #f0f2f5;
-  }
 }
 
 * {
@@ -51,6 +44,8 @@ body {
     radial-gradient(at 90% 20%, rgba(255, 87, 34, 0.2) 0px, transparent 50%),
     radial-gradient(at 50% 80%, rgba(3, 169, 244, 0.2) 0px, transparent 50%);
   background-attachment: fixed;
+  margin: 0;
+  padding: 0;
 }
 
 #root {
@@ -58,6 +53,7 @@ body {
   height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 h1 {
@@ -199,4 +195,22 @@ button:focus-visible {
   100% {
     transform: translate(24px, 0);
   }
+}
+
+/* 确保游戏页面正确显示的关键样式 */
+.App {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.game-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }

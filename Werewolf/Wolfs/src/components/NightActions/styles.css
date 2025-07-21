@@ -1,347 +1,335 @@
-.night-actions-container {
-  margin-bottom: 1.5rem;
-  padding: 1.5rem;
-  background: linear-gradient(135deg, rgba(38, 50, 56, 0.9), rgba(20, 26, 31, 0.95));
-  border-radius: var(--border-radius-medium);
-  color: var(--light-text);
-  box-shadow: var(--deep-shadow);
-  text-align: center;
+.night-actions {
   position: relative;
+  border-radius: var(--border-radius-medium);
   overflow: hidden;
+  min-height: 400px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  background: rgba(20, 20, 35, 0.8);
+  box-shadow: var(--medium-shadow);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  animation: fadeIn 0.5s ease-out;
+  padding: 2rem;
 }
 
-.night-actions-container::before {
-  content: '';
+.night-background {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url('/night-pattern.svg');
+  background-color: #0a0a18;
+  background-image: url('/night-bg.svg');
   background-size: cover;
-  opacity: 0.05;
+  opacity: 0.3;
   z-index: 0;
   pointer-events: none;
+}
+
+.moon {
+  position: absolute;
+  top: 40px;
+  right: 40px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 240, 0.9);
+  box-shadow: 0 0 40px rgba(255, 255, 240, 0.6);
+  opacity: 0.8;
+}
+
+.stars {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: radial-gradient(2px 2px at 20px 30px, #eef, rgba(0,0,0,0)),
+                    radial-gradient(2px 2px at 40px 70px, #fff, rgba(0,0,0,0)),
+                    radial-gradient(1px 1px at 90px 40px, #fff, rgba(0,0,0,0)),
+                    radial-gradient(2px 2px at 160px 120px, #ddf, rgba(0,0,0,0)),
+                    radial-gradient(1px 1px at 200px 80px, #fff, rgba(0,0,0,0)),
+                    radial-gradient(1px 1px at 300px 50px, #eee, rgba(0,0,0,0)),
+                    radial-gradient(2px 2px at 330px 180px, #fff, rgba(0,0,0,0)),
+                    radial-gradient(1px 1px at 400px 120px, #ddd, rgba(0,0,0,0)),
+                    radial-gradient(1px 1px at 450px 40px, #fff, rgba(0,0,0,0));
+  background-repeat: repeat;
+  background-size: 500px 300px;
+  opacity: 0.5;
+  animation: twinkling 8s infinite linear;
+}
+
+@keyframes twinkling {
+  0% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-100px);
+    opacity: 0.5;
+  }
 }
 
 .night-content {
   position: relative;
   z-index: 1;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
-.night-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1.5rem;
+.night-content h2 {
+  color: var(--light-text);
+  font-size: 1.8rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
-.night-header .moon-icon {
-  font-size: 1.5rem;
-  margin-right: 0.75rem;
-  color: #f4f4f4;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+.night-content h2 i {
+  color: var(--primary-color);
+  margin-right: 0.5rem;
 }
 
-.night-header h2 {
-  margin: 0;
-  color: #f4f4f4;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-}
-
-.role-turn {
-  margin: 1.5rem 0;
-  padding: 1.5rem;
+.role-actions {
+  background: rgba(255, 255, 255, 0.08);
   border-radius: var(--border-radius-medium);
-  background: rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  margin-bottom: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  animation: fadeIn 0.6s ease-out;
-  position: relative;
 }
 
-.role-turn.werewolf-turn {
-  background: rgba(211, 47, 47, 0.1);
-  border-color: rgba(211, 47, 47, 0.2);
-}
-
-.role-turn.seer-turn {
-  background: rgba(25, 118, 210, 0.1);
-  border-color: rgba(25, 118, 210, 0.2);
-}
-
-.role-turn.witch-turn {
-  background: rgba(156, 39, 176, 0.1);
-  border-color: rgba(156, 39, 176, 0.2);
-}
-
-.role-turn h3 {
+.role-actions h3 {
+  color: var(--light-text);
   margin-top: 0;
+  margin-bottom: 1rem;
   font-size: 1.4rem;
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin-bottom: 1rem;
 }
 
-.role-turn h3 i {
+.role-actions h3 i {
   margin-right: 0.5rem;
 }
 
-.werewolf-turn h3 i {
+.werewolf-actions h3 i {
   color: var(--werewolf-color);
 }
 
-.seer-turn h3 i {
+.seer-actions h3 i {
   color: var(--seer-color);
 }
 
-.witch-turn h3 i {
+.witch-actions h3 i {
   color: var(--witch-color);
 }
 
-.action-instruction {
+.action-description {
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.target-selection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
   margin-bottom: 1.5rem;
-  font-size: 1.1rem;
 }
 
-.action-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
-}
-
-.action-button {
-  padding: 0.75rem 1.5rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: var(--light-text);
-  border-radius: var(--border-radius-small);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  flex: 1 0 calc(33% - 0.75rem);
-  max-width: 180px;
-  position: relative;
-  overflow: hidden;
-}
-
-.action-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-  transition: all 0.6s;
-}
-
-.action-button:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-}
-
-.action-button:hover::before {
-  left: 100%;
-}
-
-.action-button.confirm {
-  background: rgba(40, 167, 69, 0.2);
-  border-color: rgba(40, 167, 69, 0.3);
-}
-
-.action-button.cancel {
-  background: rgba(220, 53, 69, 0.2);
-  border-color: rgba(220, 53, 69, 0.3);
-}
-
-.action-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.action-button:disabled::before {
-  display: none;
-}
-
-.night-progress {
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.progress-label {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.progress-bar-container {
-  height: 6px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.progress-bar {
-  height: 100%;
-  background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
-  border-radius: 3px;
-  transition: width 0.3s ease;
-}
-
-.role-completed {
-  text-align: center;
-  padding: 1rem;
-  margin-top: 1rem;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: var(--border-radius-medium);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.role-completed i {
-  color: var(--alive-color);
-  font-size: 1.2rem;
-  margin-right: 0.5rem;
-}
-
-.victim-announcement {
-  margin: 1.5rem 0;
-  padding: 1.5rem;
-  border-radius: var(--border-radius-medium);
-  background: rgba(220, 53, 69, 0.1);
-  border: 1px solid rgba(220, 53, 69, 0.2);
-  animation: pulse 2s infinite;
-}
-
-.victim-announcement h3 {
-  margin: 0;
-  color: #ffcdd2;
-  text-shadow: 0 0 5px rgba(244, 67, 54, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.victim-announcement h3 i {
-  margin-right: 0.5rem;
-  color: var(--dead-color);
-}
-
-.player-selection {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  justify-content: center;
-  margin-top: 1rem;
-}
-
-.player-card {
-  width: calc(33.333% - 0.75rem);
-  max-width: 150px;
-  padding: 1rem;
+.target-option {
+  padding: 0.75rem 1rem;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--border-radius-small);
   cursor: pointer;
   transition: all var(--transition-normal);
+  flex: 1 1 calc(33% - 0.75rem);
+  min-width: 120px;
   text-align: center;
 }
 
-.player-card:hover {
+.target-option:hover {
   background: rgba(255, 255, 255, 0.1);
   transform: translateY(-2px);
 }
 
-.player-card.selected {
-  background: rgba(124, 77, 255, 0.15);
-  border-color: rgba(124, 77, 255, 0.3);
-  box-shadow: 0 0 15px rgba(124, 77, 255, 0.2);
-}
-
-.player-card.selected:hover {
+.target-option.selected {
   background: rgba(124, 77, 255, 0.2);
+  border-color: rgba(124, 77, 255, 0.4);
+  box-shadow: 0 0 0 2px rgba(124, 77, 255, 0.2);
 }
 
-.player-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
+.target-name {
+  color: var(--light-text);
+  font-weight: 500;
+}
+
+.action-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-small);
+  font-weight: 600;
+  cursor: pointer;
   transition: all var(--transition-normal);
-  font-size: 1.2rem;
+  font-size: 1rem;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.action-button i {
+  margin-right: 0.5rem;
+}
+
+.action-button:hover:not(:disabled) {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+}
+
+.action-button:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: not-allowed;
+}
+
+.kill-button {
+  background-color: var(--werewolf-color);
+}
+
+.kill-button:hover:not(:disabled) {
+  background-color: var(--werewolf-hover);
+}
+
+.check-button {
+  background-color: var(--seer-color);
+}
+
+.check-button:hover:not(:disabled) {
+  background-color: var(--seer-hover);
+}
+
+.witch-options {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.save-button {
+  background-color: var(--witch-color);
+  flex: 1;
+}
+
+.save-button:hover:not(:disabled) {
+  background-color: var(--witch-hover);
+}
+
+.poison-button {
+  background-color: var(--dead-color);
+  flex: 1;
+}
+
+.poison-button:hover:not(:disabled) {
+  background-color: var(--dead-hover);
+}
+
+.skip-button {
+  background-color: rgba(255, 255, 255, 0.2);
   color: var(--light-text);
+  flex: 1;
 }
 
-.player-card:hover .player-avatar {
-  transform: scale(1.1);
+.skip-button:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.3);
 }
 
-.player-card.selected .player-avatar {
-  background: rgba(124, 77, 255, 0.3);
+.waiting-message {
+  color: var(--light-text);
+  text-align: center;
+  font-size: 1.2rem;
+  padding: 2rem 0;
+}
+
+/* 预言家查验结果样式 */
+.check-result {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--border-radius-small);
+  padding: 1.5rem;
+  text-align: center;
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.result {
+  font-size: 1.3rem;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border-radius: var(--border-radius-small);
   color: white;
 }
 
-.player-name {
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.wolf-result {
+  background: rgba(220, 53, 69, 0.3);
+  border: 1px solid rgba(220, 53, 69, 0.5);
 }
 
-.player-status {
-  font-size: 0.8rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.villager-result {
+  background: rgba(40, 167, 69, 0.3);
+  border: 1px solid rgba(40, 167, 69, 0.5);
 }
 
-.player-status i {
-  margin-right: 0.25rem;
+.result .target-name {
+  font-weight: 700;
 }
 
-.player-status.alive {
-  color: var(--alive-color);
+.role-result {
+  font-weight: 700;
+  margin-left: 0.5rem;
 }
 
-.player-status.dead {
-  color: var(--dead-color);
+.wolf-result .role-result {
+  color: var(--werewolf-color);
 }
 
-/* 响应式调整 */
+.villager-result .role-result {
+  color: var(--villager-color);
+}
+
 @media (max-width: 768px) {
-  .player-card {
-    width: calc(50% - 0.5rem);
+  .night-actions {
+    padding: 1.5rem;
   }
   
-  .action-button {
-    flex: 1 0 calc(50% - 0.5rem);
+  .target-option {
+    flex: 1 1 calc(50% - 0.75rem);
+  }
+  
+  .witch-options {
+    flex-direction: column;
   }
 }
 
 @media (max-width: 480px) {
-  .player-card {
-    width: 100%;
-    max-width: none;
-  }
-  
-  .action-button {
-    flex: 1 0 100%;
-    max-width: none;
+  .target-option {
+    flex: 1 1 100%;
   }
 } 

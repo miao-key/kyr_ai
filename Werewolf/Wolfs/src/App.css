@@ -1,6 +1,9 @@
 :root {
   --primary-color: #007bff;
+  --primary-dark: #0056b3;
+  --primary-light: #3395ff;
   --secondary-color: #6c757d;
+  --secondary-dark: #5a6268;
   --success-color: #28a745;
   --danger-color: #dc3545;
   --light-color: #f8f9fa;
@@ -10,51 +13,62 @@
   --dark-text: #343a40;
   --day-color: #29b6f6;
   --werewolf-color: #dc3545;
+  --werewolf-hover: #c82333;
   --villager-color: #28a745;
+  --villager-hover: #218838;
   --seer-color: #ffc107;
+  --seer-hover: #e0a800;
   --witch-color: #6c757d;
+  --witch-hover: #5a6268;
   --hunter-color: #007bff;
+  --hunter-hover: #0069d9;
   --alive-color: #28a745;
   --dead-color: #dc3545;
+  --dead-hover: #c82333;
   --border-radius-small: 4px;
   --border-radius-medium: 8px;
   --border-radius-large: 10px;
   --transition-normal: 0.3s ease;
   --medium-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  --light-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  --deep-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
 
 * {
   box-sizing: border-box;
 }
 
-body {
-  font-family: 'Arial', sans-serif;
+html, body {
   margin: 0;
   padding: 0;
-  background-color: #f0f2f5;
-  color: #333;
-  line-height: 1.6;
   height: 100%;
   width: 100%;
   overflow: hidden;
+  font-family: 'Noto Sans SC', 'Arial', sans-serif;
+}
+
+body {
+  background-color: #14141e;
+  color: #fff;
+  line-height: 1.6;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 应用主容器 */
 .App {
   width: 100%;
-  height: 100vh;
-  margin: 0;
-  padding: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
   background-color: #14141e;
   color: #fff;
   overflow: hidden;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
 }
 
 .app-title {
@@ -73,21 +87,21 @@ body {
   display: flex;
   flex-direction: column;
   width: 100%;
-  background-color: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  height: 100%;
+  background-color: #14141e;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* 游戏头部 */
 .game-header {
   background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
   color: var(--light-text);
-  padding: 1.5rem 2rem;
+  padding: 1rem;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   position: relative;
   overflow: hidden;
+  z-index: 10;
 }
 
 .game-header::before {
@@ -127,51 +141,30 @@ body {
 /* 游戏主体 */
 .game-main {
   display: flex;
-  flex-direction: column;
-  padding: 1rem;
-  gap: 1.5rem;
-  background-color: rgba(20, 20, 35, 0.7);
   flex: 1;
+  height: calc(100% - 80px);
+  overflow: hidden;
 }
 
 /* 游戏侧边栏和内容区布局调整 */
 .game-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  width: 100%;
-}
-
-/* 玩家区域 */
-.players-area {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  gap: 1rem;
-}
-
-/* 左侧玩家和右侧玩家 */
-.left-players, .right-players {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.left-players {
-  flex: 5;
-}
-
-.right-players {
-  flex: 4;
+  width: 40%;
+  min-width: 300px;
+  padding: 1rem;
+  background-color: rgba(20, 20, 35, 0.7);
+  overflow-y: auto;
 }
 
 /* 游戏内容区 */
 .game-content {
   flex: 1;
-  min-width: 0;
+  padding: 1rem;
+  background-color: rgba(20, 20, 35, 0.5);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
 }
 
 /* 白天讨论阶段样式 */
@@ -337,26 +330,31 @@ body {
 @media (max-width: 768px) {
   .game-main {
     flex-direction: column;
+    height: auto;
   }
   
   .game-sidebar {
-    flex: none;
     width: 100%;
+    min-width: auto;
+    max-height: 50vh;
   }
 
-  .App {
-    padding: 10px;
+  .game-content {
+    width: 100%;
+    max-height: 50vh;
   }
-  
+}
+
+@media (max-width: 480px) {
   .app-title {
-    font-size: 2rem;
-  }
-
-  .players-area {
-    flex-direction: column;
+    font-size: 1.8rem;
   }
   
-  .left-players, .right-players {
-    width: 100%;
+  .game-header h1 {
+    font-size: 1.4rem;
+  }
+  
+  .game-phase {
+    font-size: 1rem;
   }
 }
