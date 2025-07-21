@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ROLE_TYPES } from '../../constants/gameConstants';
 import './styles.css';
 
@@ -20,6 +20,8 @@ const NightActions = ({
   handleNightEnd,
   nightVictim
 }) => {
+  const [checkResult, setCheckResult] = useState(null);
+
   // 根据当前角色渲染不同的操作界面
   const renderRoleActions = () => {
     switch (currentRole) {
@@ -75,32 +77,49 @@ const NightActions = ({
         <h3>
           <i className="fas fa-eye"></i> 预言家行动
         </h3>
-        <p className="action-description">请选择一名玩家查验身份：</p>
         
-        <div className="target-selection">
-          {players
-            .filter(p => p.id !== targetPlayer && p.status === 'alive')
-            .map(player => (
-              <div
-                key={player.id}
-                className={`target-option ${targetPlayer === player.id ? 'selected' : ''}`}
-                onClick={() => setTargetPlayer(player.id)}
-              >
-                <span className="target-name">{player.name}</span>
-              </div>
-            ))}
-        </div>
-        
-        <button
-          className="action-button check-button"
-          disabled={!targetPlayer}
-          onClick={() => {
-            const isWerewolf = handleSeerCheck(targetPlayer);
-            alert(`${players.find(p => p.id === targetPlayer)?.name} 是${isWerewolf ? '狼人' : '好人'}`);
-          }}
-        >
-          <i className="fas fa-search"></i> 查验身份
-        </button>
+        {!checkResult ? (
+          <>
+            <p className="action-description">请选择一名玩家查验身份：</p>
+            
+            <div className="target-selection">
+              {players
+                .filter(p => p.status === 'alive' && p.role !== ROLE_TYPES.SEER)
+                .map(player => (
+                  <div
+                    key={player.id}
+                    className={`target-option ${targetPlayer === player.id ? 'selected' : ''}`}
+                    onClick={() => setTargetPlayer(player.id)}
+                  >
+                    <span className="target-name">{player.name}</span>
+                  </div>
+                ))}
+            </div>
+            
+            <button
+              className="action-button check-button"
+              disabled={!targetPlayer}
+              onClick={() => {
+                const isWerewolf = handleSeerCheck(targetPlayer);
+                const targetName = players.find(p => p.id === targetPlayer)?.name;
+                setCheckResult({
+                  name: targetName,
+                  isWerewolf: isWerewolf
+                });
+              }}
+            >
+              <i className="fas fa-search"></i> 查验身份
+            </button>
+          </>
+        ) : (
+          <div className="check-result">
+            <p className="action-description">查验结果：</p>
+            <div className={`result ${checkResult.isWerewolf ? 'wolf-result' : 'villager-result'}`}>
+              <span className="target-name">{checkResult.name}</span> 是 
+              <span className="role-result">{checkResult.isWerewolf ? '狼人' : '好人'}</span>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
