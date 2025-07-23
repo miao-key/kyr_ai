@@ -10,7 +10,7 @@ export default defineConfig({
   plugins: [
     react(),
     viteMockServe({
-      mockPath: 'src/mock', 
+      mockPath: 'mock', 
       localEnabled: true,
     })
   ],
