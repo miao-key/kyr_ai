@@ -96,3 +96,34 @@ ReadMe.md 很重要 方便面试官
     - 频繁的单位 260/75 换算
     - 自动化？
         postcss + postcss-pxtorem
+        vite 是自动读取postcss.config.js 将css 内容编译
+        px => rem
+## git 提交规范
+- 项目初始化
+## 功能模块
+- UI 组件库
+    - react-vant 第三方组件库 70%的组件已经有了，不用写
+    - 选择一个合适业务的
+- 配置路由及懒加载
+    - 懒加载
+    - 路由守卫
+    - Layout组件
+        - 嵌套路由Outlet 分组路由配置
+        - 网页有几个模板 Layout
+            - Route 不加path 对应的路由自动选择
+            - tabbar 模板
+            - blank 模板
+    - tabbar
+        - react-vant + @react-vant/icons
+        - value + onChange 响应式
+        - 直接点击分享 active 的设置
+
+- 自定义Hook
+    - useTitle
+    一定要设置
+
+- es6 特性使用
+    tabbar 的高亮
+    - arr.findIndex
+    - str.startsWith
+    - promise
