@@ -11,18 +11,22 @@ import {
 } from 'react-router-dom'
 import MainLayout from '@/components/MainLayout'
 import BlankLayout from '@/components/BlankLayout'
+import Loading from '@/components/Loading'
+
 const Home = lazy(() => import('@/pages/Home'))
 const Search = lazy(() => import('@/pages/Search'))
 const Discount = lazy(() => import('@/pages/Discount'))
 const Collection = lazy(() => import('@/pages/Collection'))
 const Trip = lazy(() => import('@/pages/Trip'))
 const Account = lazy(() => import('@/pages/Account'))
-
+// 删除重复的Loading组件导入
+// const Loading = lazy(() => import('@/components/Loading'))
 
 function App() {
   
   return (
     <>
+      {/* <Loading /> */}
        <Suspense fallback={<div>Loading...</div>}>
        {/* 带有tabbar的layout */}
         <Routes>
