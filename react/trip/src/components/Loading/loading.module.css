@@ -1,0 +1,38 @@
+.wrapper>div {
+    position: fixed; /*static*/
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    background: rgba(155, 57, 216, 0.5);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    /*关键帧动画*/
+    /* animation-name 动画脚本 animation-duration 动画时长
+     animation-timing-function 动画速度曲线 animation-delay 动画延迟
+     animation-iteration-count 动画播放次数 animation-direction 动画播放方向 
+     animation-fill-mode 动画播放状态 animation-play-state 动画播放状态 */
+    animation: loading 1.4s infinite ease-in;
+}
+.wrapper>div:nth-child(2) {
+    background-color: red;
+    animation-delay: -0.7s;
+}
+@keyframes loading {
+    /* 1.4 s 你设计多少个动作 ？*/
+    0%, 100% {
+        transform: scale(0);
+    }
+    /* 25% {
+        background-color: pink;
+    } */
+    50% {
+        transform: scale(1);
+    }
+    /* 75% {
+        background-color: rgb(33, 99, 205);
+    } */
+   
+}
