@@ -19,8 +19,8 @@ const Discount = lazy(() => import('@/pages/Discount'))
 const Collection = lazy(() => import('@/pages/Collection'))
 const Trip = lazy(() => import('@/pages/Trip'))
 const Account = lazy(() => import('@/pages/Account'))
-// 删除重复的Loading组件导入
-// const Loading = lazy(() => import('@/components/Loading'))
+const Detail = lazy(() => import('@/pages/Detail'))
+
 
 function App() {
   
@@ -44,6 +44,7 @@ function App() {
           <Route element={<BlankLayout />}>
             <Route path='/search' element={<Search />} />
           </Route>
+          <Route path='/detail/:id' element={<Detail />} />
         </Routes>
        </Suspense>
     </>
