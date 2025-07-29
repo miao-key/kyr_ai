@@ -39,68 +39,7 @@ const Trip = () => {
       id: 1,
       content: 'hello,I am your assistant~~',
       role: 'assistant'
-    },
-    {
-      id: 2,
-      content: 'hello~',
-      role: 'user'
-    },
-    {
-      id: 1,
-      content: 'hello,I am your assistant~~',
-      role: 'assistant'
-    },
-    {
-      id: 2,
-      content: 'hello~',
-      role: 'user'
-    },
-    {
-      id: 1,
-      content: 'hello,I am your assistant~~',
-      role: 'assistant'
-    },
-    {
-      id: 2,
-      content: 'hello~',
-      role: 'user'
-    },
-    {
-      id: 1,
-      content: 'hello,I am your assistant~~',
-      role: 'assistant'
-    },
-    {
-      id: 2,
-      content: 'hello~',
-      role: 'user'
-    },
-    {
-      id: 1,
-      content: 'hello,I am your assistant~~',
-      role: 'assistant'
-    },
-    {
-      id: 2,
-      content: 'hello~',
-      role: 'user'
-    },
-    {
-      id: 1,
-      content: 'hello,I am your assistant~~',
-      role: 'assistant'
-    },
-    {
-      id: 2,
-      content: 'hello~',
-      role: 'user'
-    },
-    {
-      id: 1,
-      content: 'hello,I am your assistant~~',
-      role: 'assistant'
-    },
-    
+    }
   ]);
   const handleChat = async () => {
       if (text.trim() === "") {
