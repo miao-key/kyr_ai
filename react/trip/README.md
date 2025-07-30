@@ -136,7 +136,19 @@ ReadMe.md 很重要 方便面试官
     数据驱动页面 （2列） 奇偶
     - 加载更多 位于盒子底部的元素 通过使用 IntersectionObserver
     观察它是否出现在视窗，性能更好，使用了观察者模式
+    组件卸载时，直接使用disconnect 释放资源，防止内存泄漏
     - key id 下拉刷新
+    - 使用IntersectionObserver 再次图片懒加载 data-src
+    - toast 组件封装
+        - 需要自定义，UI组件库不满足需求
+        - UI props
+        - JS显示出来 实现跨层级通信
+            观察者
+        - mitt eventBus 事件总线
+            - 实例化 mitt()
+            - on(自定义事件的名字, callback)
+            - emit(自定义事件的名字，参数)
+            组件通过监听一个自定义事件，实现基于事件的组件通信
     
 ## 项目亮点和难点
 - 前端智能
@@ -168,6 +180,12 @@ ReadMe.md 很重要 方便面试官
 - chat messages 遇到message 覆盖问题 
 - 闭包陷阱问题 
     一次事件里面，两次setMessages()
+- 升级瀑布流？
+    - 骨架屏
+    - 奇偶images 两列分配可能有时会像天蚕脚一样，不好看，随机
+        两个响应式数组，判断哪一列高度更少，将新得到的img加入哪个数组
+    - intersectionObserver 用的两次，重复了，违反了dry 原则 封装？
+        hooks
 
 
 - 自定义Hooks
