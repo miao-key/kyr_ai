@@ -14,6 +14,7 @@ import BlankLayout from '@/components/BlankLayout'
 import Loading from '@/components/Loading'
 import Toast from '@/components/Toast'
 
+
 const Home = lazy(() => import('@/pages/Home'))
 const Search = lazy(() => import('@/pages/Search'))
 const Discount = lazy(() => import('@/pages/Discount'))
@@ -21,7 +22,7 @@ const Collection = lazy(() => import('@/pages/Collection'))
 const Trip = lazy(() => import('@/pages/Trip'))
 const Account = lazy(() => import('@/pages/Account'))
 const Detail = lazy(() => import('@/pages/Detail'))
-
+const Coze = lazy(() => import('@/pages/Coze'));
 
 function App() {
   
@@ -40,8 +41,7 @@ function App() {
             <Route path='/account' element={<Account />} />
           </Route>
         
-        {/* 空的 */}
-        
+          <Route path="/coze" element={<Coze />}/>
           <Route element={<BlankLayout />}>
             <Route path='/search' element={<Search />} />
           </Route>
