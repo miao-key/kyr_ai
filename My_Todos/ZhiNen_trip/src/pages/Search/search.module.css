@@ -1,0 +1,133 @@
+/* Search页面样式 - 与原始内联样式完全一致 */
+.search-container {
+  margin: 16px;
+}
+
+.search-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.back-button {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  background-color: transparent !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #666 !important;
+  padding: 0 !important;
+  margin-left: -8px !important;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 2px;
+  border: 1px solid #e5e5e5;
+  flex: 1;
+}
+
+.search-input {
+  flex: 1 !important;
+  border: none !important;
+  outline: none !important;
+  background-color: transparent !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  color: #333 !important;
+}
+
+.search-button {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  background-color: #1976d2 !important;
+  border: none !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-right: 2px !important;
+}
+
+.history-container {
+  padding: 10px 0;
+  background-color: #fff;
+  margin-top: 16px;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0 10px 0;
+  cursor: pointer;
+}
+
+.history-title {
+  font-size: 16px;
+  color: #333;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+
+.history-arrow {
+  font-size: 12px;
+  color: #999;
+  margin-left: 4px;
+  display: inline-block;
+  transition: transform 0.2s;
+}
+
+.history-arrow.open {
+  transform: rotate(0deg);
+}
+
+.history-arrow.closed {
+  transform: rotate(180deg);
+}
+
+.delete-icon {
+  cursor: pointer;
+  width: 16px !important;
+  height: 16px !important;
+  font-size: 16px !important;
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 5px;
+}
+
+.history-tag {
+  margin-bottom: 8px !important;
+  background-color: #f9f9f9 !important;
+  color: #333 !important;
+  font-size: 13px !important;
+  padding: 5px 12px !important;
+  border-radius: 16px !important;
+  border: none !important;
+  cursor: pointer !important;
+}
+
+
+.empty-history {
+  text-align: center;
+  color: #999;
+  font-size: 13px;
+  padding: 20px 0;
+}
+
+.search-results {
+  /* 保持原有的 mt-4 类名效果 */
+}
