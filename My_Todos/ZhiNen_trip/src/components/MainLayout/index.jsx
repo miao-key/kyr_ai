@@ -16,14 +16,21 @@ import {
   GuideO,
   UserO
 } from '@react-vant/icons'
+import { NAVIGATION_TABS, THEME_CONFIG } from '@/constants'
+
+// 图标映射
+const IconComponents = {
+  HomeO: <HomeO/>,
+  CommentCircleO: <CommentCircleO/>,
+  GuideO: <GuideO/>,
+  UserO: <UserO/>
+}
 
 // 菜单栏配置
-const tabs = [
-    {icon: <HomeO/>,title: '首页',path: '/home'},
-    {icon:<CommentCircleO  />,title: '旅记',path: '/article'},
-    {icon: <GuideO  />,title: '行程',path: '/trip'},
-    {icon: <UserO/>,title: '我的',path: '/account'}
-]
+const tabs = NAVIGATION_TABS.map(tab => ({
+  ...tab,
+  icon: IconComponents[tab.icon]
+}))
 
 const MainLayout = () => {
   const [action, setAction] = useState(0)
@@ -41,7 +48,7 @@ const MainLayout = () => {
   return (
     <>
       {/* 主内容区域 */}
-      <div style={{ paddingBottom: '60px', minHeight: '100vh' }}>
+      <div style={{ paddingBottom: '60px' }}>
         <Outlet />
       </div>
       
@@ -63,9 +70,9 @@ const MainLayout = () => {
             left: `calc(${action * 25}% + 4px)`,
             width: 'calc(25% - 8px)',
             height: 'calc(100% - 8px)',
-            background: 'linear-gradient(135deg,rgb(110, 225, 100) 0%,rgb(112, 227, 220) 100%)',
+            background: THEME_CONFIG.COLORS.GRADIENT,
             borderRadius: '12px',
-            transition: 'left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            transition: `left 0.4s ${THEME_CONFIG.ANIMATIONS.EASING}`,
             zIndex: 0,
             pointerEvents: 'none'
           }}

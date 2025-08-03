@@ -4,7 +4,7 @@ import {
   Route,
   Navigate
 } from 'react-router-dom'
-import { Flex, Loading } from 'react-vant'
+import { LoadingSpinner } from '@/components/UI'
 import './App.css'
 
 const MainLayout = lazy(() => import('@/components/MainLayout'))
@@ -23,11 +23,12 @@ function App() {
   return (
     <>
       <Suspense fallback={
-        <div className="flex justify-center items-center h-screen">
-          <Flex.Item span={8}>
-            <Loading type="ball" />
-          </Flex.Item>
-        </div>
+        <LoadingSpinner 
+          type="ball" 
+          size="medium"
+          text="正在加载..."
+          fullScreen={true}
+        />
       }>
         <Routes>
           <Route element={<MainLayout />}>

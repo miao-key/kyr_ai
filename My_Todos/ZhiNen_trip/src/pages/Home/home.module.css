@@ -1,0 +1,540 @@
+.container {
+  padding: 0;
+  margin: 0;
+  /* 青绿色渐变背景 - 自适应高度 */
+  background: linear-gradient(135deg, #83d298 0%, #34D399 50%, #a1e5ca 100%);
+  min-height: 300px; /* 设置最小高度，让内容自然决定实际高度 */
+  width: 100vw;
+  box-sizing: border-box;
+  position: relative;
+  /* 为固定搜索框添加顶部内边距 */
+  padding-top: 80px;
+  padding-bottom: 0;
+}
+
+.searchContainer {
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 2px;
+  border: 1px solid #e5e5e5;
+  width: calc(100vw - 32px);
+  max-width: 360px;
+  margin: 0 auto 24px auto;
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+}
+
+.searchInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  background-color: transparent;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+}
+
+.searchButton {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  background-color: #1976d2;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 2px;
+}
+
+/* 导航区域 - 优化白色背景区域，确保只覆盖内容区域 */
+.navigationGrid {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background: white;
+  border-radius: 20px 20px 0 0;
+  position: relative;
+  z-index: 1;
+  margin-top: -20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 20px;
+  /* 让内容自然决定高度，避免不必要的白色空间 */
+}
+
+/* 导航内容容器 - 独立的盒子 */
+.navigationContent {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  width: 340px;
+  margin: 0;
+  padding: 16px 0 24px 0;
+  justify-items: center;
+  align-items: start;
+  /* 为导航部分创建独立的容器 */
+  background: transparent;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+/* 导航项容器 */
+.navigationItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+/* 图标容器 */
+.iconContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background-color: #f8f9fa;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid #e9ecef;
+}
+
+.iconContainer:hover {
+  background-color: #e3f2fd;
+  border-color: #1976d2;
+  transform: translateY(-1px);
+}
+
+.iconContainer:active {
+  transform: translateY(0);
+  background-color: #bbdefb;
+}
+
+/* 图标表情符号 */
+.iconEmoji {
+  font-size: 20px;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+/* 图标文字 */
+.iconText {
+  font-size: 11px;
+  color: #666;
+  text-align: center;
+  line-height: 1.2;
+  font-weight: 500;
+}
+
+/* 特定图标的颜色主题 */
+.hotelIcon {
+  background-color: #fff3e0;
+  border-color: #ffb74d;
+}
+
+.hotelIcon:hover {
+  background-color: #ffe0b2;
+  border-color: #ff9800;
+}
+
+.flightIcon {
+  background-color: #e8f5e8;
+  border-color: #81c784;
+}
+
+.flightIcon:hover {
+  background-color: #c8e6c9;
+  border-color: #4caf50;
+}
+
+.trainIcon {
+  background-color: #f3e5f5;
+  border-color: #ba68c8;
+}
+
+.trainIcon:hover {
+  background-color: #e1bee7;
+  border-color: #9c27b0;
+}
+
+.taxiIcon {
+  background-color: #fff8e1;
+  border-color: #ffb74d;
+}
+
+.taxiIcon:hover {
+  background-color: #ffecb3;
+  border-color: #ffa726;
+}
+
+.tourismIcon {
+  background-color: #e0f2f1;
+  border-color: #4db6ac;
+}
+
+.tourismIcon:hover {
+  background-color: #b2dfdb;
+  border-color: #26a69a;
+}
+
+/* 轮播容器 - 向上移动，减少边缘距离 */
+/* 轮播容器 */
+.carouselContainer {
+  width: 100%;
+  max-width: 360px;
+  margin: 8px auto 0 auto;
+  position: relative;
+  padding: 0 16px 16px 16px;
+  box-sizing: border-box;
+  background: transparent;
+  border-radius: 8px;
+}
+
+.carouselWrapper {
+  width: 100%;
+  height: 280px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  position: relative;
+  user-select: none;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.carouselTrack {
+  display: flex;
+  width: 600%; /* 6张图片（4张真实 + 2张克隆） */
+  height: 100%;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.carouselSlide {
+  flex: 0 0 16.666667%; /* 每张图片占16.67% (100/6) */
+  width: 16.666667%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.carouselImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  transition: transform 0.3s ease;
+}
+
+.carouselImage:hover {
+  transform: scale(1.05);
+}
+
+.imageOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+  padding: 20px 16px 16px;
+  color: white;
+}
+
+.imageTitle {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  -webkit-font-smoothing: antialiased;
+}
+
+.imageDescription {
+  font-size: 12px;
+  margin: 0;
+  opacity: 0.9;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  line-height: 1.3;
+}
+
+/* 导航箭头 */
+.carouselArrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5); /* 改为半透明黑色背景 */
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: bold;
+  color: white; /* 改为白色文字 */
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.carouselArrow:hover {
+  background: rgba(0, 0, 0, 0.8); /* 悬停时变为更深的半透明黑色 */
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.carouselArrowLeft {
+  left: 12px;
+}
+
+.carouselArrowRight {
+  right: 12px;
+}
+
+.carouselDots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 0;
+}
+
+.carouselDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  background-color: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateZ(0);
+}
+
+.carouselDot.active {
+  background-color: #1976d2;
+  transform: scale(1.3) translateZ(0);
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.4);
+}
+
+.carouselDot:hover:not(.active) {
+  background-color: rgba(25, 118, 210, 0.6);
+  transform: scale(1.1) translateZ(0);
+}
+
+/* 响应式设计 */
+@media (max-width: 480px) {
+  .carouselWrapper {
+    height: 240px;
+  }
+  
+  .carouselArrow {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+  
+  .carouselArrowLeft {
+    left: 8px;
+  }
+  
+  .carouselArrowRight {
+    right: 8px;
+  }
+  
+  .imageTitle {
+    font-size: 14px;
+  }
+  
+  .imageDescription {
+    font-size: 11px;
+  }
+}
+
+/* 确保容器不会产生横向滚动 */
+.container {
+  overflow-x: hidden;
+}
+
+/* 瀑布流容器 */
+.waterfallContainer {
+  width: 100%;
+  padding: 20px 16px;
+  box-sizing: border-box;
+}
+
+/* 瀑布流网格布局 */
+.waterfallGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* 攻略卡片 */
+.guideCard {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  break-inside: avoid;
+}
+
+.guideCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* 卡片图片容器 */
+.cardImage {
+  position: relative;
+  width: 100%;
+  height: 120px;
+  overflow: hidden;
+}
+
+.cardImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.guideCard:hover .cardImage img {
+  transform: scale(1.05);
+}
+
+/* 卡片标签 */
+.cardTag {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(25, 118, 210, 0.9);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 500;
+  backdrop-filter: blur(4px);
+}
+
+/* 卡片内容 */
+.cardContent {
+  padding: 12px;
+}
+
+/* 卡片标题 */
+.cardTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 6px 0;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 卡片描述 */
+.cardDescription {
+  font-size: 11px;
+  color: #666;
+  line-height: 1.4;
+  margin: 0 0 8px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 卡片底部 */
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+/* 位置信息 */
+.cardLocation {
+  font-size: 10px;
+  color: #999;
+  background: #f5f5f5;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+/* 价格信息 */
+.cardPrice {
+  font-size: 12px;
+  color: #ff6b35;
+  font-weight: 600;
+}
+
+/* 响应式设计 */
+@media (max-width: 480px) {
+  .waterfallGrid {
+    gap: 10px;
+  }
+  
+  .cardImage {
+    height: 100px;
+  }
+  
+  .cardContent {
+    padding: 10px;
+  }
+  
+  .cardTitle {
+    font-size: 13px;
+  }
+  
+  .cardDescription {
+    font-size: 10px;
+    -webkit-line-clamp: 2;
+  }
+}
+
+/* 为了实现更好的瀑布流效果，可以使用CSS Grid的masonry布局（实验性功能） */
+@supports (grid-template-rows: masonry) {
+  .waterfallGrid {
+    grid-template-rows: masonry;
+  }
+}
+
+/* 或者使用column布局作为备选方案 */
+@media (min-width: 481px) {
+  .waterfallGrid {
+    column-count: 2;
+    column-gap: 12px;
+    display: block;
+  }
+  
+  .guideCard {
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 12px;
+  }
+}
+
