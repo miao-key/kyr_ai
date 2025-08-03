@@ -1,0 +1,58 @@
+/* 懒加载图片容器 */
+.lazyImageContainer {
+  position: relative;
+  overflow: hidden;
+}
+
+.lazyImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.3s ease;
+}
+
+.lazyImage.loading {
+  opacity: 0;
+}
+
+.lazyImage.loaded {
+  opacity: 1;
+}
+
+.lazyImage.error {
+  opacity: 0.5;
+}
+
+/* 淡入动画 */
+.fadeIn {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 加载状态 */
+.lazyImageLoading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+
+/* 错误状态 */
+.lazyImageError {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #999;
+  font-size: 12px;
+  text-align: center;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 8px 12px;
+  border-radius: 4px;
+}
