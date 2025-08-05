@@ -21,7 +21,7 @@ export default defineConfig(({ command, mode }) => {
         "/api/doubao": {
           target: "https://ark.cn-beijing.volces.com",
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api\/doubao/, "/api/v3"),
+          rewrite: (path) => path.replace(/^\/api\/doubao/, "/api"),
           configure: (proxy, options) => {
             proxy.on("proxyReq", (proxyReq, req, res) => {
               // 安全地添加API密钥到请求头

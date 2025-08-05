@@ -170,6 +170,38 @@ const generateMockImages = () => {
     }
 }
 
+// 获取随机头像
+export const getRandomAvatar = async () => {
+    if (!PEXELS_API_KEY) {
+        console.warn('⚠️ Pexels API Key未配置，使用默认头像生成')
+        // 使用随机种子生成DiceBear头像作为后备
+        const seed = Math.random().toString(36).substring(7)
+        return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`
+    }
+
+    try {
+        // 搜索人物肖像照片
+        const portraitKeywords = ['portrait', 'face', 'person', 'headshot', 'profile']
+        const randomKeyword = portraitKeywords[Math.floor(Math.random() * portraitKeywords.length)]
+        
+        const response = await pexelsRequest(`/search?query=${randomKeyword}&per_page=80&orientation=portrait`)
+        
+        if (response?.photos && response.photos.length > 0) {
+            // 随机选择一张照片
+            const randomPhoto = response.photos[Math.floor(Math.random() * response.photos.length)]
+            // 返回中等尺寸的头像
+            return randomPhoto.src.medium || randomPhoto.src.small
+        } else {
+            throw new Error('没有找到合适的头像图片')
+        }
+    } catch (error) {
+        console.error('❌ 获取Pexels头像失败:', error)
+        // 降级到DiceBear头像
+        const seed = Math.random().toString(36).substring(7)
+        return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`
+    }
+}
+
 // 导出工具函数
 export const formatImageUrl = (photo, size = 'medium') => {
     return photo?.src?.[size] || photo?.src?.medium || '/placeholder-image.jpg'
