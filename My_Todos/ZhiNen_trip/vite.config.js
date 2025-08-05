@@ -39,6 +39,46 @@ export default defineConfig(({ command, mode }) => {
             });
           },
         },
+        // 代理Coze API请求
+        '/api/coze': {
+          target: 'https://api.coze.cn',
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => {
+            // 根据不同的路径使用不同的重写规则
+            if (path.includes('/api/coze/workflow')) {
+              return path.replace(/^\/api\/coze\/workflow/, '/v1/workflow');
+            } else {
+              return path.replace(/^\/api\/coze/, '/api/v1');
+            }
+          },
+          headers: {
+            'Origin': 'https://api.coze.cn',
+            'Referer': 'https://api.coze.cn/'
+          },
+          configure: (proxy, options) => {
+            proxy.on('error', (err, req, res) => {
+              console.log('❌ Coze代理错误:', err);
+            });
+            proxy.on('proxyReq', (proxyReq, req, res) => {
+              // 安全地添加PAT Token到请求头
+              const patToken = env.VITE_PAT_TOKEN;
+              
+              if (patToken && patToken.trim() !== '') {
+                proxyReq.setHeader('Authorization', `Bearer ${patToken}`);
+                console.log('✅ Coze代理请求已添加Authorization头');
+                console.log('🔗 目标URL:', req.url);
+                console.log('📊 请求方法:', req.method);
+              } else {
+                console.error('❌ 未找到VITE_PAT_TOKEN环境变量或为空');
+                console.error('请在.env.local文件中设置: VITE_PAT_TOKEN=your-pat-token');
+              }
+            });
+            proxy.on('proxyRes', (proxyRes, req, res) => {
+              console.log('📥 Coze代理响应:', req.url, proxyRes.statusCode);
+            });
+          }
+        },
       },
     },
   }
