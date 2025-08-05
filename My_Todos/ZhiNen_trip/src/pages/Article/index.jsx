@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, memo, useMemo } from 'react'
 import { Image, Loading, Empty, Button } from 'react-vant'
 import { LikeO, Star, ChatO, Location, Edit } from '@react-vant/icons'
+import { useAuth } from '@/contexts/AuthContext'
 import useTitle from '@/hooks/useTitle'
 import useThrottle from '@/hooks/useThrottle'
 import { getMixedTravelContent } from '@/api/pexels'
@@ -359,6 +360,7 @@ const CustomAvatar = ({ src, alt, className }) => {
           borderRadius: '50%',
           border: '2px solid #e3f2fd',
           objectFit: 'cover',
+          objectPosition: 'center center', // 确保豆包生成的图片居中显示
           transition: 'opacity 0.3s ease-in',
           transform: showAvatar && !hasError ? 'scale(1)' : 'scale(1.05)',
           transitionProperty: 'opacity, transform',
@@ -375,7 +377,7 @@ const CustomAvatar = ({ src, alt, className }) => {
 }
 
 // 将TravelCard组件移到外部，避免每次父组件渲染时重新创建
-const TravelCard = memo(({ article, onLike, onCollect, onFollow }) => {
+const TravelCard = memo(({ article, onLike, onCollect, onFollow, isAuthenticated = true }) => {
   const [isVisible, setIsVisible] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(null) // null=未知, true=成功, false=失败
   
@@ -415,12 +417,14 @@ const TravelCard = memo(({ article, onLike, onCollect, onFollow }) => {
             <p className={styles.userTime}>{article.time}</p>
           </div>
         </div>
-        <button 
-          className={`${styles.followBtn} ${article.user.isFollowed ? styles.followed : ''}`}
-        onClick={() => onFollow(article.user.id)}
-        >
-          {article.user.isFollowed ? '已关注' : '+ 关注'}
-        </button>
+        {isAuthenticated && (
+          <button 
+            className={`${styles.followBtn} ${article.user.isFollowed ? styles.followed : ''}`}
+            onClick={() => onFollow(article.user.id)}
+          >
+            {article.user.isFollowed ? '已关注' : '+ 关注'}
+          </button>
+        )}
       </div>
 
       {/* 卡片内容 */}
@@ -499,8 +503,14 @@ const TravelCard = memo(({ article, onLike, onCollect, onFollow }) => {
 const Article = () => {
   useTitle('智旅-旅记')
   
+  // 获取认证状态
+  const { isAuthenticated } = useAuth()
+  
+  // 根据登录状态决定初始标签
+  const defaultTab = isAuthenticated ? '关注' : '衣'
+  
   // 状态管理
-  const [activeTab, setActiveTab] = useState('关注')
+  const [activeTab, setActiveTab] = useState(defaultTab)
   const [articles, setArticles] = useState([])
   const [loading, setLoading] = useState(true)
   const [hasMore, setHasMore] = useState(true)
@@ -530,14 +540,24 @@ const Article = () => {
     setShowToast(false)
   }, [])
 
-  // 分类标签配置
-  const tabs = [
+  // 分类标签配置 - 根据登录状态过滤
+  const allTabs = [
     { key: '关注', label: '关注', icon: '❤️' },
     { key: '衣', label: '衣', icon: '👗' },
     { key: '食', label: '食', icon: '🍽️' },
     { key: '住', label: '住', icon: '🏨' },
     { key: '行', label: '行', icon: '✈️' }
   ]
+  
+  // 根据登录状态过滤标签
+  const tabs = isAuthenticated ? allTabs : allTabs.filter(tab => tab.key !== '关注')
+  
+  // 监听登录状态变化，调整activeTab
+  useEffect(() => {
+    if (!isAuthenticated && activeTab === '关注') {
+      setActiveTab('衣') // 如果用户退出登录且当前在关注标签，切换到衣标签
+    }
+  }, [isAuthenticated, activeTab])
 
   // 根据分类生成用户数据
   const generateMockUser = (category = activeTab) => {
@@ -1080,9 +1100,10 @@ const Article = () => {
         onLike={handleLike}
         onCollect={handleCollect}
         onFollow={handleFollow}
+        isAuthenticated={isAuthenticated}
       />
     ))
-  }, [articles, handleLike, handleCollect, handleFollow])
+  }, [articles, handleLike, handleCollect, handleFollow, isAuthenticated])
 
   // 组件挂载时加载数据
   useEffect(() => {
@@ -1116,7 +1137,7 @@ const Article = () => {
     <div className={styles.articleContainer}>
       {/* 顶部分类标签栏 */}
       <div className={styles.topTabs}>
-        <div className={styles.tabsContainer}>
+        <div className={`${styles.tabsContainer} ${!isAuthenticated ? styles.fourTabs : ''}`}>
           {tabs.map(tab => (
             <button
               key={tab.key}

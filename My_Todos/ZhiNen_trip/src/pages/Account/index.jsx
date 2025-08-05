@@ -1,6 +1,8 @@
 import useTitle from '@/hooks/useTitle'
 import { useState, useEffect, useRef } from 'react'
-import { Image, ActionSheet, Cell, CellGroup, Badge, Progress, Grid, GridItem, Popup, Button, Space, Tag, Notify, Field, Form } from 'react-vant'
+import { useAuth } from '@/contexts/AuthContext'
+import { useNavigate } from 'react-router-dom'
+import { Image, ActionSheet, Cell, CellGroup, Badge, Progress, Grid, GridItem, Popup, Button, Space, Tag, Notify, Field, Form, Dialog } from 'react-vant'
 import {
     LikeO,
     Star,
@@ -18,6 +20,7 @@ import {
     Edit
 } from '@react-vant/icons'
 import { generateTravelAvatar } from '@/api'
+import { formatUserDisplayName, generateAvatarUrl } from '@/utils/auth'
 import styles from './account.module.css'
 
 // 旅行足迹数据
@@ -85,6 +88,13 @@ const myServices = [
         text: '设置', 
         desc: '个人偏好设置',
         color: '#64748B' 
+    },
+    { 
+        icon: <span style={{ fontSize: '18px' }}>🚪</span>, 
+        text: '退出登录', 
+        desc: '安全退出账户',
+        color: '#FF6B6B',
+        isLogout: true
     }
 ]
 
@@ -95,34 +105,98 @@ const recentActivities = [
     { type: 'plan', content: '制定了"日本7日游"计划', time: '3天前', avatar: '📅' }
 ]
 
-// 默认用户信息
-const defaultUserInfo = {
-    nickname: '旅行探索家小王',
-    signature: '世界那么大，我想去看看 ✈️',
-    avatar: 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg',
-    level: '黄金旅行家',
-    levelProgress: 75,
-    nextLevel: '钻石旅行家',
-    travelDays: 365,
-    joinDate: '2023.06',
-    location: '上海',
-    followers: 1024,
-    following: 256
-}
-
-// 从localStorage获取用户信息的函数
-const getUserInfoFromStorage = () => {
-    try {
-        const savedUserInfo = localStorage.getItem('userInfo')
-        return savedUserInfo ? JSON.parse(savedUserInfo) : defaultUserInfo
-    } catch (error) {
-        console.warn('解析localStorage中的用户信息失败:', error)
-        return defaultUserInfo
-    }
-}
-
 const Account = () => {
-    const [userInfo, setUserInfo] = useState(() => getUserInfoFromStorage())
+    const { user, logout, updateUser, generateAvatar, isAuthenticated, isLoading } = useAuth()
+    const navigate = useNavigate()
+    
+    // 调试日志 - 显示当前认证状态
+    useEffect(() => {
+        console.log('🔍 Account页面 - 认证状态检查:')
+        console.log('  - isLoading:', isLoading)
+        console.log('  - isAuthenticated:', isAuthenticated)
+        console.log('  - user:', user)
+    }, [isLoading, isAuthenticated, user])
+    
+    // 如果正在加载认证状态，显示加载界面
+    if (isLoading) {
+        return (
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100vh',
+                flexDirection: 'column',
+                gap: '16px'
+            }}>
+                <div style={{ fontSize: '24px' }}>🔄</div>
+                <div>验证登录状态...</div>
+            </div>
+        )
+    }
+    
+    // 如果未认证，显示提示信息
+    if (!isAuthenticated || !user) {
+        return (
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100vh',
+                flexDirection: 'column',
+                gap: '16px',
+                padding: '20px',
+                textAlign: 'center'
+            }}>
+                <div style={{ fontSize: '48px' }}>🔐</div>
+                <h2>需要登录</h2>
+                <p>请先登录以访问个人中心</p>
+                <button 
+                    onClick={() => navigate('/login')}
+                    style={{
+                        padding: '12px 24px',
+                        background: '#1976d2',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer'
+                    }}
+                >
+                    去登录
+                </button>
+            </div>
+        )
+    }
+    
+    // 合并认证系统用户信息和旅行相关扩展信息
+    const [extendedUserInfo, setExtendedUserInfo] = useState(() => {
+        // 从localStorage获取扩展的旅行信息
+        const savedExtendedInfo = localStorage.getItem('userExtendedInfo')
+        const defaultExtended = {
+            level: '黄金旅行家',
+            levelProgress: 75,
+            nextLevel: '钻石旅行家',
+            travelDays: 365,
+            joinDate: '2023.06',
+            location: '上海',
+            followers: 1024,
+            following: 256
+        }
+        
+        try {
+            return savedExtendedInfo ? JSON.parse(savedExtendedInfo) : defaultExtended
+        } catch (error) {
+            console.warn('解析扩展用户信息失败:', error)
+            return defaultExtended
+        }
+    })
+    
+    // 合并用户信息 - 添加安全检查
+    const userInfo = {
+        nickname: user ? formatUserDisplayName(user) : '未登录用户',
+        signature: user?.preferences?.travelMotto || '世界那么大，我想去看看 ✈️',
+        avatar: user?.avatar || (user ? generateAvatarUrl(user) : 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'),
+        ...extendedUserInfo
+    }
     
     useTitle('智旅-我的')
     const [showAvatarSheet, setShowAvatarSheet] = useState(false)
@@ -139,11 +213,11 @@ const Account = () => {
     // 用于跟踪组件是否已卸载
     const isMountedRef = useRef(true)
     
-    // 初始化localStorage
+    // 初始化扩展用户信息
     useEffect(() => {
-        // 确保localStorage中有用户信息
-        if (!localStorage.getItem('userInfo')) {
-            localStorage.setItem('userInfo', JSON.stringify(userInfo))
+        // 确保localStorage中有扩展用户信息
+        if (!localStorage.getItem('userExtendedInfo')) {
+            localStorage.setItem('userExtendedInfo', JSON.stringify(extendedUserInfo))
         }
     }, [])
     
@@ -258,8 +332,8 @@ const Account = () => {
                 // 显示加载提示
                 loadingToast = safeNotify.loading('正在生成专属旅行头像...')
                 
-                const prompt = `旅行者昵称: ${userInfo.nickname}, 个性签名: ${userInfo.signature}, 当前等级: ${userInfo.level}, 旅行天数: ${userInfo.travelDays}天`
-                const newAvatar = await generateTravelAvatar(prompt)
+                // 使用认证系统的generateAvatar功能
+                const result = await generateAvatar()
                 
                 // 检查组件是否仍然挂载
                 if (!isMountedRef.current) {
@@ -273,13 +347,12 @@ const Account = () => {
                     loadingToast = null
                 }
                 
-                // 更新头像
-                const updatedUserInfo = {...userInfo, avatar: newAvatar}
-                setUserInfo(updatedUserInfo)
-                // 同步到localStorage
-                localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo))
-                // 触发自定义事件通知其他组件
-                window.dispatchEvent(new CustomEvent('userInfoUpdated', { detail: updatedUserInfo }))
+                if (result.success) {
+                    // 头像生成成功
+                    console.log('AI头像生成成功:', result.avatar)
+                } else {
+                    throw new Error(result.error || '头像生成失败')
+                }
                 
                 // 显示成功提示
                 setTimeout(() => {
@@ -339,18 +412,15 @@ const Account = () => {
         const reader = new FileReader()
         reader.onload = (e) => {
             if (isMountedRef.current) {
-                const updatedUserInfo = {
-                    ...userInfo, 
-                    avatar: e.target.result
+                // 使用认证系统更新用户头像
+                const result = updateUser({ avatar: e.target.result })
+                if (result.success) {
+                    setTimeout(() => {
+                        safeNotify.success('头像更新成功！')
+                    }, 100)
+                } else {
+                    safeNotify.fail('头像更新失败')
                 }
-                setUserInfo(updatedUserInfo)
-                // 同步到localStorage
-                localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo))
-                // 触发自定义事件通知其他组件
-                window.dispatchEvent(new CustomEvent('userInfoUpdated', { detail: updatedUserInfo }))
-                setTimeout(() => {
-                    safeNotify.success('头像更新成功！')
-                }, 100)
             }
         }
         reader.onerror = () => {
@@ -415,6 +485,70 @@ const Account = () => {
             safeNotify.success('联系客服')
         } else if (service.text === '设置') {
             safeNotify.success('进入设置页面')
+        } else if (service.text === '退出登录') {
+            handleLogout()
+        }
+    }
+
+    // 直接退出登录（不需要确认）
+    const handleDirectLogout = () => {
+        console.log('🚪 退出登录按钮被点击 - 直接退出')
+        performLogout()
+    }
+
+    // 处理登出（保留原有的确认退出逻辑供其他地方使用）
+    const handleLogout = () => {
+        console.log('🚪 退出登录按钮被点击')
+        
+        try {
+            // 尝试使用Dialog.confirm
+            Dialog.confirm({
+                title: '确认退出',
+                message: '确定要退出登录吗？',
+                confirmButtonText: '确定',
+                cancelButtonText: '取消'
+            }).then(() => {
+                console.log('✅ 用户确认退出')
+                performLogout()
+            }).catch(() => {
+                console.log('❌ 用户取消退出')
+            })
+        } catch (error) {
+            console.warn('Dialog.confirm失败，使用原生confirm:', error)
+            // 降级到原生confirm
+            if (window.confirm('确定要退出登录吗？')) {
+                console.log('✅ 用户确认退出（原生确认）')
+                performLogout()
+            } else {
+                console.log('❌ 用户取消退出（原生确认）')
+            }
+        }
+    }
+
+    // 执行退出登录的逻辑
+    const performLogout = () => {
+        try {
+            console.log('🔄 开始执行退出登录')
+            console.log('🔄 退出前状态 - isAuthenticated:', isAuthenticated)
+            console.log('🔄 退出前状态 - user:', user)
+            
+            logout()
+            
+            console.log('✅ 退出登录成功，即将跳转')
+            safeNotify.success('已安全退出')
+            
+            // 立即跳转到登录页面
+            setTimeout(() => {
+                console.log('🔄 跳转到登录页面')
+                console.log('🔄 退出后状态 - isAuthenticated:', isAuthenticated)
+                console.log('🔄 退出后状态 - user:', user)
+                
+                // 直接跳转到登录页面
+                navigate('/login', { replace: true })
+            }, 100)
+        } catch (error) {
+            console.error('退出登录过程中出错:', error)
+            safeNotify.fail('退出失败，请重试')
         }
     }
 
@@ -440,16 +574,23 @@ const Account = () => {
             return
         }
         
-        setUserInfo(prev => ({
-            ...prev,
+        // 使用认证系统更新用户信息
+        const result = updateUser({ 
             nickname: editForm.nickname.trim(),
-            signature: editForm.signature.trim()
-        }))
-        setShowEditProfile(false)
+            preferences: {
+                ...user?.preferences,
+                travelMotto: editForm.signature.trim()
+            }
+        })
         
-        setTimeout(() => {
-            safeNotify.success('个人信息更新成功！')
-        }, 100)
+        if (result.success) {
+            setShowEditProfile(false)
+            setTimeout(() => {
+                safeNotify.success('个人信息更新成功！')
+            }, 100)
+        } else {
+            safeNotify.fail('更新失败，请重试')
+        }
     }
 
 
@@ -483,8 +624,11 @@ const Account = () => {
                         <div className={styles.actionButton} onClick={handleShareProfile}>
                             <Share size={18} />
                         </div>
-                        <div className={styles.actionButton} onClick={() => Toast.success('进入设置')}>
+                        <div className={styles.actionButton} onClick={() => safeNotify.success('进入设置')}>
                             <Setting size={18} />
+                        </div>
+                        <div className={styles.actionButton} onClick={handleDirectLogout} title="退出登录">
+                            <span style={{ fontSize: '16px' }}>🚪</span>
                         </div>
                     </div>
 
@@ -672,6 +816,30 @@ const Account = () => {
                         />
                     ))}
                 </CellGroup>
+            </div>
+            
+            {/* 退出登录区域 */}
+            <div className={styles.logoutSection}>
+                <div className={styles.logoutContainer}>
+                    <div className={styles.logoutInfo}>
+                        <div className={styles.logoutIcon}>
+                            <span>🚪</span>
+                        </div>
+                        <div className={styles.logoutText}>
+                            <h4>退出当前账户</h4>
+                            <p>退出后将清除本地登录信息</p>
+                        </div>
+                    </div>
+                    <Button 
+                        type="danger" 
+                        size="large"
+                        round
+                        className={styles.logoutButton}
+                        onClick={handleLogout}
+                    >
+                        安全退出
+                    </Button>
+                </div>
             </div>
             
             {/* 头像更换弹窗 */}

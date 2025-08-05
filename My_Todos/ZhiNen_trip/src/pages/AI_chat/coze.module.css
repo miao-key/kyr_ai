@@ -141,12 +141,13 @@
   margin: 0 12px 0 2px; /* 左边距很小，靠近左边缘 */
 }
 
-/* 用户头像图片样式 */
+/* 用户头像图片样式 - 优化豆包生成图片显示 */
 .avatarImage {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 50% !important;
+  object-position: center center; /* 确保图片居中 */
 }
 
 .messageContent {

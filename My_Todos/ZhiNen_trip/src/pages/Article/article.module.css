@@ -34,6 +34,21 @@
     background-position: left, right;
     background-repeat: no-repeat;
     background-attachment: local, local;
+    /* 在未登录状态下（4个标签时）平均分布 */
+    justify-content: center;
+}
+
+/* 当标签数量较少时（未登录状态），调整布局 */
+.tabsContainer.fourTabs {
+    justify-content: space-evenly;
+    gap: 8px;
+    padding: 0 16px;
+}
+
+.tabsContainer.fourTabs .tabItem {
+    flex: 1;
+    max-width: 80px;
+    min-width: 60px;
 }
 
 .tabsContainer::-webkit-scrollbar {

@@ -34,6 +34,13 @@ VITE_PAT_TOKEN=your-coze-pat-token-here
 
 ## 🎯 核心功能
 
+### 🔐 用户认证系统
+- 🔑 **完整登录注册** - 安全的用户认证和会话管理
+- 👤 **个人档案管理** - 用户信息编辑和偏好设置
+- 🛡️ **路由保护** - 智能页面访问控制
+- 📱 **状态持久化** - 登录状态安全保存
+- 🚪 **安全退出** - 双重确认的退出登录机制
+
 ### ✨ AI智能助手
 - 🤖 **智能对话** - 基于Coze工作流的旅行咨询助手
 - 🎨 **AI头像生成** - 豆包API驱动的个性化旅行头像
@@ -61,20 +68,26 @@ src/
 │   │   ├── LazyImage/        # 懒加载图片组件
 │   │   └── EmptyState/       # 空状态组件
 │   ├── MainLayout/      # 主布局组件
-│   └── WaterfallLayout/ # 瀑布流组件
+│   ├── WaterfallLayout/ # 瀑布流组件
+│   └── ProtectedRoute/  # 路由保护组件
+├── contexts/            # React上下文
+│   └── AuthContext.jsx # 认证上下文
 ├── hooks/               # 自定义钩子
 │   ├── useDebounce.js   # 防抖钩子
 │   ├── useThrottle.js   # 节流钩子
 │   └── useTitle.js      # 标题钩子
 ├── constants/           # 常量配置
 ├── utils/               # 工具函数
+│   └── auth.js          # 认证工具函数
 ├── services/            # API服务
 │   └── pexelsApi.js     # Pexels API
 ├── pages/               # 页面组件
+│   ├── Login/          # 登录注册页面
+│   ├── Welcome/        # 欢迎页面
 │   ├── Home/           # 首页
 │   ├── Article/        # 旅记页面
 │   ├── AI_chat/        # AI聊天
-│   └── Profile/        # 个人中心
+│   └── Account/        # 个人中心
 └── assets/              # 静态资源
 ```
 
@@ -141,6 +154,42 @@ src/
 - **错误边界**: 组件级别的异常处理
 
 ## 🛠️ 开发指南
+
+### 使用认证系统
+```javascript
+// 在组件中使用认证状态
+import { useAuth } from '@/contexts/AuthContext'
+
+function MyComponent() {
+  const { user, isAuthenticated, login, logout } = useAuth()
+  
+  if (!isAuthenticated) {
+    return <div>请先登录</div>
+  }
+  
+  return (
+    <div>
+      <h1>欢迎, {user.nickname}!</h1>
+      <button onClick={logout}>退出登录</button>
+    </div>
+  )
+}
+```
+
+### 路由保护
+```javascript
+// 保护需要登录的页面
+<ProtectedRoute>
+  <SomePage />
+</ProtectedRoute>
+
+// 或者在路由配置中使用
+<Route path="/protected" element={
+  <ProtectedRoute>
+    <ProtectedPage />
+  </ProtectedRoute>
+} />
+```
 
 ### 使用UI组件
 ```javascript
@@ -222,6 +271,10 @@ const handleScroll = useThrottle(() => {
 ## 🎯 功能路线图
 
 ### 已完成 ✅
+- [x] **完整登录系统** - 注册/登录、路由保护、状态管理
+- [x] **用户认证** - 安全的会话管理和用户信息存储  
+- [x] **个人中心** - 用户档案、头像管理、设置功能
+- [x] **权限控制** - 不同页面的访问权限和功能控制
 - [x] 基础界面和导航
 - [x] AI聊天助手集成
 - [x] AI头像生成功能
