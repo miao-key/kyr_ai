@@ -1,0 +1,772 @@
+/* 旅记页面样式 - 仿小红书/马蜂窝风格 */
+
+.articleContainer {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding-bottom: 80px; /* 为底部导航留空间 */
+}
+
+/* 顶部分类标签栏 */
+.topTabs {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 16px 0;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.tabsContainer {
+    display: flex;
+    padding: 0 20px;
+    gap: 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    /* 添加滚动指示器 */
+    background: 
+        linear-gradient(90deg, rgba(255,255,255,1) 0%, transparent 8%), 
+        linear-gradient(-90deg, rgba(255,255,255,1) 0%, transparent 8%);
+    background-size: 20px 100%, 20px 100%;
+    background-position: left, right;
+    background-repeat: no-repeat;
+    background-attachment: local, local;
+}
+
+.tabsContainer::-webkit-scrollbar {
+    display: none;
+}
+
+.tabItem {
+    flex-shrink: 0;
+    min-width: auto;
+    padding: 10px 20px;
+    border-radius: 25px;
+    background: #f8f9fa;
+    color: #666;
+    font-size: 15px;
+    font-weight: 600;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.tabItem::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    right: 100%;
+    bottom: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transition: all 0.3s ease;
+    z-index: -1;
+}
+
+.tabItem.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    transform: translateY(-2px) scale(1.05);
+    border-color: rgba(102, 126, 234, 0.3);
+}
+
+.tabItem.active::before {
+    left: 0;
+    right: 0;
+}
+
+.tabItem:hover:not(.active) {
+    background: #e9ecef;
+    transform: translateY(-1px) scale(1.02);
+    border-color: #ddd;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.tabItem:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* 瀑布流容器 */
+.waterfallContainer {
+    padding: 16px;
+    max-width: 480px;
+    margin: 0 auto;
+    transition: opacity 0.3s ease-in-out;
+    min-height: 400px; /* 确保有最小高度，避免内容跳动 */
+}
+
+.waterfallList {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    transition: all 0.3s ease-in-out;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* 切换标签时的平滑过渡效果 */
+.waterfallList.switching {
+    opacity: 0.7;
+    transform: translateY(10px);
+}
+
+/* 旅记卡片 */
+.travelCard {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    will-change: transform, opacity;
+    contain: layout style paint;
+}
+
+/* 卡片进入动画状态 */
+.cardHidden {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.cardVisible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.travelCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* 卡片头部 */
+.cardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.userInfo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.userAvatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 2px solid #e3f2fd;
+    object-fit: cover;
+}
+
+/* 头像骨架屏 */
+.avatarSkeleton {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(
+        90deg,
+        #e9ecef 25%,
+        #f8f9fa 50%,
+        #e9ecef 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border: 2px solid #e3f2fd;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+    will-change: opacity, transform;
+}
+
+.userDetails {
+    flex: 1;
+}
+
+.userName {
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 2px 0;
+}
+
+.userTime {
+    font-size: 12px;
+    color: #999;
+    margin: 0;
+}
+
+.followBtn {
+    padding: 6px 16px;
+    border: 1px solid #667eea;
+    border-radius: 18px;
+    background: transparent;
+    color: #667eea;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.followBtn:hover {
+    background: #667eea;
+    color: white;
+    transform: scale(1.05);
+}
+
+.followBtn.followed {
+    background: #f0f0f0;
+    border-color: #f0f0f0;
+    color: #999;
+}
+
+/* 卡片内容 */
+.cardContent {
+    padding: 0 16px 16px 16px;
+}
+
+.contentText {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #333;
+    margin: 0 0 12px 0;
+    word-break: break-word;
+    /* 添加省略号效果 */
+    display: -webkit-box;
+    -webkit-line-clamp: 4; /* 限制显示4行 */
+    line-clamp: 4; /* 标准属性，增强兼容性 */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-height: 6.4em; /* 4行 × 1.6行高 = 6.4em */
+}
+
+.contentImages {
+    margin: 12px 0;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.singleImage {
+    width: 100%;
+    height: auto;
+    max-height: 400px;
+    object-fit: cover;
+    display: block;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.singleImage:hover {
+    transform: scale(1.02);
+}
+
+/* 图片淡入动画效果 */
+.fadeInImage {
+    transition: opacity 0.4s ease-in, transform 0.4s ease-out;
+    will-change: opacity, transform;
+}
+
+.multiImages {
+    display: grid;
+    gap: 2px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.multiImages.twoImages {
+    grid-template-columns: 1fr 1fr;
+}
+
+.multiImages.threeImages {
+    grid-template-columns: 2fr 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+
+.multiImages.fourImages {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+
+.multiImages.moreImages {
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+
+.multiImageItem {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.multiImageItem:hover {
+    transform: scale(1.05);
+    z-index: 2;
+}
+
+.multiImages.threeImages .multiImageItem:first-child {
+    grid-row: 1 / -1;
+    height: 100%;
+}
+
+.moreImagesOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* 标签 */
+.contentTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0 0 0;
+}
+
+.tag {
+    padding: 4px 10px;
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* 卡片底部 */
+.cardFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px 16px 16px;
+    border-top: 1px solid #f8f9fa;
+    margin-top: 12px;
+    padding-top: 12px;
+}
+
+.actionButtons {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.actionBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 4px 0;
+}
+
+.actionBtn:hover {
+    color: #667eea;
+    transform: scale(1.1);
+}
+
+.actionBtn.liked {
+    color: #ff4757;
+}
+
+.actionBtn.collected {
+    color: #ffa502;
+}
+
+.locationTag {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #999;
+    font-size: 12px;
+    padding: 4px 8px;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+/* 写文章浮动按钮 */
+.writeButton {
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    z-index: 1000;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.writeButton:hover {
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 6px 30px rgba(102, 126, 234, 0.6);
+}
+
+.writeButton:active {
+    transform: scale(0.95);
+}
+
+/* 加载状态 */
+.loading {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 20px;
+    color: #666;
+    font-size: 15px;
+    font-weight: 500;
+    gap: 16px;
+    transition: opacity 0.3s ease-in-out;
+    min-height: 200px; /* 确保加载状态有足够高度 */
+}
+
+.loadingSpinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #f0f0f0;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.2);
+}
+
+/* 切换标签时的特殊加载状态 */
+.loading.switching {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    border-radius: 16px;
+    margin: 20px 0;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 无内容状态 */
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: #999;
+    text-align: center;
+}
+
+.emptyIcon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.emptyText {
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.emptySubtext {
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .topTabs {
+        padding: 12px 0;
+    }
+    
+    .tabsContainer {
+        padding: 0 16px;
+        gap: 10px;
+    }
+    
+    .tabItem {
+        padding: 8px 16px;
+        font-size: 14px;
+        min-width: 60px;
+    }
+}
+
+@media (max-width: 480px) {
+    .topTabs {
+        padding: 10px 0;
+        box-shadow: 0 1px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .tabsContainer {
+        padding: 0 12px;
+        gap: 8px;
+    }
+    
+    .tabItem {
+        padding: 6px 12px;
+        font-size: 13px;
+        border-radius: 18px;
+        min-width: 50px;
+    }
+    
+    .tabItem.active {
+        transform: translateY(-1px) scale(1.02);
+    }
+    
+    .waterfallContainer {
+        padding: 12px;
+    }
+    
+    .travelCard {
+        border-radius: 12px;
+    }
+    
+    .cardHeader {
+        padding: 12px;
+    }
+    
+    .cardContent {
+        padding: 0 12px 12px 12px;
+    }
+    
+    .cardFooter {
+        padding: 0 12px 12px 12px;
+    }
+    
+    .writeButton {
+        bottom: 90px;
+        right: 16px;
+        width: 50px;
+        height: 50px;
+        font-size: 18px;
+    }
+    
+    .loading {
+        padding: 40px 15px;
+        font-size: 14px;
+    }
+    
+    .loadingSpinner {
+        width: 28px;
+        height: 28px;
+    }
+}
+
+/* 图片懒加载占位符 */
+.imagePlaceholder {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 8px;
+}
+
+/* 图片骨架屏 */
+.imageSkeleton {
+    width: 100%;
+    height: 200px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    overflow: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+    will-change: opacity, transform;
+}
+
+.skeletonContent {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.4) 50%,
+        transparent 100%
+    );
+    background-color: #e9ecef;
+}
+
+.skeletonShimmer {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        #e9ecef 25%,
+        #f8f9fa 50%,
+        #e9ecef 75%
+    );
+    background-size: 200% 100%;
+    animation: skeletonShimmer 1.8s infinite ease-in-out;
+    position: relative;
+}
+
+.skeletonShimmer::before {
+    content: '🖼️';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    opacity: 0.3;
+    z-index: 1;
+}
+
+/* 图片加载失败样式 */
+.imageError {
+    width: 100%;
+    height: 200px;
+    background: #fafafa;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    border: 2px dashed #ccc;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 3;
+    transition: opacity 0.3s ease-in;
+    backdrop-filter: blur(2px);
+}
+
+.imageError span {
+    font-size: 32px;
+    margin-bottom: 8px;
+    opacity: 0.5;
+}
+
+.imageError p {
+    font-size: 14px;
+    margin: 0;
+    opacity: 0.7;
+}
+
+@keyframes skeletonShimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+    .travelCard:hover {
+        transform: none;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    
+    .tabItem:hover:not(.active) {
+        background: #f8f9fa;
+        transform: none;
+    }
+    
+    .singleImage:hover,
+    .multiImageItem:hover {
+        transform: none;
+    }
+}
+
+/* 移动端骨架屏优化 */
+@media (max-width: 480px) {
+    .imageSkeleton {
+        height: 180px;
+        border-radius: 10px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1;
+    }
+    
+    .skeletonShimmer::before {
+        font-size: 20px;
+    }
+    
+    .imageError {
+        height: 180px;
+        border-radius: 10px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1;
+    }
+    
+    .imageError span {
+        font-size: 28px;
+    }
+    
+    .imageError p {
+        font-size: 13px;
+    }
+}
+
+/* Toast动画效果 */
+@keyframes fadeInOut {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+    15% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    85% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+}

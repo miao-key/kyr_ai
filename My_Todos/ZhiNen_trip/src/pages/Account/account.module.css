@@ -1,0 +1,1000 @@
+/* 旅游账户页面 - 全新设计 */
+.travelAccountPage {
+    min-height: 100vh;
+    background: #f8f9ff;
+    padding-bottom: 80px;
+    position: relative;
+}
+
+/* ===== 旅行档案头部 ===== */
+.travelProfileHeader {
+    position: relative;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    border-radius: 0 0 40px 40px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.headerBackground {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background-image: 
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,0.1) 2px, transparent 2px),
+        radial-gradient(circle at 80% 70%, rgba(255,255,255,0.08) 3px, transparent 3px),
+        radial-gradient(circle at 60% 20%, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 100px 100px, 120px 120px, 80px 80px;
+}
+
+.headerOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.1);
+}
+
+.profileContent {
+    position: relative;
+    z-index: 2;
+    padding: 20px 20px 25px;
+}
+
+/* 顶部操作按钮 */
+.topActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.actionButton {
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: white;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.actionButton:hover {
+    background: rgba(255,255,255,0.25);
+    transform: scale(1.05);
+}
+
+
+
+/* 头像部分 */
+.avatarSection {
+    display: flex;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.travelAvatar {
+    position: relative;
+    margin-right: 20px;
+    cursor: pointer;
+}
+
+.travelAvatar::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #FFD93D, #FF6B6B, #4ECDC4, #A29BFE);
+    z-index: -1;
+    animation: avatarRotate 4s linear infinite;
+}
+
+@keyframes avatarRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.cameraIcon {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 28px;
+    height: 28px;
+    border-radius: 14px;
+    background: #FF6B6B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.userBasicInfo {
+    flex: 1;
+    color: white;
+}
+
+.userName {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.signatureContainer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.userSignature {
+    font-size: 15px;
+    margin: 0;
+    opacity: 0.9;
+    line-height: 1.4;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    flex: 1;
+}
+
+.editIcon {
+    width: 28px;
+    height: 28px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: rgba(255,255,255,0.7);
+    border: 1px solid rgba(255,255,255,0.2);
+    animation: breathe 3s ease-in-out infinite;
+}
+
+.editIcon:hover {
+    background: rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.9);
+    transform: scale(1.05);
+}
+
+.editIcon:active {
+    transform: scale(0.95);
+}
+
+/* 编辑图标呼吸动画 */
+@keyframes breathe {
+    0%, 100% {
+        opacity: 0.7;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+
+
+.userMeta {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+    opacity: 0.8;
+}
+
+.location,
+.joinDate {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* 等级进度 */
+.levelSection {
+    margin-bottom: 20px;
+}
+
+.levelInfo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    color: white;
+}
+
+.currentLevel {
+    font-size: 16px;
+    font-weight: 600;
+    background: rgba(255,255,255,0.2);
+    padding: 6px 12px;
+    border-radius: 15px;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.levelProgress {
+    font-size: 13px;
+    opacity: 0.9;
+}
+
+/* 社交统计 */
+.socialStats {
+    display: flex;
+    justify-content: space-around;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+}
+
+.socialItem {
+    text-align: center;
+    color: white;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.socialItem:hover {
+    transform: translateY(-2px);
+}
+
+.socialNumber {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.socialLabel {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+/* ===== 通用区块样式 ===== */
+.travelStatsSection,
+.quickActionsSection,
+.achievementsSection,
+.activitiesSection,
+.servicesSection {
+    margin: 0 20px 24px 20px;
+}
+
+.travelStatsSection {
+    margin-bottom: 20px;
+}
+
+.quickActionsSection {
+    margin-bottom: 20px;
+}
+
+.achievementsSection {
+    margin-bottom: 20px;
+}
+
+.activitiesSection {
+    margin-bottom: 20px;
+}
+
+.sectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.sectionTitle {
+    font-size: 18px;
+    font-weight: 700;
+    color: #2c3e50;
+    position: relative;
+    padding-left: 12px;
+    margin-bottom: 12px;
+    transition: color 0.3s ease;
+}
+
+.sectionTitle:hover {
+    color: #1a202c;
+}
+
+.sectionTitle::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 18px;
+    background: linear-gradient(135deg, #FF6B6B, #FFD93D);
+    border-radius: 2px;
+    box-shadow: 0 2px 6px rgba(255, 107, 107, 0.3);
+}
+
+.viewAll {
+    font-size: 14px;
+    color: #7c3aed;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.viewAll:hover {
+    color: #5b21b6;
+}
+
+/* ===== 旅行数据统计 ===== */
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.statCard {
+    background: white;
+    border-radius: 16px;
+    padding: 20px 12px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid #f1f5f9;
+}
+
+.statCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+
+.statIcon {
+    font-size: 28px;
+    margin-bottom: 12px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.statNumber {
+    font-size: 20px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 6px;
+}
+
+.statLabel {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* ===== 快捷功能 ===== */
+.actionsGrid {
+    background: white;
+    border-radius: 20px;
+    padding: 20px 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid #f1f5f9;
+}
+
+.actionCard {
+    display: flex;
+    align-items: center;
+    padding: 18px 16px;
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.actionCard:hover {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    transform: scale(1.02);
+}
+
+.actionIcon {
+    font-size: 32px;
+    margin-right: 16px;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.1));
+}
+
+.actionContent {
+    flex: 1;
+}
+
+.actionTitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 4px;
+}
+
+.actionDesc {
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.3;
+}
+
+/* ===== 旅行成就 ===== */
+.achievementsList {
+    background: white;
+    border-radius: 20px;
+    padding: 20px 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid #f1f5f9;
+}
+
+.achievementCard {
+    display: flex;
+    align-items: center;
+    padding: 18px 16px;
+    border-radius: 16px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.achievementCard:last-child {
+    margin-bottom: 0;
+}
+
+.achievementCard:hover {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    transform: translateX(4px);
+}
+
+.achievementIcon {
+    font-size: 32px;
+    margin-right: 16px;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.1));
+}
+
+.achievementInfo {
+    flex: 1;
+}
+
+.achievementTitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 4px;
+}
+
+.achievementDesc {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 8px;
+}
+
+.achievementLevel {
+    width: 36px;
+    height: 36px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.achievementLevel.gold {
+    background: linear-gradient(135deg, #FFD93D, #FF6B6B);
+}
+
+.achievementLevel.silver {
+    background: linear-gradient(135deg, #e2e8f0, #94a3b8);
+}
+
+.achievementLevel.bronze {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.achievementLevel.diamond {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+}
+
+/* ===== 近期动态 ===== */
+.activitiesList {
+    background: white;
+    border-radius: 20px;
+    padding: 20px 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid #f1f5f9;
+}
+
+.activityItem {
+    display: flex;
+    align-items: flex-start;
+    padding: 16px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.activityItem:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.activityAvatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.activityContent {
+    flex: 1;
+}
+
+.activityText {
+    font-size: 14px;
+    color: #2c3e50;
+    line-height: 1.4;
+    margin-bottom: 4px;
+}
+
+.activityTime {
+    font-size: 12px;
+    color: #64748b;
+}
+
+/* ===== 我的服务 ===== */
+.servicesList {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid #f1f5f9;
+}
+
+.serviceIcon {
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
+    background: rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.08);
+}
+
+/* 服务列表Cell悬停效果 */
+.servicesList :global(.rv-cell):hover .serviceIcon {
+    transform: scale(1.1);
+    background: rgba(0,0,0,0.08);
+}
+
+/* 自定义徽章样式 */
+.customBadge {
+    min-width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 0 6px;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.customBadge.danger {
+    background: linear-gradient(135deg, #FF6B6B, #EE5A52);
+}
+
+.customBadge.warning {
+    background: linear-gradient(135deg, #FFD93D, #FFC107);
+    color: #333;
+    text-shadow: none;
+}
+
+.customBadge.primary {
+    background: linear-gradient(135deg, #7C3AED, #5B21B6);
+}
+
+.customBadge.success {
+    background: linear-gradient(135deg, #4ECDC4, #26D0CE);
+}
+
+/* 徽章动画效果 */
+.customBadge:hover {
+    transform: scale(1.1);
+}
+
+.customBadge.danger:hover {
+    animation: pulse 0.6s ease-in-out;
+}
+
+.customBadge.warning {
+    animation: shimmer 2s ease-in-out infinite;
+}
+
+.customBadge.success {
+    position: relative;
+    overflow: hidden;
+}
+
+.customBadge.success::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: hotBadgeShine 2s ease-in-out infinite;
+}
+
+@keyframes hotBadgeShine {
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+/* ===== 成就详情弹窗 ===== */
+.achievementDetail {
+    padding: 32px 24px 24px;
+    text-align: center;
+}
+
+.detailHeader {
+    margin-bottom: 24px;
+}
+
+.detailIcon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.1));
+}
+
+.detailTitle {
+    font-size: 24px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.detailDesc {
+    font-size: 16px;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+.detailProgress {
+    margin-bottom: 24px;
+}
+
+.progressLabel {
+    font-size: 14px;
+    color: #2c3e50;
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+
+.detailActions {
+    padding-top: 8px;
+}
+
+/* ===== 编辑个人信息弹窗 ===== */
+.editProfileModal {
+    padding: 32px 24px 24px;
+    min-height: 320px;
+}
+
+.editHeader {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.editTitle {
+    font-size: 24px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 8px 0;
+}
+
+.editSubtitle {
+    font-size: 14px;
+    color: #64748b;
+    margin: 0;
+}
+
+.editForm {
+    margin-bottom: 32px;
+}
+
+.editField {
+    margin-bottom: 24px;
+}
+
+.fieldLabel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 12px;
+}
+
+.fieldLabel span {
+    flex: 1;
+}
+
+.customField {
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    transition: all 0.3s ease;
+}
+
+.customField:focus-within {
+    border-color: #667eea;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.editActions {
+    display: flex;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.cancelBtn {
+    flex: 1;
+    height: 48px;
+    border-radius: 24px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.cancelBtn:hover {
+    background: #e2e8f0;
+    border-color: #cbd5e1;
+}
+
+.saveBtn {
+    flex: 1;
+    height: 48px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
+}
+
+.saveBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* ===== 移动端适配 ===== */
+@media (max-width: 480px) {
+    .travelAccountPage {
+        padding-bottom: 60px;
+    }
+
+    .travelProfileHeader {
+        border-radius: 0 0 32px 32px;
+    }
+
+    .profileContent {
+        padding: 16px 16px 24px;
+    }
+
+    .avatarSection {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .travelAvatar {
+        margin-right: 0;
+        margin-bottom: 16px;
+    }
+
+    .userName {
+        font-size: 20px;
+    }
+
+    .userSignature {
+        font-size: 14px;
+    }
+
+    .userMeta {
+        justify-content: center;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .socialStats {
+        margin-top: 16px;
+        padding-top: 16px;
+    }
+
+    .socialNumber {
+        font-size: 18px;
+    }
+
+    .statsGrid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .statCard {
+        padding: 16px 8px;
+    }
+
+    .statIcon {
+        font-size: 24px;
+        margin-bottom: 8px;
+    }
+
+    .statNumber {
+        font-size: 18px;
+    }
+
+    .travelStatsSection,
+    .quickActionsSection,
+    .achievementsSection,
+    .activitiesSection,
+    .servicesSection {
+        margin: 0 16px 18px 16px;
+    }
+
+    .actionCard {
+        padding: 12px;
+    }
+
+    .actionIcon {
+        font-size: 28px;
+        margin-right: 12px;
+    }
+
+    .actionTitle {
+        font-size: 14px;
+    }
+
+    .actionDesc {
+        font-size: 12px;
+    }
+
+    .achievementCard {
+        padding: 12px;
+    }
+
+    .achievementIcon {
+        font-size: 28px;
+        margin-right: 12px;
+    }
+}
+
+@media (max-width: 375px) {
+    .statsGrid {
+        gap: 8px;
+    }
+
+    .statCard {
+        padding: 12px 6px;
+    }
+
+    .statIcon {
+        font-size: 20px;
+    }
+
+    .statNumber {
+        font-size: 16px;
+    }
+
+    .actionCard {
+        padding: 10px;
+    }
+
+    .actionIcon {
+        font-size: 24px;
+        margin-right: 10px;
+    }
+
+    .editIcon {
+        width: 24px;
+        height: 24px;
+        border-radius: 12px;
+    }
+
+    .editProfileModal {
+        padding: 24px 20px 20px;
+        min-height: 280px;
+    }
+
+    .editTitle {
+        font-size: 20px;
+    }
+
+    .editActions {
+        gap: 10px;
+    }
+
+    .cancelBtn,
+    .saveBtn {
+        height: 44px;
+        border-radius: 22px;
+    }
+}
+
+/* 增强动画效果 */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes bounce {
+    0%, 20%, 53%, 80%, 100% {
+        transform: translate3d(0,0,0);
+    }
+    40%, 43% {
+        transform: translate3d(0,-8px,0);
+    }
+    70% {
+        transform: translate3d(0,-4px,0);
+    }
+    90% {
+        transform: translate3d(0,-2px,0);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -468px 0;
+    }
+    100% {
+        background-position: 468px 0;
+    }
+}
+
+
+
+.statCard:hover {
+    animation: pulse 0.6s ease-in-out;
+}
+
+.actionCard:active {
+    transform: scale(0.98);
+}
+
+.achievementCard:hover .achievementLevel {
+    animation: pulse 0.8s ease-in-out;
+}
+
+/* 加载状态动画 */
+.loading {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 400% 100%;
+    animation: shimmer 1.2s ease-in-out infinite;
+}
