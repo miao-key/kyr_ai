@@ -45,6 +45,15 @@ const MainLayout = () => {
     }
   }, [location.pathname])
 
+  // 路由切换时滚动到顶部
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'smooth' // 平滑滚动效果
+    })
+  }, [location.pathname])
+
   return (
     <>
       {/* 主内容区域 */}

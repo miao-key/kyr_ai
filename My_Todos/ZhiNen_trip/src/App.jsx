@@ -18,6 +18,7 @@ const Flight = lazy(() => import('@/pages/Flight'))
 const Train = lazy(() => import('@/pages/Train'))
 const Taxi = lazy(() => import('@/pages/Taxi'))
 const Tourism = lazy(() => import('@/pages/Tourism'))
+const Coze = lazy(() => import('@/pages/AI_chat/coze'))
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
             <Route path='/train' element={<Train />} />
             <Route path='/taxi' element={<Taxi />} />
             <Route path='/tourism' element={<Tourism />} />
+            <Route path='/coze' element={<Coze />} />
         </Routes>
       </Suspense>
     </>

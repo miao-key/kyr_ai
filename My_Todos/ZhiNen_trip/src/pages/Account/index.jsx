@@ -95,20 +95,34 @@ const recentActivities = [
     { type: 'plan', content: '制定了"日本7日游"计划', time: '3天前', avatar: '📅' }
 ]
 
+// 默认用户信息
+const defaultUserInfo = {
+    nickname: '旅行探索家小王',
+    signature: '世界那么大，我想去看看 ✈️',
+    avatar: 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg',
+    level: '黄金旅行家',
+    levelProgress: 75,
+    nextLevel: '钻石旅行家',
+    travelDays: 365,
+    joinDate: '2023.06',
+    location: '上海',
+    followers: 1024,
+    following: 256
+}
+
+// 从localStorage获取用户信息的函数
+const getUserInfoFromStorage = () => {
+    try {
+        const savedUserInfo = localStorage.getItem('userInfo')
+        return savedUserInfo ? JSON.parse(savedUserInfo) : defaultUserInfo
+    } catch (error) {
+        console.warn('解析localStorage中的用户信息失败:', error)
+        return defaultUserInfo
+    }
+}
+
 const Account = () => {
-    const [userInfo, setUserInfo] = useState({
-        nickname: '旅行探索家小王',
-        signature: '世界那么大，我想去看看 ✈️',
-        avatar: 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg',
-        level: '黄金旅行家',
-        levelProgress: 75,
-        nextLevel: '钻石旅行家',
-        travelDays: 365,
-        joinDate: '2023.06',
-        location: '上海',
-        followers: 1024,
-        following: 256
-    })
+    const [userInfo, setUserInfo] = useState(() => getUserInfoFromStorage())
     
     useTitle('智旅-我的')
     const [showAvatarSheet, setShowAvatarSheet] = useState(false)
@@ -124,6 +138,14 @@ const Account = () => {
     const fileInputRef = useRef(null)
     // 用于跟踪组件是否已卸载
     const isMountedRef = useRef(true)
+    
+    // 初始化localStorage
+    useEffect(() => {
+        // 确保localStorage中有用户信息
+        if (!localStorage.getItem('userInfo')) {
+            localStorage.setItem('userInfo', JSON.stringify(userInfo))
+        }
+    }, [])
     
     // 安全的提示函数 - 使用Notify替代Toast避免reactRender错误
     // 多重降级保护：Notify -> console -> 静默忽略
@@ -252,7 +274,12 @@ const Account = () => {
                 }
                 
                 // 更新头像
-                setUserInfo(prev => ({...prev, avatar: newAvatar}))
+                const updatedUserInfo = {...userInfo, avatar: newAvatar}
+                setUserInfo(updatedUserInfo)
+                // 同步到localStorage
+                localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo))
+                // 触发自定义事件通知其他组件
+                window.dispatchEvent(new CustomEvent('userInfoUpdated', { detail: updatedUserInfo }))
                 
                 // 显示成功提示
                 setTimeout(() => {
@@ -312,10 +339,15 @@ const Account = () => {
         const reader = new FileReader()
         reader.onload = (e) => {
             if (isMountedRef.current) {
-                setUserInfo(prev => ({
-                    ...prev, 
+                const updatedUserInfo = {
+                    ...userInfo, 
                     avatar: e.target.result
-                }))
+                }
+                setUserInfo(updatedUserInfo)
+                // 同步到localStorage
+                localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo))
+                // 触发自定义事件通知其他组件
+                window.dispatchEvent(new CustomEvent('userInfoUpdated', { detail: updatedUserInfo }))
                 setTimeout(() => {
                     safeNotify.success('头像更新成功！')
                 }, 100)
