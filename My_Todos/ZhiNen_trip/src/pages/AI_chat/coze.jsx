@@ -1,6 +1,8 @@
 import { useRef, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useTitle from '@/hooks/useTitle'
+import { useAuthStore } from '../../stores'
+import { UserAvatar } from '@/components/UI'
 import styles from './coze.module.css'
 
 // 增强的Markdown格式化函数
@@ -268,25 +270,8 @@ const Coze = () => {
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef(null)
   
-  // 从localStorage获取用户信息的函数
-  const getUserInfoFromStorage = () => {
-    try {
-      const savedUserInfo = localStorage.getItem('userInfo')
-      if (savedUserInfo) {
-        return JSON.parse(savedUserInfo)
-      }
-    } catch (error) {
-      console.warn('解析localStorage中的用户信息失败:', error)
-    }
-    // 默认用户信息
-    return {
-      nickname: '旅行探索家小王',
-      avatar: 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg'
-    }
-  }
-
-  // 用户信息状态
-  const [userInfo, setUserInfo] = useState(() => getUserInfoFromStorage())
+  // 使用统一的认证系统
+  const { user, isAuthenticated } = useAuthStore()
 
   // Coze工作流API配置
   const workflowUrl = '/api/coze/workflow/run'
@@ -394,18 +379,7 @@ const Coze = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // 监听用户信息更新事件
-  useEffect(() => {
-    const handleUserInfoUpdate = (event) => {
-      setUserInfo(event.detail)
-    }
-
-    window.addEventListener('userInfoUpdated', handleUserInfoUpdate)
-
-    return () => {
-      window.removeEventListener('userInfoUpdated', handleUserInfoUpdate)
-    }
-  }, [])
+  // 用户信息现在通过Zustand store自动更新，无需手动监听
 
   // 发送消息
   const handleSendMessage = async () => {
@@ -507,9 +481,9 @@ const Coze = () => {
             >
               <div className={styles.messageAvatar}>
                 {message.type === 'user' ? (
-                  <img 
-                    src={userInfo.avatar} 
-                    alt={userInfo.nickname}
+                  <UserAvatar 
+                    size={40}
+                    round={true}
                     className={styles.avatarImage}
                   />
                 ) : (

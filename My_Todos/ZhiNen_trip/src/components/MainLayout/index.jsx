@@ -16,7 +16,7 @@ import {
   GuideO,
   UserO
 } from '@react-vant/icons'
-import { NAVIGATION_TABS, THEME_CONFIG } from '@/constants'
+import { NAVIGATION_TABS, THEME_CONFIG } from '@constants'
 
 // 图标映射
 const IconComponents = {

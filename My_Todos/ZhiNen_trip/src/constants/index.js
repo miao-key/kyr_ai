@@ -10,16 +10,21 @@ export const NAVIGATION_TABS = [
   { icon: 'UserO', title: '我的', path: '/account' }
 ]
 
-// 瀑布流配置
+// 瀑布流配置 - 性能优化版本
 export const WATERFALL_CONFIG = {
   COLUMNS: 2,
-  GAP: 16,
-  ITEMS_PER_PAGE: 15,
+  GAP: 12,                 // 优化：减少间距，增加内容密度
+  ITEMS_PER_PAGE: 12,      // 优化：调整每页数量，平衡加载速度和用户体验
   DELAYS: {
-    INITIAL_LOAD: 50,      // 初始加载延迟
-    SCROLL_LOAD: 300,      // 滚动加载延迟
-    RESIZE: 100,           // 窗口调整延迟
-    IMAGE_TIMEOUT: 10000   // 图片加载超时
+    INITIAL_LOAD: 30,      // 优化：减少初始加载延迟，从50ms到30ms
+    SCROLL_LOAD: 200,      // 优化：减少滚动加载延迟，从300ms到200ms
+    RESIZE: 80,            // 优化：减少窗口调整延迟，从100ms到80ms
+    IMAGE_TIMEOUT: 6000    // 优化：减少图片加载超时，从10s到6s
+  },
+  PERFORMANCE: {
+    BATCH_SIZE: 6,         // 批处理大小
+    BATCH_DELAY: 150,      // 批次间延迟
+    PRELOAD_THRESHOLD: 200 // 预加载阈值
   }
 }
 

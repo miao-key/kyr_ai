@@ -9,6 +9,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCarouselPhotos } from '@/services/pexelsApi';
 import WaterfallLayout from '@/components/WaterfallLayout';
+import SimpleWaterfall from '@/components/WaterfallLayout/SimpleWaterfall';
+import DebugWaterfall from '@/components/WaterfallLayout/DebugWaterfall';
+import WaterfallFixed from '@/components/WaterfallLayout/WaterfallFixed';
+import { imageUtils } from '@/utils';
 import useDebounce from '@/hooks/useDebounce';
 import useThrottle from '@/hooks/useThrottle';
 import styles from './home.module.css';
@@ -240,7 +244,7 @@ const ImageCarousel = () => {
                 loading={index <= 2 ? 'eager' : 'lazy'} // 预加载前3张
                 decoding="async"
                 onError={(e) => {
-                  e.target.src = `https://via.placeholder.com/1200x600/4CAF50/white?text=${encodeURIComponent(image.title)}`;
+                  e.target.src = imageUtils.placeholder(1200, 600, image.title);
                 }}
               />
               <div className={styles.imageOverlay}>
@@ -397,7 +401,7 @@ const Home = () => {
         <ImageCarousel />
         
         {/* 瀑布流攻略展示 - 使用Pexels API */}
-        <WaterfallLayout columns={2} gap={12} />
+        <WaterfallFixed columns={2} gap={12} />
       </div>
     </div>
   )

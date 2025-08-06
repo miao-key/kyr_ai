@@ -1,11 +1,11 @@
 import { useEffect } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuthStore } from '@/stores'
 import { useNavigate } from 'react-router-dom'
 import { Button, Space } from 'react-vant'
 import styles from './welcome.module.css'
 
 const Welcome = () => {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated } = useAuthStore()
   const navigate = useNavigate()
 
   // 如果已登录，直接跳转到首页

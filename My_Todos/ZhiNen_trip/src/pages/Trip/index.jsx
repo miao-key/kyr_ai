@@ -1,4 +1,4 @@
-import useTitle from '@/hooks/useTitle'
+import useTitle from '@hooks/useTitle'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import styles from './trip.module.css'

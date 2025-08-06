@@ -1,11 +1,18 @@
-/* 加载容器样式 */
+/**
+ * LoadingSpinner 组件样式
+ * 支持多种显示模式和响应式设计
+ */
+
+/* 基础加载容器 */
 .loadingContainer {
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 20px;
+  min-height: 60px;
 }
 
+/* 全屏加载容器 */
 .loadingFullscreen {
   display: flex;
   justify-content: center;
@@ -15,20 +22,151 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(255, 255, 255, 0.8);
   z-index: 9999;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
+/* 遮罩层效果 */
+.withOverlay {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+/* 深色模式遮罩层 */
+@media (prefers-color-scheme: dark) {
+  .withOverlay {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* 加载内容容器 */
+.loadingContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* 深色模式加载内容 */
+@media (prefers-color-scheme: dark) {
+  .loadingContent {
+    background-color: rgba(40, 40, 40, 0.95);
+    color: #fff;
+  }
+}
+
+/* 加载动画容器 */
+.spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 加载文本样式 */
 .loadingText {
-  margin-top: 8px;
   font-size: 14px;
   color: #666;
   text-align: center;
+  font-weight: 500;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* 响应式尺寸 */
+/* 深色模式文本 */
+@media (prefers-color-scheme: dark) {
+  .loadingText {
+    color: #ccc;
+  }
+}
+
+/* 响应式设计 */
 @media (max-width: 768px) {
+  .loadingContainer {
+    padding: 16px;
+    min-height: 50px;
+  }
+  
+  .loadingContent {
+    padding: 12px;
+    gap: 8px;
+  }
+  
   .loadingText {
     font-size: 12px;
+    max-width: 150px;
+  }
+}
+
+@media (max-width: 480px) {
+  .loadingContainer {
+    padding: 12px;
+    min-height: 40px;
+  }
+  
+  .loadingContent {
+    padding: 8px;
+    gap: 6px;
+  }
+  
+  .loadingText {
+    font-size: 11px;
+    max-width: 120px;
+  }
+}
+
+/* 动画优化 */
+.loadingContent {
+  animation: fadeInScale 0.3s ease-out;
+  transform-origin: center;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  .loadingContent {
+    border: 2px solid #000;
+    background-color: #fff;
+  }
+  
+  .loadingText {
+    color: #000;
+    font-weight: 600;
+  }
+}
+
+/* 减少动画模式 */
+@media (prefers-reduced-motion: reduce) {
+  .loadingContent {
+    animation: none;
+  }
+  
+  .spinner {
+    animation-duration: 2s; /* 减慢旋转速度 */
+  }
+}
+
+/* 打印样式 */
+@media print {
+  .loadingFullscreen,
+  .loadingContainer {
+    display: none;
   }
 }
