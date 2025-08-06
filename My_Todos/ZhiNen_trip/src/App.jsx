@@ -4,30 +4,34 @@ import {
   Route,
   Navigate
 } from 'react-router-dom'
-import { LoadingSpinner } from '@/components/UI'
-import { AuthProvider } from '@/contexts/AuthContext'
-import ProtectedRoute from '@/components/ProtectedRoute'
+import { LoadingSpinner } from '@components/UI'
+import ZustandProvider from '@components/Providers/ZustandProvider'
+import { ProtectedRoute } from '@components/Business'
+import ErrorBoundary from '@components/ErrorBoundary'
+
+import { useRoutePreloader } from '@hooks/useRoutePreloader'
 import './App.css'
 
-
-
 // 页面组件懒加载
-const MainLayout = lazy(() => import('@/components/MainLayout'))
-const Login = lazy(() => import('@/pages/Login'))
-const Home = lazy(() => import('@/pages/Home'))
-const Article = lazy(() => import('@/pages/Article'))
-const Trip = lazy(() => import('@/pages/Trip'))
-const Account = lazy(() => import('@/pages/Account'))
-const Search = lazy(() => import('@/pages/Search'))
-const Hotel = lazy(() => import('@/pages/Hotel'))
-const Flight = lazy(() => import('@/pages/Flight'))
-const Train = lazy(() => import('@/pages/Train'))
-const Taxi = lazy(() => import('@/pages/Taxi'))
-const Tourism = lazy(() => import('@/pages/Tourism'))
-const Coze = lazy(() => import('@/pages/AI_chat/coze'))
+const MainLayout = lazy(() => import('@components/Layout/MainLayout'))
+const Login = lazy(() => import('@pages/Login'))
+const Home = lazy(() => import('@pages/Home'))
+const Article = lazy(() => import('@pages/Article'))
+const Trip = lazy(() => import('@pages/Trip'))
+const Account = lazy(() => import('@pages/Account'))
+const Search = lazy(() => import('@pages/Search'))
+const Hotel = lazy(() => import('@pages/Hotel'))
+const Flight = lazy(() => import('@pages/Flight'))
+const Train = lazy(() => import('@pages/Train'))
+const Taxi = lazy(() => import('@pages/Taxi'))
+const Tourism = lazy(() => import('@pages/Tourism'))
+const Coze = lazy(() => import('@pages/AI_chat/coze'))
 
 // 主应用组件包装器
 const AppContent = () => {
+  // 启用路由预加载（保持后台运行，但不暴露到全局）
+  useRoutePreloader()
+
   return (
     <>
       <Suspense fallback={
@@ -108,9 +112,11 @@ const AppContent = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ErrorBoundary fallbackMessage="智旅应用遇到了问题，我们正在努力修复">
+      <ZustandProvider>
+        <AppContent />
+      </ZustandProvider>
+    </ErrorBoundary>
   )
 }
 

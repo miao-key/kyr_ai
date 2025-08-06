@@ -1,11 +1,136 @@
 import { useState, useEffect, useRef, useCallback, memo, useMemo } from 'react'
 import { Image, Loading, Empty, Button } from 'react-vant'
 import { LikeO, Star, ChatO, Location, Edit } from '@react-vant/icons'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuthStore } from '@/stores'
 import useTitle from '@/hooks/useTitle'
 import useThrottle from '@/hooks/useThrottle'
 import { getMixedTravelContent } from '@/api/pexels'
 import styles from './article.module.css'
+
+// 图片源配置 - 多个备用源提高稳定性，本地回退优先
+const IMAGE_SOURCES = [
+  {
+    name: 'local-fallback',
+    baseUrl: 'data:image/svg+xml',
+    generateUrl: (width, height, id) => {
+      // 创建更美观的占位符图片，根据尺寸判断是头像还是普通图片
+      const isAvatar = width <= 100 && height <= 100
+      
+      const svgContent = isAvatar ? 
+        // 头像样式
+        `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="avatarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#4facfe;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#00f2fe;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <circle cx="50%" cy="50%" r="50%" fill="url(#avatarGrad)"/>
+          <text x="50%" y="60%" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="white" text-anchor="middle" font-weight="600">👤</text>
+        </svg>` :
+        // 普通图片样式  
+        `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#667eea;stop-opacity:0.8" />
+              <stop offset="100%" style="stop-color:#764ba2;stop-opacity:0.6" />
+            </linearGradient>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grad)"/>
+          <circle cx="50%" cy="40%" r="20" fill="white" opacity="0.3"/>
+          <text x="50%" y="65%" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="white" text-anchor="middle" font-weight="500">🌟 精彩旅程</text>
+        </svg>`
+      
+      // 使用 encodeURIComponent 替代 btoa 来处理中文字符
+      return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`
+    },
+    fallback: true
+  },
+  {
+    name: 'picsum',
+    baseUrl: 'https://picsum.photos',
+    generateUrl: (width, height, id) => `https://picsum.photos/${width}/${height}?random=${id}`,
+    fallback: true
+  },
+  {
+    name: 'unsplash',
+    baseUrl: 'https://source.unsplash.com',
+    generateUrl: (width, height, id) => `https://source.unsplash.com/${width}x${height}/?travel,nature&sig=${id}`,
+    fallback: true
+  }
+]
+
+// 网络状态检测Hook
+const useNetworkStatus = () => {
+  const [isOnline, setIsOnline] = useState(navigator.onLine)
+  const [connectionType, setConnectionType] = useState('unknown')
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    // 检测连接类型（如果支持）
+    if ('connection' in navigator) {
+      const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection
+      if (connection) {
+        setConnectionType(connection.effectiveType || 'unknown')
+        const handleConnectionChange = () => {
+          setConnectionType(connection.effectiveType || 'unknown')
+        }
+        connection.addEventListener('change', handleConnectionChange)
+        
+        return () => {
+          window.removeEventListener('online', handleOnline)
+          window.removeEventListener('offline', handleOffline)
+          connection.removeEventListener('change', handleConnectionChange)
+        }
+      }
+    }
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
+  return { isOnline, connectionType }
+}
+
+// 生成优化的图片URL
+const generateOptimizedImageUrl = (width, height, id, sourceIndex = 0) => {
+  const source = IMAGE_SOURCES[sourceIndex] || IMAGE_SOURCES[0]
+  return source.generateUrl(width, height, id)
+}
+
+// 图片预加载工具函数
+const preloadImage = (src) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => resolve(img)
+    img.onerror = reject
+    img.src = src
+  })
+}
+
+// 批量预加载图片
+const preloadImages = async (urls, maxConcurrent = 3) => {
+  const results = []
+  for (let i = 0; i < urls.length; i += maxConcurrent) {
+    const batch = urls.slice(i, i + maxConcurrent)
+    const batchPromises = batch.map(url => 
+      preloadImage(url).catch(err => {
+        console.warn(`预加载失败: ${url}`, err)
+        return null
+      })
+    )
+    const batchResults = await Promise.allSettled(batchPromises)
+    results.push(...batchResults)
+  }
+  return results
+}
 
 // 简单的Toast组件
 const SimpleToast = ({ message, type, show, onClose }) => {
@@ -69,15 +194,71 @@ const isValidImageUrl = (url) => {
   return hasImageExtension || hasImageInPath || url.startsWith('data:image/')
 }
 
-// 自定义图片组件，支持加载状态
-const CustomImage = ({ src, alt, className, onClick, onLoadStatusChange }) => {
+// 自定义图片组件，支持加载状态和重试机制
+const CustomImage = ({ src, alt, className, onClick, onLoadStatusChange, width = 400, height = 300, imageId }) => {
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
   const [showImage, setShowImage] = useState(false)
   const [minLoadTimeComplete, setMinLoadTimeComplete] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
+  const [currentSrc, setCurrentSrc] = useState(src)
+  const [sourceIndex, setSourceIndex] = useState(0)
   const timeoutRef = useRef(null)
   const loadStartTimeRef = useRef(Date.now())
+  const imgRef = useRef(null)
+  const maxRetries = IMAGE_SOURCES.length * 2 // 每个源尝试2次
+  const { isOnline, connectionType } = useNetworkStatus()
   
+  // 重试加载图片的函数
+  const retryLoadImage = useCallback(() => {
+    if (retryCount < maxRetries) {
+      const newRetryCount = retryCount + 1
+      setRetryCount(newRetryCount)
+      setIsLoading(true)
+      setHasError(false)
+      setShowImage(false)
+      setMinLoadTimeComplete(false)
+      
+      // 重新设计重试策略：优先尝试真实图片，失败后使用占位符
+      let newSourceIndex = 1 // 默认尝试 picsum
+      if (newRetryCount === 1 && isOnline) {
+        newSourceIndex = 1 // 首次重试使用 picsum
+      } else if (newRetryCount === 2 && isOnline) {
+        newSourceIndex = 2 // 第二次重试使用 unsplash
+      } else {
+        newSourceIndex = 0 // 最后使用本地回退
+      }
+      setSourceIndex(newSourceIndex)
+      
+      let newSrc
+      if (imageId) {
+        // 使用优化的图片URL生成器
+        newSrc = generateOptimizedImageUrl(width, height, `${imageId}-${newRetryCount}`, newSourceIndex)
+      } else {
+        // 在原URL基础上添加重试参数
+        newSrc = `${src}${src.includes('?') ? '&' : '?'}retry=${newRetryCount}&t=${Date.now()}&source=${newSourceIndex}`
+      }
+      
+      console.log(`图片加载重试第${newRetryCount}次，使用源: ${IMAGE_SOURCES[newSourceIndex].name}`)
+      setCurrentSrc(newSrc)
+    } else {
+      if (!isOnline) {
+        console.warn('网络离线，使用本地回退图片')
+        // 网络离线时直接使用本地回退
+        const fallbackSrc = generateOptimizedImageUrl(width, height, `fallback-${imageId || 'default'}`, 0)
+        setCurrentSrc(fallbackSrc)
+        setRetryCount(0)
+        return
+      } else {
+        console.warn(`图片加载失败，已达到最大重试次数: ${src}`)
+      }
+      setIsLoading(false)
+      setHasError(true)
+      setShowImage(false)
+      onLoadStatusChange?.(false)
+    }
+  }, [src, retryCount, maxRetries, onLoadStatusChange, isOnline, imageId, width, height])
+
   // 检查图片URL并初始化状态
   useEffect(() => {
     // 立即检查URL有效性
@@ -86,31 +267,53 @@ const CustomImage = ({ src, alt, className, onClick, onLoadStatusChange }) => {
       setIsLoading(false)
       setHasError(true)
       setShowImage(false)
-      // 通知父组件图片加载失败
       onLoadStatusChange?.(false)
       return
     }
     
-    // 重置状态
+    // 重置状态，首先尝试加载真实图片
     setIsLoading(true)
     setHasError(false)
     setShowImage(false)
     setMinLoadTimeComplete(false)
+    setRetryCount(0)
+    
+    // 初始化时优先尝试真实图片（如果在线）
+    if (isOnline && imageId) {
+      setSourceIndex(1) // 使用 picsum 作为首选
+      const realImageSrc = generateOptimizedImageUrl(width, height, imageId, 1)
+      setCurrentSrc(realImageSrc)
+    } else if (imageId) {
+      setSourceIndex(0) // 离线时使用本地回退
+      const localSrc = generateOptimizedImageUrl(width, height, imageId, 0)
+      setCurrentSrc(localSrc)
+    } else {
+      setSourceIndex(0)
+      setCurrentSrc(src)
+    }
     loadStartTimeRef.current = Date.now()
     
     const timer = setTimeout(() => {
       setMinLoadTimeComplete(true)
     }, 600)
     
-    // 设置最大加载超时时间（8秒，缩短超时时间）
+    // 根据网络类型调整超时时间
+    const getTimeoutDuration = () => {
+      if (!isOnline) return 5000 // 离线时快速失败
+      switch (connectionType) {
+        case 'slow-2g': return 30000 // 30秒
+        case '2g': return 25000 // 25秒
+        case '3g': return 15000 // 15秒
+        case '4g': return 10000 // 10秒
+        default: return 12000 // 默认12秒
+      }
+    }
+    
     timeoutRef.current = setTimeout(() => {
-      console.warn(`图片加载超时: ${src}`)
-      setIsLoading(false)
-      setHasError(true)
-      setShowImage(false)
-      // 通知父组件图片加载失败
-      onLoadStatusChange?.(false)
-    }, 8000)
+      console.warn(`图片加载超时 (${connectionType}): ${src}`)
+      // 超时时自动重试
+      retryLoadImage()
+    }, getTimeoutDuration())
     
     return () => {
       clearTimeout(timer)
@@ -118,7 +321,7 @@ const CustomImage = ({ src, alt, className, onClick, onLoadStatusChange }) => {
         clearTimeout(timeoutRef.current)
       }
     }
-  }, [src, onLoadStatusChange])
+  }, [src, onLoadStatusChange, retryLoadImage])
   
   const handleLoad = useCallback(() => {
     // 清除超时定时器
@@ -152,7 +355,7 @@ const CustomImage = ({ src, alt, className, onClick, onLoadStatusChange }) => {
   }, [minLoadTimeComplete, onLoadStatusChange])
   
   const handleError = useCallback(() => {
-    console.warn(`图片加载失败: ${src}`)
+    console.warn(`图片加载失败: ${currentSrc}`)
     
     // 清除超时定时器
     if (timeoutRef.current) {
@@ -160,14 +363,19 @@ const CustomImage = ({ src, alt, className, onClick, onLoadStatusChange }) => {
       timeoutRef.current = null
     }
     
-    // 通知父组件图片加载失败
-    onLoadStatusChange?.(false)
-    
-    // 立即设置错误状态，不等待最小时间
-    setIsLoading(false)
-    setHasError(true) 
-    setShowImage(false)
-  }, [src, onLoadStatusChange])
+    // 尝试重试
+    if (retryCount < maxRetries) {
+      setTimeout(() => {
+        retryLoadImage()
+      }, 1000 * (retryCount + 1)) // 递增延迟重试：1s, 2s, 3s
+    } else {
+      // 达到最大重试次数，通知父组件加载失败
+      onLoadStatusChange?.(false)
+      setIsLoading(false)
+      setHasError(true) 
+      setShowImage(false)
+    }
+  }, [currentSrc, retryCount, maxRetries, retryLoadImage, onLoadStatusChange])
   
   const handleClick = () => {
     if (!isLoading && !hasError) {
@@ -202,9 +410,56 @@ const CustomImage = ({ src, alt, className, onClick, onLoadStatusChange }) => {
         </div>
       )}
       
+      {/* 重试提示 */}
+      {isLoading && retryCount > 0 && (
+        <div 
+          className={styles.retryIndicator}
+          style={{
+            position: 'absolute',
+            bottom: '10px',
+            right: '10px',
+            background: 'rgba(0, 0, 0, 0.8)',
+            color: 'white',
+            padding: '4px 8px',
+            borderRadius: '8px',
+            fontSize: '11px',
+            zIndex: 3,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            minWidth: '60px'
+          }}
+        >
+          <div>重试 {retryCount}/{maxRetries}</div>
+          <div style={{ fontSize: '10px', opacity: 0.8, marginTop: '2px' }}>
+            {IMAGE_SOURCES[sourceIndex]?.name || '默认'}
+          </div>
+        </div>
+      )}
+
+      {/* 网络状态提示 */}
+      {!isOnline && (
+        <div 
+          style={{
+            position: 'absolute',
+            top: '10px',
+            left: '10px',
+            background: 'rgba(255, 0, 0, 0.8)',
+            color: 'white',
+            padding: '4px 8px',
+            borderRadius: '8px',
+            fontSize: '11px',
+            zIndex: 3
+          }}
+        >
+          📵 网络离线
+        </div>
+      )}
+
       {/* 图片 - 添加淡入效果 */}
       <img
-        src={src}
+        ref={imgRef}
+        src={currentSrc}
         alt={alt}
         className={styles.fadeInImage}
         style={{
@@ -227,18 +482,99 @@ const CustomImage = ({ src, alt, className, onClick, onLoadStatusChange }) => {
         loading="lazy"
         decoding="async"
       />
+      
+      {/* 手动重试按钮 */}
+      {hasError && (
+        <div 
+          className={styles.errorOverlay}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(248, 249, 250, 0.95)',
+            borderRadius: '12px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 4,
+            cursor: 'pointer',
+            transition: 'opacity 0.3s ease-in'
+          }}
+          onClick={() => {
+            setRetryCount(0)
+            retryLoadImage()
+          }}
+        >
+          <div style={{ fontSize: '32px', marginBottom: '8px', opacity: 0.5 }}>🖼️</div>
+          <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>图片加载失败</div>
+          <div style={{ 
+            fontSize: '12px', 
+            color: '#667eea', 
+            padding: '4px 12px',
+            background: 'white',
+            borderRadius: '16px',
+            border: '1px solid #667eea'
+          }}>
+            点击重试
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-// 自定义头像组件，支持加载状态
-const CustomAvatar = ({ src, alt, className }) => {
+// 自定义头像组件，支持加载状态和重试机制
+const CustomAvatar = ({ src, alt, className, width = 80, height = 80, imageId }) => {
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
   const [showAvatar, setShowAvatar] = useState(false)
   const [minLoadTimeComplete, setMinLoadTimeComplete] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
+  const [currentSrc, setCurrentSrc] = useState(src)
+  const [sourceIndex, setSourceIndex] = useState(0)
   const timeoutRef = useRef(null)
+  const maxRetries = Math.min(IMAGE_SOURCES.length, 2) // 头像重试次数较少
+  const { isOnline } = useNetworkStatus()
   
+  // 重试加载头像的函数
+  const retryLoadAvatar = useCallback(() => {
+    if (retryCount < maxRetries) {
+      const newRetryCount = retryCount + 1
+      setRetryCount(newRetryCount)
+      setIsLoading(true)
+      setHasError(false)
+      setShowAvatar(false)
+      setMinLoadTimeComplete(false)
+      
+      // 头像重试策略：先尝试真实图片，最后使用占位符
+      let newSourceIndex = 1 // 默认尝试 picsum
+      if (newRetryCount === 1 && isOnline) {
+        newSourceIndex = 1 // 首次重试使用 picsum
+      } else {
+        newSourceIndex = 0 // 最后使用本地回退
+      }
+      setSourceIndex(newSourceIndex)
+      
+      let newSrc
+      if (imageId) {
+        newSrc = generateOptimizedImageUrl(width, height, `avatar-${imageId}-${newRetryCount}`, newSourceIndex)
+      } else {
+        newSrc = `${src}${src.includes('?') ? '&' : '?'}retry=${newRetryCount}&t=${Date.now()}&source=${newSourceIndex}`
+      }
+      
+      console.log(`头像重试第${newRetryCount}次，使用源: ${IMAGE_SOURCES[newSourceIndex].name}`)
+      setCurrentSrc(newSrc)
+    } else {
+      console.warn(`头像加载失败，停止重试: ${src}`)
+      setIsLoading(false)
+      setHasError(true)
+      setShowAvatar(false)
+    }
+  }, [src, retryCount, maxRetries, isOnline, imageId, width, height])
+
   // 检查头像URL并初始化状态
   useEffect(() => {
     // 立即检查URL有效性
@@ -250,23 +586,36 @@ const CustomAvatar = ({ src, alt, className }) => {
       return
     }
     
-    // 重置状态
+    // 重置状态，头像也优先尝试真实图片
     setIsLoading(true)
     setHasError(false)
     setShowAvatar(false)
     setMinLoadTimeComplete(false)
+    setRetryCount(0)
+    
+    // 头像初始化时也优先尝试真实图片
+    if (isOnline && imageId) {
+      setSourceIndex(1) // 使用 picsum 作为首选
+      const realAvatarSrc = generateOptimizedImageUrl(width, height, `avatar-${imageId}`, 1)
+      setCurrentSrc(realAvatarSrc)
+    } else if (imageId) {
+      setSourceIndex(0) // 离线时使用本地回退
+      const localAvatarSrc = generateOptimizedImageUrl(width, height, `avatar-${imageId}`, 0)
+      setCurrentSrc(localAvatarSrc)
+    } else {
+      setSourceIndex(0)
+      setCurrentSrc(src)
+    }
     
     const timer = setTimeout(() => {
       setMinLoadTimeComplete(true)
     }, 400)
     
-    // 头像超时时间设为5秒
+    // 头像超时时间设为8秒（相对较短）
     timeoutRef.current = setTimeout(() => {
       console.warn(`头像加载超时: ${src}`)
-      setIsLoading(false)
-      setHasError(true)
-      setShowAvatar(false)
-    }, 5000)
+      retryLoadAvatar()
+    }, 8000)
     
     return () => {
       clearTimeout(timer)
@@ -274,7 +623,7 @@ const CustomAvatar = ({ src, alt, className }) => {
         clearTimeout(timeoutRef.current)
       }
     }
-  }, [src])
+  }, [src, retryLoadAvatar])
   
   const handleLoad = useCallback(() => {
     // 清除超时定时器
@@ -301,7 +650,7 @@ const CustomAvatar = ({ src, alt, className }) => {
   }, [minLoadTimeComplete])
   
   const handleError = useCallback(() => {
-    console.warn(`头像加载失败: ${src}`)
+    console.warn(`头像加载失败: ${currentSrc}`)
     
     // 清除超时定时器
     if (timeoutRef.current) {
@@ -309,11 +658,17 @@ const CustomAvatar = ({ src, alt, className }) => {
       timeoutRef.current = null
     }
     
-    // 立即设置错误状态
-    setIsLoading(false)
-    setHasError(true)
-    setShowAvatar(false)
-  }, [src])
+    // 尝试重试
+    if (retryCount < maxRetries) {
+      setTimeout(() => {
+        retryLoadAvatar()
+      }, 500 * (retryCount + 1)) // 较短的重试延迟
+    } else {
+      setIsLoading(false)
+      setHasError(true)
+      setShowAvatar(false)
+    }
+  }, [currentSrc, retryCount, maxRetries, retryLoadAvatar])
   
   return (
     <div style={{ position: 'relative', width: '42px', height: '42px' }}>
@@ -350,7 +705,7 @@ const CustomAvatar = ({ src, alt, className }) => {
       
       {/* 头像图片 - 添加淡入效果 */}
       <img
-        src={src}
+        src={currentSrc}
         alt={alt}
         className={className}
         style={{
@@ -360,7 +715,7 @@ const CustomAvatar = ({ src, alt, className }) => {
           borderRadius: '50%',
           border: '2px solid #e3f2fd',
           objectFit: 'cover',
-          objectPosition: 'center center', // 确保豆包生成的图片居中显示
+          objectPosition: 'center center',
           transition: 'opacity 0.3s ease-in',
           transform: showAvatar && !hasError ? 'scale(1)' : 'scale(1.05)',
           transitionProperty: 'opacity, transform',
@@ -411,6 +766,9 @@ const TravelCard = memo(({ article, onLike, onCollect, onFollow, isAuthenticated
             src={article.user.avatar}
             alt={article.user.name}
             className={styles.userAvatar}
+            width={80}
+            height={80}
+            imageId={article.user.avatarId}
           />
           <div className={styles.userDetails}>
             <h4 className={styles.userName}>{article.user.name}</h4>
@@ -438,6 +796,9 @@ const TravelCard = memo(({ article, onLike, onCollect, onFollow, isAuthenticated
               src={article.images[0].src?.medium || article.images[0].url}
               alt={article.images[0].alt || '旅行图片'}
               className={styles.singleImage}
+              width={article.images[0].width || 400}
+              height={article.images[0].height || 300}
+              imageId={article.images[0].imageId}
               onLoadStatusChange={handleImageLoadStatus}
             />
           </div>
@@ -504,7 +865,7 @@ const Article = () => {
   useTitle('智旅-旅记')
   
   // 获取认证状态
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated } = useAuthStore()
   
   // 根据登录状态决定初始标签
   const defaultTab = isAuthenticated ? '关注' : '衣'
@@ -606,10 +967,12 @@ const Article = () => {
     
     const names = userNames[category] || userNames['关注']
     
+    const userId = Math.floor(Math.random() * 10000)
     return {
-      id: Math.floor(Math.random() * 10000),
+      id: userId,
       name: names[Math.floor(Math.random() * names.length)],
-      avatar: `https://picsum.photos/80/80?random=${Math.floor(Math.random() * 1000)}`,
+      avatar: generateOptimizedImageUrl(80, 80, `avatar-${userId}`, 0),
+      avatarId: `avatar-${userId}`,
       // 关注导航下的用户都是已关注状态
       isFollowed: category === '关注' ? true : Math.random() > 0.7,
       location: [
@@ -819,18 +1182,24 @@ const Article = () => {
                             category === '住' ? 'hotel' : 'travel'
       
       const imageHeight = Math.floor(Math.random() * 200) + 400
+      const imageId = `${categoryPrefix}-${imageIndex}`
+      
+      // 使用优化的图片源生成URL
+      const optimizedUrl = generateOptimizedImageUrl(400, imageHeight, imageId, 0)
+      
       return {
-        id: `${categoryPrefix}-${imageIndex}`,
+        id: imageId,
         width: 400,
         height: imageHeight,
-        url: `https://picsum.photos/400/${imageHeight}?random=${imageIndex}&category=${randomKeyword}`,
+        url: optimizedUrl,
         photographer: `${category}达人${imageIndex}`,
         src: {
-          medium: `https://picsum.photos/400/${imageHeight}?random=${imageIndex}&category=${randomKeyword}`,
-          small: `https://picsum.photos/300/${Math.floor(imageHeight * 0.75)}?random=${imageIndex + 1000}&category=${randomKeyword}`
+          medium: optimizedUrl,
+          small: generateOptimizedImageUrl(300, Math.floor(imageHeight * 0.75), `${imageId}-thumb`, 0)
         },
         alt: `${category}相关图片 ${imageIndex}`,
-        hasImage: true  // 所有图片都存在
+        hasImage: true,  // 所有图片都存在
+        imageId: imageId // 添加imageId用于重试时的源切换
       }
     })
     

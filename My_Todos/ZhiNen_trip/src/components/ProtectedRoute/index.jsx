@@ -1,6 +1,6 @@
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuthStore } from '@/stores'
 import { Navigate, useLocation } from 'react-router-dom'
-import { LoadingSpinner } from '@/components/UI'
+import { LoadingSpinner } from '@components/UI'
 
 /**
  * 路由保护组件
@@ -15,7 +15,7 @@ const ProtectedRoute = ({
   requireAuth = true, 
   redirectTo = '/login' 
 }) => {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading } = useAuthStore()
   const location = useLocation()
 
   // 如果正在加载认证状态，显示加载器

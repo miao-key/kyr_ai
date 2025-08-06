@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuthStore } from '../../stores'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Form, Field, Button, Notify } from 'react-vant'
 import styles from './login.module.css'
 
 const Login = () => {
-  const { login, register, isLoading } = useAuth()
+  const { login, register, isLoading } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
   

@@ -1,8 +1,9 @@
 import useTitle from '@/hooks/useTitle'
 import { useState, useEffect, useRef } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuthStore } from '../../stores'
 import { useNavigate } from 'react-router-dom'
 import { Image, ActionSheet, Cell, CellGroup, Badge, Progress, Grid, GridItem, Popup, Button, Space, Tag, Notify, Field, Form, Dialog } from 'react-vant'
+import { UserAvatar } from '@/components/UI'
 import {
     LikeO,
     Star,
@@ -106,7 +107,7 @@ const recentActivities = [
 ]
 
 const Account = () => {
-    const { user, logout, updateUser, generateAvatar, isAuthenticated, isLoading } = useAuth()
+    const { user, logout, updateUser, generateAvatar, isAuthenticated, isLoading } = useAuthStore()
     const navigate = useNavigate()
     
     // 调试日志 - 显示当前认证状态
@@ -636,13 +637,12 @@ const Account = () => {
 
                     {/* 头像和基本信息 */}
                     <div className={styles.avatarSection}>
-                        <div className={styles.travelAvatar} onClick={() => setShowAvatarSheet(true)}>
-                            <Image
-                                round
-                                width="90px"
-                                height="90px"
-                                src={userInfo.avatar}
-                                fit="cover"
+                        <div className={styles.travelAvatar}>
+                            <UserAvatar
+                                size={90}
+                                round={true}
+                                onClick={() => setShowAvatarSheet(true)}
+                                className={styles.avatarImage}
                             />
                             <div className={styles.cameraIcon}>
                                 <PhotoO size={16} />

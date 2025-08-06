@@ -6,13 +6,20 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:analyze": "ANALYZE=true vite build",
+    "build:test": "node build-test.js",
+    "build:report": "vite build && npx serve dist",
+    "preview": "vite preview",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "performance:test": "node -e \"import('./src/utils/performanceTest.js').then(m => m.quickPerformanceTest())\"",
+    "performance:mid": "node -e \"import('./src/utils/midPriorityTest.js').then(m => m.quickMidPriorityTest())\"",
+    "size:analyze": "vite build --mode analyze"
   },
   "dependencies": {
     "@react-vant/icons": "^0.1.0",
     "axios": "^1.11.0",
     "lib-flexible": "^0.3.2",
+    "prop-types": "^15.8.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.7.1",
@@ -28,7 +35,10 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
+    "rollup-plugin-visualizer": "^6.0.3",
+    "terser": "^5.43.1",
     "vite": "^6.3.5",
+    "vite-plugin-chunk-split": "^0.5.0",
     "vite-plugin-mock": "^3.0.2"
   }
 }

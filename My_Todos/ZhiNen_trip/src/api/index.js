@@ -1,6 +1,7 @@
 /**
  * 豆包AI图像生成API配置 - 通过Vite代理解决跨域问题
  * - 使用豆包专用图像生成模型 ep-20250804182253-ckvjk
+ * - 集成缓存机制，提升性能
  * 
  * API端点：
  * - 图像生成：/api/v3/images/generations
@@ -10,6 +11,8 @@
  * 在项目根目录下创建 .env.local 文件：
  * VITE_DOUBAO_IMAGE_API_KEY=your-api-key-here
  */
+
+import { avatarCache, imageCache } from '@utils/apiCache'
 
 // API 配置 - 使用代理路径，API密钥由代理服务器处理
 const API_CONFIG = {
@@ -51,9 +54,19 @@ const createRequest = async (url, options = {}) => {
     }
 }
 
-// 生成旅行头像的主函数
+// 生成旅行头像的主函数 - 集成缓存机制
 export const generateTravelAvatar = async (prompt) => {
     const optimizedPrompt = `Portrait of a traveler, ${prompt}, professional photography, high quality, travel style, friendly expression, outdoor lighting, 4K resolution`
+    
+    // 生成缓存键
+    const cacheKey = `avatar_${btoa(optimizedPrompt).slice(0, 32)}`
+    
+    // 检查缓存
+    const cachedResult = avatarCache.get(cacheKey)
+    if (cachedResult) {
+        console.log('🎯 使用缓存的头像结果')
+        return { ...cachedResult, fromCache: true }
+    }
     
     console.log('🎨 开始生成旅行头像...')
     console.log('📝 提示词:', optimizedPrompt)
@@ -80,11 +93,17 @@ export const generateTravelAvatar = async (prompt) => {
         if (response && response.data && response.data.length > 0) {
             const imageUrl = response.data[0].url
             console.log('🖼️ 生成的头像URL:', imageUrl)
-            return {
+            
+            const result = {
                 success: true,
                 url: imageUrl,
                 prompt: optimizedPrompt
             }
+            
+            // 缓存成功结果
+            avatarCache.set(cacheKey, result)
+            
+            return result
         } else {
             console.warn('⚠️ 豆包API返回格式异常:', response)
             throw new Error('API返回数据格式不正确')
@@ -99,17 +118,22 @@ export const generateTravelAvatar = async (prompt) => {
         
         console.log('🔄 使用降级头像:', fallbackUrl)
         
-        return {
+        const fallbackResult = {
             success: false,
             url: fallbackUrl,
             prompt: optimizedPrompt,
             error: error.message,
             fallback: true
         }
+        
+        // 缓存降级结果（较短时间）
+        avatarCache.set(cacheKey, fallbackResult)
+        
+        return fallbackResult
     }
 }
 
-// 生成写实风格图像
+// 生成写实风格图像 - 集成缓存机制
 export const generateRealisticImage = async (prompt, options = {}) => {
     const {
         size = '1024x1024',
@@ -118,6 +142,16 @@ export const generateRealisticImage = async (prompt, options = {}) => {
     } = options
 
     const optimizedPrompt = `Realistic photography, ${prompt}, high detail, professional quality, natural lighting`
+    
+    // 生成缓存键（包含参数）
+    const cacheKey = `image_${btoa(optimizedPrompt + size + guidance_scale).slice(0, 32)}`
+    
+    // 检查缓存
+    const cachedResult = imageCache.get(cacheKey)
+    if (cachedResult) {
+        console.log('🎯 使用缓存的图像结果')
+        return { ...cachedResult, fromCache: true }
+    }
 
     try {
         const requestBody = {
@@ -135,22 +169,31 @@ export const generateRealisticImage = async (prompt, options = {}) => {
         })
 
         if (response && response.data && response.data.length > 0) {
-            return {
+            const result = {
                 success: true,
                 url: response.data[0].url,
                 prompt: optimizedPrompt
             }
+            
+            // 缓存成功结果
+            imageCache.set(cacheKey, result)
+            
+            return result
         } else {
             throw new Error('API返回数据格式不正确')
         }
 
     } catch (error) {
         console.error('生成写实图像失败:', error)
-        return {
+        
+        const errorResult = {
             success: false,
             error: error.message,
             prompt: optimizedPrompt
         }
+        
+        // 不缓存错误结果，让下次请求重试
+        return errorResult
     }
 }
 

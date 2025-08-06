@@ -1,0 +1,143 @@
+/**
+ * MainLayout 组件样式
+ * 移动端友好的布局样式
+ */
+
+.mainLayout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f5f5f5;
+}
+
+.content {
+  flex: 1;
+  padding-bottom: 60px; /* 为底部导航栏预留空间 */
+  overflow-x: hidden;
+  
+  /* 优化滚动性能 */
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+.tabbarContainer {
+  /* 底部导航容器样式在JS中定义，这里可以添加额外的样式 */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  
+  /* 安全区域适配 */
+  padding-bottom: env(safe-area-inset-bottom);
+  
+  /* 防止在某些设备上出现闪烁 */
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.indicator {
+  /* 指示器动画优化 */
+  will-change: left;
+  transform: translateZ(0);
+  
+  /* 添加微妙的阴影效果 */
+  box-shadow: 0 2px 8px rgba(111, 225, 100, 0.3);
+}
+
+.tabbar {
+  /* Tabbar 样式优化 */
+  height: 60px;
+  
+  /* 确保在所有设备上正确显示 */
+  min-height: 60px;
+}
+
+.tabItem {
+  /* Tab项样式 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  
+  /* 字体优化 */
+  font-size: 12px;
+  font-weight: 500;
+  
+  /* 触摸优化 */
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  
+  /* 图标间距 */
+  gap: 2px;
+}
+
+.tabItem:active {
+  /* 按下时的反馈效果 */
+  transform: scale(0.95);
+  transition: transform 0.1s ease;
+}
+
+/* 响应式设计 */
+@media (max-width: 320px) {
+  .content {
+    padding-bottom: 55px;
+  }
+  
+  .tabbar {
+    height: 55px;
+    min-height: 55px;
+  }
+  
+  .tabItem {
+    font-size: 11px;
+  }
+}
+
+@media (min-width: 768px) {
+  .mainLayout {
+    max-width: 428px; /* iPhone 14 Pro Max 宽度 */
+    margin: 0 auto;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+  .mainLayout {
+    background-color: #1a1a1a;
+  }
+  
+  .tabbarContainer {
+    background-color: #2a2a2a !important;
+    border-top-color: #333 !important;
+  }
+  
+  .tabItem {
+    color: #999 !important;
+  }
+  
+  .tabItem[data-active="true"] {
+    color: #fff !important;
+  }
+}
+
+/* 动画性能优化 */
+.indicator,
+.tabItem {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* 无障碍支持 */
+@media (prefers-reduced-motion: reduce) {
+  .indicator {
+    transition: none;
+  }
+  
+  .content {
+    scroll-behavior: auto;
+  }
+  
+  .tabItem:active {
+    transform: none;
+  }
+}

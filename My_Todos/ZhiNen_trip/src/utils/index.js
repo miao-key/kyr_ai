@@ -103,9 +103,37 @@ export const imageUtils = {
     })
   },
   
-  // 生成占位图URL
-  placeholder: (width = 400, height = 300, text = '', bg = '4CAF50', color = 'white') => {
-    return `https://via.placeholder.com/${width}x${height}/${bg}/${color}?text=${encodeURIComponent(text)}`
+  // 生成本地占位图URL
+  placeholder: (width = 400, height = 300, text = '精彩内容', bg = '667eea', color = 'white') => {
+    // 创建美观的本地SVG占位符
+    const isSmall = width <= 100 && height <= 100
+    
+    const svgContent = isSmall ? 
+      // 小尺寸图片（如头像）
+      `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="smallGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#4facfe;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#00f2fe;stop-opacity:1" />
+          </linearGradient>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#smallGrad)" rx="8"/>
+        <text x="50%" y="60%" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="white" text-anchor="middle" font-weight="500">📷</text>
+      </svg>` :
+      // 大尺寸图片
+      `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="largeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#667eea;stop-opacity:0.9" />
+            <stop offset="100%" style="stop-color:#764ba2;stop-opacity:0.7" />
+          </linearGradient>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#largeGrad)"/>
+        <circle cx="50%" cy="35%" r="25" fill="white" opacity="0.2"/>
+        <text x="50%" y="70%" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="white" text-anchor="middle" font-weight="500">${text}</text>
+      </svg>`
+    
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`
   }
 }
 
