@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, memo, useMemo } from 'react'
 import { Image, Loading, Empty, Button } from 'react-vant'
 import { LikeO, Star, ChatO, Location, Edit } from '@react-vant/icons'
+import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores'
 import useTitle from '@/hooks/useTitle'
 import useThrottle from '@/hooks/useThrottle'
@@ -863,6 +864,7 @@ const TravelCard = memo(({ article, onLike, onCollect, onFollow, isAuthenticated
 
 const Article = () => {
   useTitle('智旅-旅记')
+  const navigate = useNavigate()
   
   // 获取认证状态
   const { isAuthenticated } = useAuthStore()
@@ -1453,9 +1455,8 @@ const Article = () => {
   }, [activeTab])
 
   const handleWriteArticle = () => {
-    // 移除Toast提示
     console.log('开始写旅记...')
-    // TODO: 跳转到写文章页面
+    navigate('/write-article')
   }
 
   // 将useMemo移到组件顶层，避免条件渲染中使用Hook

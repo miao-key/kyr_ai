@@ -351,8 +351,11 @@ const Home = () => {
     ]
 
     // 导航点击添加防抖机制
-    const handleNavClick = useDebounce((route) => {
-      navigate(route)
+    const handleNavClick = useDebounce((route, title) => {
+      // 暂时注释掉路由跳转，只保留点击反馈
+      // navigate(route)
+      console.log(`点击了${title}功能，路由: ${route}`)
+      // 可以在这里添加其他交互效果，比如显示提示信息
     }, 250) // 250ms防抖，避免重复点击
     
   return (
@@ -385,7 +388,7 @@ const Home = () => {
             <div
               key={item.id}
               className={styles.navigationItem}
-              onClick={() => handleNavClick(item.route)}
+              onClick={() => handleNavClick(item.route, item.title)}
             >
               <div 
                 className={`${styles.iconContainer} ${item.iconClass}`}

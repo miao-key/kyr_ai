@@ -4,28 +4,29 @@ import {
   Route,
   Navigate
 } from 'react-router-dom'
-import { LoadingSpinner } from '@components/UI'
-import ZustandProvider from '@components/Providers/ZustandProvider'
-import { ProtectedRoute } from '@components/Business'
-import ErrorBoundary from '@components/ErrorBoundary'
+import { LoadingSpinner } from '@/components/UI'
+import ZustandProvider from '@/components/Providers/ZustandProvider'
+import { ProtectedRoute } from '@/components'
+import ErrorBoundary from '@/components/ErrorBoundary'
 
-import { useRoutePreloader } from '@hooks/useRoutePreloader'
+import { useRoutePreloader } from '@/hooks/useRoutePreloader'
 import './App.css'
 
 // 页面组件懒加载
-const MainLayout = lazy(() => import('@components/Layout/MainLayout'))
-const Login = lazy(() => import('@pages/Login'))
-const Home = lazy(() => import('@pages/Home'))
-const Article = lazy(() => import('@pages/Article'))
-const Trip = lazy(() => import('@pages/Trip'))
-const Account = lazy(() => import('@pages/Account'))
-const Search = lazy(() => import('@pages/Search'))
-const Hotel = lazy(() => import('@pages/Hotel'))
-const Flight = lazy(() => import('@pages/Flight'))
-const Train = lazy(() => import('@pages/Train'))
-const Taxi = lazy(() => import('@pages/Taxi'))
-const Tourism = lazy(() => import('@pages/Tourism'))
-const Coze = lazy(() => import('@pages/AI_chat/coze'))
+const MainLayout = lazy(() => import('@/components/Layout/MainLayout'))
+const Login = lazy(() => import('@/pages/Login'))
+const Home = lazy(() => import('@/pages/Home'))
+const Article = lazy(() => import('@/pages/Article'))
+const WriteArticle = lazy(() => import('@/pages/WriteArticle'))
+const Trip = lazy(() => import('@/pages/Trip'))
+const Account = lazy(() => import('@/pages/Account'))
+const Search = lazy(() => import('@/pages/Search'))
+const Hotel = lazy(() => import('@/pages/Hotel'))
+const Flight = lazy(() => import('@/pages/Flight'))
+const Train = lazy(() => import('@/pages/Train'))
+const Taxi = lazy(() => import('@/pages/Taxi'))
+const Tourism = lazy(() => import('@/pages/Tourism'))
+const Coze = lazy(() => import('@/pages/AI_chat/coze'))
 
 // 主应用组件包装器
 const AppContent = () => {
@@ -66,6 +67,11 @@ const AppContent = () => {
           </Route>
           
           {/* 独立页面 - 需要认证 */}
+          <Route path='/write-article' element={
+            <ProtectedRoute>
+              <WriteArticle />
+            </ProtectedRoute>
+          } />
           <Route path='/search' element={
             <ProtectedRoute>
               <Search />
