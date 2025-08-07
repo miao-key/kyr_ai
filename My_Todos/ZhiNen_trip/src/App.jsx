@@ -8,6 +8,8 @@ import { LoadingSpinner } from '@/components/UI'
 import ZustandProvider from '@/components/Providers/ZustandProvider'
 import { ProtectedRoute } from '@/components'
 import ErrorBoundary from '@/components/ErrorBoundary'
+import JWTProvider from '@/components/JWTProvider'
+
 
 import { useRoutePreloader } from '@/hooks/useRoutePreloader'
 import './App.css'
@@ -112,6 +114,8 @@ const AppContent = () => {
           <Route path='*' element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
+      
+
     </>
   )
 }
@@ -120,7 +124,9 @@ function App() {
   return (
     <ErrorBoundary fallbackMessage="智旅应用遇到了问题，我们正在努力修复">
       <ZustandProvider>
-        <AppContent />
+        <JWTProvider>
+          <AppContent />
+        </JWTProvider>
       </ZustandProvider>
     </ErrorBoundary>
   )
