@@ -158,6 +158,7 @@ class RoutePreloader {
     const routeMap = {
       '/home': () => import('@pages/Home'),
       '/article': () => import('@pages/Article'),
+      '/write-article': () => import('@pages/WriteArticle'),
       '/trip': () => import('@pages/Trip'),
       '/account': () => import('@pages/Account'),
       '/search': () => import('@pages/Search'),
