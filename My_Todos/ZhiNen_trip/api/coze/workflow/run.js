@@ -22,17 +22,14 @@ export default async function handler(req) {
       )
     }
 
-    // 允许通过环境变量切换 Coze API 域名（例如可能存在全球加速域名）
-    const COZE_API_BASE = process.env.COZE_API_BASE || 'https://api.coze.cn'
-
-    // 超时控制，避免网关默认 504，便于在客户端展示更明确的错误
-    const controller = new AbortController()
+    // 允许通过环境变量切换 Coze API 域名；未指定时并发尝试 .cn 与 .com，优先返回最快可用结果
+    const explicitBase = process.env.COZE_API_BASE
     const timeoutMs = Number(process.env.COZE_API_TIMEOUT_MS || 25000)
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
 
-    let resp
-    try {
-      resp = await fetch(`${COZE_API_BASE}/v1/workflow/run`, {
+    const runOnce = (base) => {
+      const controller = new AbortController()
+      const t = setTimeout(() => controller.abort(), timeoutMs)
+      return fetch(`${base}/v1/workflow/run`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -40,23 +37,49 @@ export default async function handler(req) {
         },
         body: JSON.stringify(body),
         signal: controller.signal,
+        cache: 'no-store',
       })
-    } catch (e) {
-      if (e.name === 'AbortError') {
+        .then(async (resp) => {
+          const text = await resp.text()
+          return { ok: true, status: resp.status, text }
+        })
+        .catch((err) => {
+          // 标记失败，便于 Promise.any 聚合
+          return Promise.reject({ ok: false, error: err && (err.message || String(err)) })
+        })
+        .finally(() => clearTimeout(t))
+    }
+
+    let result
+    if (explicitBase) {
+      // 明确指定域名时只请求该域名
+      try {
+        result = await runOnce(explicitBase)
+      } catch (e) {
+        const msg = e && e.error ? e.error : (e.message || 'Unknown error')
+        const status = /abort|timeout/i.test(msg) ? 504 : 502
         return new Response(
-          JSON.stringify({ error: 'Upstream timeout when calling Coze API', timeoutMs }),
+          JSON.stringify({ error: `Request failed for ${explicitBase}`, detail: msg, timeoutMs }),
+          { status, headers: { 'Content-Type': 'application/json' } }
+        )
+      }
+    } else {
+      // 并发 .cn 与 .com，谁先返回就用谁
+      const candidates = ['https://api.coze.cn', 'https://api.coze.com']
+      try {
+        result = await Promise.any(candidates.map(runOnce))
+      } catch (aggregate) {
+        // 所有候选都失败
+        return new Response(
+          JSON.stringify({ error: 'All upstream endpoints failed or timed out', timeoutMs }),
           { status: 504, headers: { 'Content-Type': 'application/json' } }
         )
       }
-      throw e
-    } finally {
-      clearTimeout(timeoutId)
     }
 
-    const text = await resp.text()
-    return new Response(text, {
-      status: resp.status,
-      headers: { 'Content-Type': 'application/json' }
+    return new Response(result.text, {
+      status: result.status,
+      headers: { 'Content-Type': 'application/json; charset=utf-8' }
     })
   } catch (err) {
     return new Response(
