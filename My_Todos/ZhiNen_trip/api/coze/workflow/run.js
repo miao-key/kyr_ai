@@ -1,6 +1,6 @@
 export const config = {
   runtime: 'nodejs',
-  regions: ['hkg1', 'sin1', 'icn1'],
+  // 移除多区域设置以避免免费计划限制
   maxDuration: 60,
 }
 
