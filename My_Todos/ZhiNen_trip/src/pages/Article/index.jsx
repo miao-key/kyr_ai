@@ -393,8 +393,10 @@ const CustomImage = ({ src, alt, className, onClick, onLoadStatusChange, width =
     return <div className={className} style={{ display: 'none' }}></div>
   }
 
+  // 使用固定纵横比容器，避免图片未加载时高度不确定导致与骨架叠加
+  const aspectRatio = `${width} / ${height}`
   return (
-    <div className={className} style={{ position: 'relative' }}>
+    <div className={className} style={{ position: 'relative', width: '100%', aspectRatio, overflow: 'hidden', borderRadius: '12px' }}>
       {/* 骨架屏 - 添加淡出效果 */}
       {isLoading && (
         <div 
@@ -464,18 +466,19 @@ const CustomImage = ({ src, alt, className, onClick, onLoadStatusChange, width =
         alt={alt}
         className={styles.fadeInImage}
         style={{
+          position: 'absolute',
+          inset: 0,
           opacity: showImage && !hasError ? 1 : 0,
           width: '100%',
-          height: 'auto',
-          maxHeight: '400px',
+          height: '100%',
           objectFit: 'cover',
-          borderRadius: '12px',
           cursor: 'pointer',
           transition: 'opacity 0.4s ease-in',
           transform: showImage && !hasError ? 'scale(1)' : 'scale(1.02)',
           transitionProperty: 'opacity, transform',
           transitionDuration: '0.4s',
-          transitionTimingFunction: 'ease-out'
+          transitionTimingFunction: 'ease-out',
+          visibility: showImage && !hasError ? 'visible' : 'hidden'
         }}
         onLoad={handleLoad}
         onError={handleError}
@@ -1554,9 +1557,24 @@ const Article = () => {
           <div className={styles.waterfallList}>
             {/* 切换标签时的加载状态：在内容清空前显示 */}
             {loading && articles.length === 0 && (
-              <div className={`${styles.loading} ${styles.switching}`}>
-                <div className={styles.loadingSpinner}></div>
-                <span>正在切换到「{activeTab}」分类...</span>
+              <div className={styles.waterfallList}>
+                {/* 旅记卡片骨架屏（3 条） */}
+                {[0,1,2].map(i => (
+                  <div key={i} className={styles.cardSkeleton}>
+                    <div className={styles.cardHeaderSkeleton}>
+                      <div className={styles.circleSkeleton}></div>
+                      <div style={{flex:1}}>
+                        <div className={styles.lineSkeleton} style={{width:'40%'}}></div>
+                        <div className={styles.lineSkeleton} style={{width:'25%', marginTop:6}}></div>
+                      </div>
+                    </div>
+                    <div className={styles.imageBoxSkeleton}>
+                      <div className={styles.skeletonShimmer}></div>
+                    </div>
+                    <div className={styles.lineSkeleton} style={{width:'90%', marginTop:8}}></div>
+                    <div className={styles.lineSkeleton} style={{width:'70%', marginTop:8}}></div>
+                  </div>
+                ))}
               </div>
             )}
             

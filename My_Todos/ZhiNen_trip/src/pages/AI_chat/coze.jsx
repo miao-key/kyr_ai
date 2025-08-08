@@ -275,6 +275,7 @@ const Coze = () => {
 
   // Coze工作流API配置
   const workflowUrl = '/api/coze/workflow/run'
+  // 生产由 Vercel 函数注入鉴权，不再从前端读取 token
   const patToken = import.meta.env.VITE_PAT_TOKEN
   const workflow_id = '7534974379706794024'
 
@@ -285,7 +286,9 @@ const Coze = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${patToken}`
+          // 在本地开发时通过 Vite 代理加上 Authorization；
+          // 在 Vercel 生产环境由无服务函数处理，无需此头
+          ...(patToken ? { 'Authorization': `Bearer ${patToken}` } : {})
         },
         body: JSON.stringify({
           workflow_id,

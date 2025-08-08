@@ -612,7 +612,7 @@
 /* 图片骨架屏 */
 .imageSkeleton {
     width: 100%;
-    height: 200px;
+    height: 100%;
     background: #f8f9fa;
     border-radius: 12px;
     overflow: hidden;
@@ -736,7 +736,7 @@
 /* 移动端骨架屏优化 */
 @media (max-width: 480px) {
     .imageSkeleton {
-        height: 180px;
+        height: 100%;
         border-radius: 10px;
         position: absolute;
         top: 0;
@@ -765,6 +765,50 @@
         font-size: 13px;
     }
 }
+
+/* 旅记卡片骨架屏 */
+.cardSkeleton {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    padding: 16px;
+}
+
+.cardHeaderSkeleton {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.circleSkeleton {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, #e9ecef 25%, #f8f9fa 50%, #e9ecef 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+.lineSkeleton {
+    height: 12px;
+    background: linear-gradient(90deg, #e9ecef 25%, #f8f9fa 50%, #e9ecef 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 6px;
+}
+
+.imageBoxSkeleton {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 12px 0;
+    background: #f8f9fa;
+}
+
 
 /* Toast动画效果 */
 @keyframes fadeInOut {

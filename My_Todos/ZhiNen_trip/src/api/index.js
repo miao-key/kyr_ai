@@ -16,7 +16,8 @@ import { avatarCache, imageCache } from '@utils/apiCache'
 
 // API 配置 - 使用代理路径，API密钥由代理服务器处理
 const API_CONFIG = {
-    BASE_URL: '/api/doubao', // 代理路径，自动转发到真实API
+    // 在开发环境通过 Vite 代理；在 Vercel 生产环境由 Serverless 处理
+    BASE_URL: '/api/doubao',
     IMAGE_MODEL: 'ep-20250804182253-ckvjk', // 专用图像生成模型
     TIMEOUT: 30000
 }
