@@ -5,12 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "start": "vite",
     "build": "vite build",
     "build:analyze": "ANALYZE=true vite build",
     "build:test": "node build-test.js",
     "build:report": "vite build && npx serve dist",
     "preview": "vite preview",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "performance:test": "node -e \"import('./src/utils/performanceTest.js').then(m => m.quickPerformanceTest())\"",
     "performance:mid": "node -e \"import('./src/utils/midPriorityTest.js').then(m => m.quickMidPriorityTest())\"",
     "size:analyze": "vite build --mode analyze"
@@ -37,10 +39,18 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
+    "postcss": "^8.4.47",
+    "autoprefixer": "^10.4.20",
+    "postcss-pxtorem": "^6.1.0",
     "rollup-plugin-visualizer": "^6.0.3",
     "terser": "^5.43.1",
     "vite": "^6.3.5",
     "vite-plugin-chunk-split": "^0.5.0",
     "vite-plugin-mock": "^3.0.2"
-  }
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
 }

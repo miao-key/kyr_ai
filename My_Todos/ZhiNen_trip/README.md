@@ -1,65 +1,95 @@
-# 🌟 智旅 - 智能旅行应用
+# 🌟 智旅 - React智能旅行应用
 
-一款现代化的移动端旅行应用，集成AI智能助手、高质量图片内容和流畅的用户体验。
+一款现代化的移动端旅行应用，集成AI智能助手、用户认证系统、高质量图片内容和流畅的用户体验。
 
 ## 🚀 快速开始
 
 ### 1. 环境配置
 
 ```bash
-# 1. 复制环境变量模板
-cp env.example .env.local
+# 1) 安装依赖（推荐使用 pnpm）
+pnpm i
+# 或：npm i
 
-# 2. 启动开发服务器
-npm run dev
+# 2) 复制环境变量模板（已提供 .env.example）
+cp .env.example .env.local
+# Windows PowerShell：Copy-Item .env.example .env.local
 
-# 3. 访问应用
+# 3) 启动开发服务器
+pnpm run dev
+# 或：npm run dev
+
+# 4) 访问应用
 # http://localhost:5173
 ```
 
-### 2. 环境变量配置
+### 2. 项目构建
 
-创建 `.env.local` 文件并配置以下API密钥：
+```bash
+# 生产构建
+pnpm build    # 或 npm run build
 
-```env
-# AI图像生成API（可选）- 用于AI头像生成
-VITE_DOUBAO_IMAGE_API_KEY=your-doubao-api-key-here
+# 构建并分析包大小
+pnpm run build:analyze    # 或 npm run build:analyze
 
-# Pexels图片API（可选）- 用于高质量旅行图片
-VITE_PEXELS_API=your-pexels-api-key-here
-
-# Coze工作流API（必需）- 用于AI聊天助手
-VITE_PAT_TOKEN=your-coze-pat-token-here
+# 预览构建结果
+pnpm preview  # 或 npm run preview
 ```
+
+### 3. 常用脚本
+
+- **start**: 开发启动同 `dev`
+- **dev**: 启动 Vite 开发服务器
+- **build**: 生产构建（已启用 Terser 压缩与手动分包）
+- **build:analyze**: 生成 `dist/stats.html` 可视化分析
+- **build:test**: 自动选择包管理器执行构建并输出性能报告
+- **build:report**: 构建并本地预览 `dist`
+- **preview**: 预览生产构建
+- **lint** / **lint:fix**: 代码检查 / 自动修复
+- **performance:test** / **performance:mid**: 内置性能测试脚本
 
 ## 🎯 核心功能
 
 ### 🔐 用户认证系统
-- 🔑 **完整登录注册** - 安全的用户认证和会话管理
+- 🔑 **完整登录注册** - 安全的用户认证和会话管理（基于JWT）
 - 👤 **个人档案管理** - 用户信息编辑和偏好设置
 - 🛡️ **路由保护** - 智能页面访问控制
-- 📱 **状态持久化** - 登录状态安全保存
+- 📱 **状态持久化** - 登录状态安全保存（Cookie + Zustand）
 - 🚪 **安全退出** - 双重确认的退出登录机制
 
 ### ✨ AI智能助手
 - 🤖 **智能对话** - 基于Coze工作流的旅行咨询助手
 - 🎨 **AI头像生成** - 豆包API驱动的个性化旅行头像
 - 💬 **实时交流** - 智能回复和加载状态管理
+- 🔄 **流式输出** - 支持AI内容的流式展示
 
 ### 📸 旅记内容
 - 🏖️ **高质量图片** - Pexels API提供专业旅行摄影
-- 📱 **仿小红书设计** - 单列瀑布流和现代卡片风格
+- 📱 **仿小红书设计** - 瀑布流布局和现代卡片风格
 - 🏷️ **分类标签** - 发现、美食、风景、人文、攻略等
 - 💬 **完整交互** - 点赞、收藏、评论、关注功能
+- ✍️ **写文章功能** - 支持用户发表旅行文章
 
-### 🎪 用户体验
+### 🎪 用户体验优化
 - 🔄 **无缝轮播** - 真正的无限循环，消除视觉跳跃
-- ⚡ **性能优化** - 防抖节流、图片懒加载、虚拟滚动
-- 📱 **移动端优先** - 完美适配各种屏幕尺寸
+- ⚡ **性能优化** - 防抖节流、图片懒加载、代码分割
+- 📱 **移动端优先** - 完美适配各种屏幕尺寸（lib-flexible + rem）
 - 🎭 **流畅动画** - 60fps的过渡效果和交互反馈
+- 🦴 **骨架屏** - 优雅的加载状态展示
 
-## 🏗️ 项目结构
+## 🏗️ 项目架构
 
+### 技术栈
+- **框架**: React 19.1.0 + Vite 6.x
+- **路由**: React Router DOM 7.x
+- **状态管理**: Zustand 5.x
+- **UI组件库**: React-Vant 3.x + @react-vant/icons
+- **HTTP客户端**: Axios
+- **移动端适配**: lib-flexible + postcss-pxtorem
+- **认证**: JWT + js-cookie
+- **构建优化**: 代码分割、打包分析
+
+### 项目结构
 ```
 src/
 ├── components/           # 组件目录
@@ -93,7 +123,7 @@ src/
 
 ## 🔧 API集成指南
 
-### 1. 豆包AI图像生成
+### 1. 豆包AI图像生成（可选）
 
 **获取API密钥：**
 1. 访问豆包开发者平台
@@ -101,12 +131,12 @@ src/
 3. 配置到 `VITE_DOUBAO_IMAGE_API_KEY`
 
 **功能特性：**
-- 专用图像生成模型：`ep-20250804182253-ckvjk`
+- 专用图像生成模型
 - 真实图片输出，直接返回图片URL
 - 代理服务器安全处理API密钥
-- 智能降级到7种精美旅行备用头像
+- 智能降级到精美旅行备用头像
 
-### 2. Pexels图片API
+### 2. Pexels图片API（可选）
 
 **获取API密钥：**
 1. 访问 [Pexels API官网](https://www.pexels.com/api/)
@@ -118,17 +148,32 @@ src/
 - 智能分类和标签系统
 - 自动降级到Lorem Picsum备用图片
 
-### 3. Coze工作流API
+### 3. Coze工作流API（推荐）
 
 **获取API密钥：**
 1. 登录 [Coze平台](https://www.coze.cn/)
-2. 创建工作流（ID: `7534974379706794024`）
+2. 创建AI工作流
 3. 获取PAT Token配置到 `VITE_PAT_TOKEN`
 
 **工作流配置：**
 - 输入变量：`input` (string)
 - 输出变量：`output` (string)
 - API端点：`/api/v1/workflow/run`
+
+### 环境变量配置
+
+创建 `.env.local` 文件：
+
+```env
+# AI图像生成API（可选）- 用于AI头像生成
+VITE_DOUBAO_IMAGE_API_KEY=your-doubao-api-key-here
+
+# Pexels图片API（可选）- 用于高质量旅行图片
+VITE_PEXELS_API=your-pexels-api-key-here
+
+# Coze工作流API（推荐）- 用于AI聊天助手
+VITE_PAT_TOKEN=your-coze-pat-token-here
+```
 
 ## ⚡ 性能优化特性
 
@@ -142,20 +187,21 @@ src/
 触摸移动: 16ms       // 60fps流畅体验
 ```
 
-### 无缝轮播机制
-- **图片扩展策略**: `[D, A, B, C, D, A]` 克隆首尾图片
-- **智能重置**: 动画结束后自动重置到正确位置
-- **真正无限循环**: 消除视觉跳跃和断层感
+### 移动端适配方案
+- **lib-flexible**: 1rem = 屏幕宽度/10
+- **设计稿标准**: 375px（postcss rootValue=37.5）
+- **postcss-pxtorem**: 自动 px→rem 转换
+- **响应式设计**: 适配常见移动设备
 
-### 组件优化
-- **图片懒加载**: 只加载可视区域内容
-- **虚拟滚动**: 处理大量数据
-- **请求去重**: 避免重复API调用
-- **错误边界**: 组件级别的异常处理
+### 构建优化
+- **代码分割**: vite-plugin-chunk-split
+- **打包分析**: rollup-plugin-visualizer
+- **性能测试**: 内置性能测试脚本
+- **压缩优化**: Terser压缩
 
 ## 🛠️ 开发指南
 
-### 使用认证系统
+### 认证系统使用
 ```javascript
 // 在组件中使用认证状态
 import { useAuth } from '@/contexts/AuthContext'
@@ -191,19 +237,6 @@ function MyComponent() {
 } />
 ```
 
-### 使用UI组件
-```javascript
-// 导入组件
-import { LoadingSpinner, LazyImage, EmptyState } from '@/components/UI'
-import { useDebounce, useThrottle } from '@/hooks'
-import { WATERFALL_CONFIG, THEME_CONFIG } from '@/constants'
-
-// 使用示例
-<LoadingSpinner type="ball" size="medium" text="正在加载..." />
-<LazyImage src={imageUrl} alt="图片" timeout={10000} />
-<EmptyState type="noData" title="暂无数据" />
-```
-
 ### 自定义钩子
 ```javascript
 // 防抖使用
@@ -216,35 +249,6 @@ const handleScroll = useThrottle(() => {
   // 滚动处理
 }, 100)
 ```
-
-## 🔍 故障排除
-
-### 常见问题
-
-**1. `reactRender is not a function`**
-- ✅ 已修复：使用Notify替代Toast组件
-- ✅ 多重降级保护：Notify → 控制台 → 原生弹窗
-
-**2. API调用失败**
-- 检查 `.env.local` 配置是否正确
-- 确认API密钥有效且有权限
-- 重启开发服务器使环境变量生效
-
-**3. 图片加载问题**
-- 自动降级到备用图片服务
-- 检查网络连接状态
-- 查看控制台错误信息
-
-**4. 轮播图跳跃**
-- ✅ 已修复：实现真正的无缝循环
-- 使用图片克隆和智能重置机制
-
-### 调试信息
-在浏览器控制台查看以下关键日志：
-- `🔄 开始加载数据` - 请求开始
-- `✅ 数据加载完成` - 请求成功  
-- `🎨 使用备用方案` - 降级处理
-- `❌ 请求失败` - 错误状态
 
 ## 🎨 设计规范
 
@@ -260,28 +264,60 @@ const handleScroll = useThrottle(() => {
 - **加载状态**: 优雅的skeleton loading
 - **空状态**: 友好的引导文案
 
+## 🔍 故障排除
+
+### 常见问题
+
+**1. 依赖安装问题**
+```bash
+# 清除缓存重新安装
+rm -rf node_modules package-lock.json
+npm install
+```
+
+**2. API调用失败**
+- 检查 `.env.local` 配置是否正确
+- 确认API密钥有效且有权限
+- 重启开发服务器使环境变量生效
+
+**3. 移动端适配问题**
+- 确保meta viewport标签正确设置
+- 检查postcss.config.js配置
+- 验证lib-flexible是否正确加载
+
+**4. 认证状态丢失**
+- 检查Cookie配置
+- 确认JWT token有效期
+- 验证Zustand store配置
+
+### 调试信息
+在浏览器控制台查看以下关键日志：
+- `🔄 开始加载数据` - 请求开始
+- `✅ 数据加载完成` - 请求成功  
+- `🎨 使用备用方案` - 降级处理
+- `❌ 请求失败` - 错误状态
+
 ## 🛡️ 安全提示
 
 - ✅ 将 `.env.local` 添加到 `.gitignore`
 - ✅ API密钥通过代理服务器安全处理
 - ✅ 前端代码零API密钥暴露
+- ✅ JWT token安全存储
 - ✅ 定期轮换API密钥
 - ❌ 不要将密钥提交到公共仓库
 
 ## 🎯 功能路线图
 
 ### 已完成 ✅
-- [x] **完整登录系统** - 注册/登录、路由保护、状态管理
-- [x] **用户认证** - 安全的会话管理和用户信息存储  
+- [x] **完整认证系统** - JWT登录、注册、路由保护
+- [x] **用户状态管理** - Zustand + Context API
 - [x] **个人中心** - 用户档案、头像管理、设置功能
-- [x] **权限控制** - 不同页面的访问权限和功能控制
-- [x] 基础界面和导航
-- [x] AI聊天助手集成
-- [x] AI头像生成功能
-- [x] 高质量图片内容
-- [x] 无缝轮播优化
-- [x] 性能防抖节流
-- [x] 移动端适配
+- [x] **AI聊天助手** - Coze工作流集成
+- [x] **AI头像生成** - 豆包API集成
+- [x] **高质量图片** - Pexels API集成
+- [x] **移动端适配** - lib-flexible + postcss
+- [x] **性能优化** - 防抖节流、代码分割
+- [x] **无缝轮播** - 真正的无限循环
 
 ### 开发中 🚧
 - [ ] 写文章页面完整实现
@@ -295,6 +331,26 @@ const handleScroll = useThrottle(() => {
 - [ ] 社交分享功能
 - [ ] 离线内容缓存
 - [ ] 多语言国际化
+- [ ] PWA支持
+
+## 📊 项目亮点
+
+### 前端智能化
+- **多模型支持**: 灵活切换不同AI模型
+- **工作流集成**: Coze智能编排AI流程
+- **降级策略**: 完善的备用方案机制
+
+### 用户体验
+- **原子CSS**: 高复用性的样式架构
+- **组件粒度**: React.memo + useCallback优化
+- **懒加载**: 图片和路由懒加载
+- **骨架屏**: 优雅的加载状态
+
+### 工程化
+- **代码规范**: ESLint + Git提交规范
+- **性能监控**: 内置性能测试工具
+- **构建优化**: 智能代码分割和压缩
+- **开发体验**: 热更新 + Mock数据
 
 ## 💡 获取帮助
 
@@ -303,11 +359,13 @@ const handleScroll = useThrottle(() => {
 2. 确认环境变量配置正确
 3. 重启开发服务器
 4. 检查网络连接
+5. 查看本文档的故障排除部分
 
 ---
 
 🎉 **即使不配置任何API，应用也会使用精美的备用方案，确保100%功能可用性！**
 
-**开发者**: 智旅团队  
-**技术栈**: React + Vite + React-Vant  
-**设计风格**: 仿小红书/马蜂窝移动端体验
+**开发团队**: 智旅开发组  
+**技术栈**: React 19 + Vite 6 + React-Vant  
+**设计风格**: 仿小红书/马蜂窝移动端体验  
+**项目类型**: 移动端SPA + AI智能应用
