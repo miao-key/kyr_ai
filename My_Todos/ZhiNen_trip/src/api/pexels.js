@@ -8,7 +8,10 @@
  */
 
 const PEXELS_API_KEY = import.meta.env.VITE_PEXELS_API
-const PEXELS_BASE_URL = 'https://api.pexels.com/v1'
+// 生产（Vercel）通过无服务函数隐藏密钥；开发仍直连官方 API
+const PEXELS_BASE_URL = typeof window !== 'undefined' && window.location?.host?.includes('vercel.app')
+  ? '/api/pexels'
+  : 'https://api.pexels.com/v1'
 
 // Pexels API请求封装
 const pexelsRequest = async (endpoint, options = {}) => {
@@ -20,7 +23,8 @@ const pexelsRequest = async (endpoint, options = {}) => {
     try {
         const response = await fetch(`${PEXELS_BASE_URL}${endpoint}`, {
             headers: {
-                'Authorization': PEXELS_API_KEY,
+                // 本地直连官方 API 需要前端密钥；线上由函数注入，无需提供
+                ...(PEXELS_BASE_URL.startsWith('http') && PEXELS_API_KEY ? { 'Authorization': PEXELS_API_KEY } : {}),
                 'Content-Type': 'application/json',
                 ...options.headers
             },

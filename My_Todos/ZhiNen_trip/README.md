@@ -175,6 +175,60 @@ VITE_PEXELS_API=your-pexels-api-key-here
 VITE_PAT_TOKEN=your-coze-pat-token-here
 ```
 
+### 线上部署（Vercel）
+
+1. 在项目根目录已提供 `vercel.json`，包含 SPA 重写配置。
+2. 在 Vercel 项目设置 → Environment Variables 添加：
+   - `COZE_PAT_TOKEN`（或 `VITE_PAT_TOKEN`）
+   - `DOUBAO_IMAGE_API_KEY`（或 `VITE_DOUBAO_IMAGE_API_KEY`）
+3. Framework 选择 Vite；Root Directory 设为 `My_Todos/ZhiNen_trip`；Build Command `vite build`；Output `dist`。
+4. 部署完成后，前端通过 `/api/coze/*` 与 `/api/doubao/*` 调用 Vercel 无服务函数，避免在浏览器暴露密钥。
+
+## 🗄️ 后端与 Mock 说明
+
+- **是否包含后端**: 本项目不内置独立后端服务。开发阶段通过 Vite 代理安全转发到第三方 API，并在代理层注入鉴权信息。
+
+- **开发代理配置**（见 `vite.config.js` → `server.proxy`）
+  - `/api/doubao` → `https://ark.cn-beijing.volces.com`
+    - 代理层自动注入 `Authorization: Bearer ${VITE_DOUBAO_IMAGE_API_KEY}`
+    - 用于豆包图像生成接口（`/v3/images/generations`）
+  - `/api/coze` → `https://api.coze.cn`
+    - 代理层自动注入 `Authorization: Bearer ${VITE_PAT_TOKEN}`
+    - 同时进行路径重写：如 `/api/coze/workflow` → `/v1/workflow`
+
+- **如何使用**
+  - 开发环境：按“环境变量配置”填写密钥后，前端直接请求 `/api/doubao`、`/api/coze` 前缀（参考 `src/api/index.js`）。
+  - 生产环境：需要在部署层提供同等反向代理，或将 `src/api/index.js` 中的 `BASE_URL` 改为真实服务地址；否则 `/api/*` 前缀将无法在生产直接访问。
+
+- **内置 Mock（降级策略）**
+  - `src/api/pexels.js` 在未配置 `VITE_PEXELS_API` 或请求失败时，会自动降级到本地 `generateMockImages()`，使用 Picsum 占位图生成模拟数据，确保页面功能可用。
+  - 配置 `VITE_PEXELS_API` 后会自动使用真实 Pexels 数据，无需额外开关。
+
+- **可选：vite-plugin-mock（已安装，默认未启用）**
+  - 依赖已在 `devDependencies` 中：`vite-plugin-mock`
+  - 如需本地接口 Mock：
+    1. 在 `vite.config.js` 启用插件：
+       ```js
+       import { viteMockServe } from 'vite-plugin-mock'
+       export default defineConfig(({ command, mode }) => ({
+         plugins: [
+           react(),
+           viteMockServe({ mockPath: 'mock', localEnabled: true })
+         ]
+       }))
+       ```
+    2. 新建 `mock/example.js`：
+       ```js
+       export default [
+         { url: '/api/demo', method: 'get', response: () => ({ ok: true }) }
+       ]
+       ```
+    3. 运行 `pnpm dev` 后访问 `/api/demo` 验证本地 Mock。
+
+- **安全提示**
+  - 请勿在前端代码中硬编码密钥；密钥仅通过代理层注入。
+  - `.env.local` 已加入 `.gitignore`，避免泄露。
+
 ## ⚡ 性能优化特性
 
 ### 防抖节流配置

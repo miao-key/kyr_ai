@@ -125,6 +125,27 @@ const WaterfallFixed = memo(({
     return () => window.removeEventListener('resize', throttledHandleResize)
   }, [throttledHandleResize])
 
+  // 使用 ResizeObserver + 视口监听，解决从PC切到移动端时布局错位
+  useEffect(() => {
+    if (!containerRef.current) return
+
+    const relayout = () => setTimeout(layoutItems, 150)
+
+    const ro = new ResizeObserver(() => relayout())
+    ro.observe(containerRef.current)
+
+    // 方向变化与视觉视口变化（DevTools 切换设备也会触发）
+    window.addEventListener('orientationchange', relayout)
+    const vv = window.visualViewport
+    vv && vv.addEventListener('resize', relayout)
+
+    return () => {
+      ro.disconnect()
+      window.removeEventListener('orientationchange', relayout)
+      vv && vv.removeEventListener('resize', relayout)
+    }
+  }, [layoutItems])
+
   // 布局项目 - 响应数据变化
   useEffect(() => {
     if (items.length > 0) {
