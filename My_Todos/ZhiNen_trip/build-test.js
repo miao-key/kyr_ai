@@ -47,7 +47,9 @@ class BuildAnalyzer {
       console.log('⚡ 开始构建...')
       const buildStart = Date.now()
       
-      execSync('pnpm run build', { 
+      const pm = this.detectPackageManager()
+      const buildCmd = pm === 'pnpm' ? 'pnpm run build' : pm === 'yarn' ? 'yarn build' : pm === 'bun' ? 'bun run build' : 'npm run build'
+      execSync(buildCmd, { 
         cwd: __dirname, 
         stdio: 'inherit',
         env: { ...process.env, ANALYZE: 'true' }
@@ -66,6 +68,13 @@ class BuildAnalyzer {
       console.error('❌ 构建测试失败:', error.message)
       throw error
     }
+  }
+
+  detectPackageManager() {
+    try { execSync('pnpm -v', { stdio: 'ignore' }); return 'pnpm' } catch {}
+    try { execSync('yarn -v', { stdio: 'ignore' }); return 'yarn' } catch {}
+    try { execSync('bun -v', { stdio: 'ignore' }); return 'bun' } catch {}
+    return 'npm'
   }
 
   analyzeBuildOutput() {
