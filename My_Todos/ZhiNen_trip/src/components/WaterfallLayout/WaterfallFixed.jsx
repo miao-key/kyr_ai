@@ -1,11 +1,9 @@
 /**
- * 修复后的瀑布流布局组件
- * 简化逻辑，专注于核心功能
+ * 瀑布流布局组件
  */
 
 import { useEffect, useRef, useCallback, memo } from 'react'
 import { useWaterfallStore } from '../../stores'
-import { useThrottle } from '@/hooks'
 import { LazyImage, LoadingSpinner, EmptyState } from '@/components/UI'
 import { WATERFALL_CONFIG } from '@/constants'
 import { imageUtils } from '@/utils'
@@ -30,6 +28,8 @@ const WaterfallFixed = memo(({
   const containerRef = useRef(null)
   const columnHeights = useRef([])
   const itemsRef = useRef({})
+  const sentinelRef = useRef(null)
+  const observerRef = useRef(null)
 
   // 初始化列高度
   const initColumnHeights = useCallback(() => {
@@ -81,7 +81,7 @@ const WaterfallFixed = memo(({
       element.style.opacity = '1'
       
       // 更新列高度
-      const elementHeight = element.offsetHeight || 300 // 默认高度
+      const elementHeight = element.offsetHeight || 300
       columnHeights.current[columnIndex] += elementHeight + gap
     })
 
@@ -92,38 +92,42 @@ const WaterfallFixed = memo(({
     console.log(`📐 布局完成: 容器高度 ${maxHeight}px, 元素数量 ${items.length}`)
   }, [items, columns, gap, initColumnHeights, getShortestColumn])
 
-  // 监听滚动加载更多
-  const throttledHandleScroll = useThrottle(() => {
-    if (loading || !loadMore) return
-    
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop
-    const windowHeight = window.innerHeight
-    const documentHeight = document.documentElement.scrollHeight
-    
-    const distanceToBottom = documentHeight - scrollTop - windowHeight
-    
-    if (distanceToBottom < 200 && hasMore) {
-      console.log(`🎯 距离底部 ${distanceToBottom}px，触发加载更多`)
-      handleLoadMore()
-    }
-  }, 300)
-
-  // 监听滚动事件
+  // 使用IntersectionObserver替代scroll事件监听
   useEffect(() => {
-    if (!loadMore) return
-    window.addEventListener('scroll', throttledHandleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', throttledHandleScroll)
-  }, [throttledHandleScroll, loadMore])
+    if (!loadMore || !sentinelRef.current) return
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries
+        if (entry.isIntersecting && hasMore && !loading) {
+          console.log('🎯 哨兵元素进入视口，触发加载更多')
+          handleLoadMore()
+        }
+      },
+      {
+        rootMargin: '200px 0px',
+        threshold: 0
+      }
+    )
+
+    observerRef.current.observe(sentinelRef.current)
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect()
+      }
+    }
+  }, [loadMore, hasMore, loading, handleLoadMore])
 
   // 监听窗口大小变化重新布局
-  const throttledHandleResize = useThrottle(() => {
-    setTimeout(layoutItems, 100)
-  }, 200)
-
   useEffect(() => {
-    window.addEventListener('resize', throttledHandleResize)
-    return () => window.removeEventListener('resize', throttledHandleResize)
-  }, [throttledHandleResize])
+    const handleResize = () => {
+      setTimeout(layoutItems, 100)
+    }
+    
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [layoutItems])
 
   // 使用 ResizeObserver + 视口监听，解决从PC切到移动端时布局错位
   useEffect(() => {
@@ -134,7 +138,6 @@ const WaterfallFixed = memo(({
     const ro = new ResizeObserver(() => relayout())
     ro.observe(containerRef.current)
 
-    // 方向变化与视觉视口变化（DevTools 切换设备也会触发）
     window.addEventListener('orientationchange', relayout)
     const vv = window.visualViewport
     vv && vv.addEventListener('resize', relayout)
@@ -249,7 +252,6 @@ const WaterfallFixed = memo(({
                   }}
                   onLoad={() => {
                     console.log(`✅ 图片加载完成: ${item.title}`)
-                    // 图片加载完成后重新布局
                     setTimeout(layoutItems, 50)
                   }}
                   onError={(error) => {
@@ -269,6 +271,21 @@ const WaterfallFixed = memo(({
             </div>
           </div>
         ))}
+        
+        {hasMore && (
+          <div 
+            ref={sentinelRef}
+            style={{
+              position: 'absolute',
+              bottom: '200px',
+              left: 0,
+              width: '100%',
+              height: '1px',
+              pointerEvents: 'none',
+              visibility: 'hidden'
+            }}
+          />
+        )}
       </div>
 
       {loading && !initialLoading && (

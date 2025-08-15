@@ -14,104 +14,129 @@ const PEXELS_BASE_URL = typeof window !== 'undefined' && window.location?.host?.
   : 'https://api.pexels.com/v1'
 
 // Pexels API请求封装
+// 添加缓存机制
+const API_CACHE = new Map()
+const CACHE_DURATION = 5 * 60 * 1000 // 5分钟缓存
+const MAX_CACHE_SIZE = 50
+const REQUEST_QUEUE = new Map() // 请求去重队列
+
+// 缓存管理
+const getCacheKey = (endpoint, params) => {
+  return `${endpoint}?${new URLSearchParams(params).toString()}`
+}
+
+const getCachedData = (key) => {
+  const cached = API_CACHE.get(key)
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    console.log('🎯 使用缓存数据:', key)
+    return cached.data
+  }
+  return null
+}
+
+const setCachedData = (key, data) => {
+  // 限制缓存大小
+  if (API_CACHE.size >= MAX_CACHE_SIZE) {
+    const firstKey = API_CACHE.keys().next().value
+    API_CACHE.delete(firstKey)
+  }
+  
+  API_CACHE.set(key, {
+    data,
+    timestamp: Date.now()
+  })
+}
+
+// 优化的pexels请求函数
 const pexelsRequest = async (endpoint, options = {}) => {
+    const cacheKey = getCacheKey(endpoint, options.params || {})
+    
+    // 检查缓存
+    const cachedData = getCachedData(cacheKey)
+    if (cachedData) {
+        return cachedData
+    }
+    
+    // 请求去重 - 如果相同请求正在进行，等待结果
+    if (REQUEST_QUEUE.has(cacheKey)) {
+        console.log('⏳ 等待进行中的请求:', cacheKey)
+        return await REQUEST_QUEUE.get(cacheKey)
+    }
+    
     if (!PEXELS_API_KEY) {
         console.warn('⚠️ Pexels API Key未配置，使用模拟数据')
         return generateMockImages()
     }
 
-    try {
-        const response = await fetch(`${PEXELS_BASE_URL}${endpoint}`, {
-            headers: {
-                // 本地直连官方 API 需要前端密钥；线上由函数注入，无需提供
-                ...(PEXELS_BASE_URL.startsWith('http') && PEXELS_API_KEY ? { 'Authorization': PEXELS_API_KEY } : {}),
-                'Content-Type': 'application/json',
-                ...options.headers
-            },
-            ...options
-        })
+    // 创建请求Promise并加入队列
+    const requestPromise = (async () => {
+        try {
+            const response = await fetch(`${PEXELS_BASE_URL}${endpoint}`, {
+                headers: {
+                    ...(PEXELS_BASE_URL.startsWith('http') && PEXELS_API_KEY ? { 'Authorization': PEXELS_API_KEY } : {}),
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                },
+                ...options
+            })
 
-        if (!response.ok) {
-            throw new Error(`Pexels API错误: ${response.status} ${response.statusText}`)
+            if (!response.ok) {
+                throw new Error(`Pexels API错误: ${response.status} ${response.statusText}`)
+            }
+
+            const data = await response.json()
+            console.log('🖼️ Pexels API响应:', data)
+            
+            // 缓存成功的响应
+            setCachedData(cacheKey, data)
+            
+            return data
+        } catch (error) {
+            console.error('❌ Pexels API请求失败:', error)
+            return generateMockImages()
+        } finally {
+            // 请求完成后从队列中移除
+            REQUEST_QUEUE.delete(cacheKey)
         }
-
-        const data = await response.json()
-        console.log('🖼️ Pexels API响应:', data)
-        return data
-    } catch (error) {
-        console.error('❌ Pexels API请求失败:', error)
-        return generateMockImages() // 降级到模拟数据
-    }
+    })()
+    
+    // 将请求加入队列
+    REQUEST_QUEUE.set(cacheKey, requestPromise)
+    
+    return await requestPromise
 }
 
-// 获取旅游相关图片
-export const getTravelImages = async (page = 1, perPage = 20) => {
-    const travelKeywords = [
-        'travel', 'vacation', 'destination', 'adventure', 'explore',
-        'beach', 'mountain', 'city', 'sunset', 'landscape'
-    ]
-    
-    const randomKeyword = travelKeywords[Math.floor(Math.random() * travelKeywords.length)]
-    
-    return await pexelsRequest(`/search?query=${randomKeyword}&page=${page}&per_page=${perPage}&orientation=portrait`)
-}
-
-// 获取美食图片
-export const getFoodImages = async (page = 1, perPage = 10) => {
-    const foodKeywords = [
-        'food', 'delicious', 'cuisine', 'restaurant', 'cooking',
-        'breakfast', 'dinner', 'dessert', 'coffee', 'fruit'
-    ]
-    
-    const randomKeyword = foodKeywords[Math.floor(Math.random() * foodKeywords.length)]
-    
-    return await pexelsRequest(`/search?query=${randomKeyword}&page=${page}&per_page=${perPage}&orientation=portrait`)
-}
-
-// 获取风景图片
-export const getLandscapeImages = async (page = 1, perPage = 10) => {
-    const landscapeKeywords = [
-        'landscape', 'nature', 'mountain', 'ocean', 'forest',
-        'sunset', 'sunrise', 'lake', 'river', 'sky'
-    ]
-    
-    const randomKeyword = landscapeKeywords[Math.floor(Math.random() * landscapeKeywords.length)]
-    
-    return await pexelsRequest(`/search?query=${randomKeyword}&page=${page}&per_page=${perPage}&orientation=landscape`)
-}
-
-// 获取人物旅行图片
-export const getPeopleImages = async (page = 1, perPage = 10) => {
-    const peopleKeywords = [
-        'people travel', 'friends vacation', 'couple travel', 'family trip',
-        'backpacker', 'tourist', 'adventure people', 'travel lifestyle'
-    ]
-    
-    const randomKeyword = peopleKeywords[Math.floor(Math.random() * peopleKeywords.length)]
-    
-    return await pexelsRequest(`/search?query=${randomKeyword}&page=${page}&per_page=${perPage}&orientation=portrait`)
-}
-
-// 获取混合旅游内容
+// 优化getMixedTravelContent - 减少并发请求
 export const getMixedTravelContent = async (page = 1, perPage = 20) => {
     console.log('🎯 开始获取混合旅游内容:', { page, perPage })
     
     try {
-        // 并行获取不同类型的图片
-        const [travelData, foodData, landscapeData, peopleData] = await Promise.all([
-            getTravelImages(page, Math.ceil(perPage * 0.4)), // 40% 旅游
-            getFoodImages(page, Math.ceil(perPage * 0.2)),   // 20% 美食
-            getLandscapeImages(page, Math.ceil(perPage * 0.2)), // 20% 风景
-            getPeopleImages(page, Math.ceil(perPage * 0.2))  // 20% 人物
-        ])
-
-        // 合并并打乱顺序
-        const allPhotos = [
-            ...(travelData.photos || []),
-            ...(foodData.photos || []),
-            ...(landscapeData.photos || []),
-            ...(peopleData.photos || [])
+        // 改为串行请求，减少API压力，添加请求间隔
+        const results = []
+        const categories = [
+            { func: getTravelImages, ratio: 0.4, name: '旅游' },
+            { func: getFoodImages, ratio: 0.25, name: '美食' },
+            { func: getLandscapeImages, ratio: 0.25, name: '风景' },
+            { func: getPeopleImages, ratio: 0.1, name: '人物' }
         ]
+        
+        for (const category of categories) {
+            const count = Math.ceil(perPage * category.ratio)
+            console.log(`📸 获取${category.name}图片:`, count, '张')
+            
+            const data = await category.func(page, count)
+            results.push(data)
+            
+            // 添加请求间隔，避免API限流
+            if (categories.indexOf(category) < categories.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 200))
+            }
+        }
+        
+        // 合并结果
+        const allPhotos = results.reduce((acc, result) => {
+            return acc.concat(result.photos || [])
+        }, [])
 
         // Fisher-Yates洗牌算法
         for (let i = allPhotos.length - 1; i > 0; i--) {
@@ -121,17 +146,21 @@ export const getMixedTravelContent = async (page = 1, perPage = 20) => {
 
         console.log('✅ 成功获取混合旅游内容:', allPhotos.length, '张图片')
         
-        return {
+        const result = {
             photos: allPhotos.slice(0, perPage),
-            total_results: Math.max(
-                travelData.total_results || 0,
-                foodData.total_results || 0,
-                landscapeData.total_results || 0,
-                peopleData.total_results || 0
-            ),
+            total_results: Math.max(...results.map(r => r.total_results || 0)),
             page,
             per_page: perPage
         }
+        
+        // 预加载下一页数据（后台进行）
+        if (page < 5) { // 只预加载前5页
+            setTimeout(() => {
+                getMixedTravelContent(page + 1, perPage).catch(console.warn)
+            }, 1000)
+        }
+        
+        return result
     } catch (error) {
         console.error('❌ 获取混合旅游内容失败:', error)
         return generateMockImages()
@@ -217,4 +246,36 @@ export const formatPhotographer = (photo) => {
         url: photo?.photographer_url || '#',
         id: photo?.photographer_id || 0
     }
+}
+
+// 获取旅游相关图片
+const getTravelImages = async (page = 1, perPage = 10) => {
+    const travelKeywords = ['travel', 'vacation', 'tourism', 'adventure', 'journey', 'destination', 'explore', 'wanderlust']
+    const randomKeyword = travelKeywords[Math.floor(Math.random() * travelKeywords.length)]
+    
+    return await pexelsRequest(`/search?query=${randomKeyword}&per_page=${perPage}&page=${page}`)
+}
+
+// 获取美食相关图片
+const getFoodImages = async (page = 1, perPage = 10) => {
+    const foodKeywords = ['food', 'cuisine', 'meal', 'restaurant', 'cooking', 'delicious', 'gourmet', 'dining']
+    const randomKeyword = foodKeywords[Math.floor(Math.random() * foodKeywords.length)]
+    
+    return await pexelsRequest(`/search?query=${randomKeyword}&per_page=${perPage}&page=${page}`)
+}
+
+// 获取风景相关图片
+const getLandscapeImages = async (page = 1, perPage = 10) => {
+    const landscapeKeywords = ['landscape', 'nature', 'mountain', 'ocean', 'forest', 'sunset', 'scenery', 'beautiful']
+    const randomKeyword = landscapeKeywords[Math.floor(Math.random() * landscapeKeywords.length)]
+    
+    return await pexelsRequest(`/search?query=${randomKeyword}&per_page=${perPage}&page=${page}`)
+}
+
+// 获取人物相关图片
+const getPeopleImages = async (page = 1, perPage = 10) => {
+    const peopleKeywords = ['people', 'person', 'portrait', 'lifestyle', 'happy', 'friends', 'family', 'smile']
+    const randomKeyword = peopleKeywords[Math.floor(Math.random() * peopleKeywords.length)]
+    
+    return await pexelsRequest(`/search?query=${randomKeyword}&per_page=${perPage}&page=${page}`)
 }

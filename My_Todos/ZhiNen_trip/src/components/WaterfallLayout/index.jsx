@@ -1,6 +1,5 @@
 import { useEffect, useRef, useCallback, memo } from 'react'
 import { useWaterfallStore } from '../../stores'
-import { useThrottle } from '@/hooks'
 import { LazyImage, LoadingSpinner, EmptyState } from '@/components/UI'
 import { WATERFALL_CONFIG, ERROR_MESSAGES } from '@/constants'
 import { imageUtils } from '@/utils'
@@ -30,6 +29,8 @@ const WaterfallLayout = memo(({
   const containerRef = useRef(null)
   const columnHeights = useRef([])
   const itemsRef = useRef({})
+  const sentinelRef = useRef(null)
+  const observerRef = useRef(null)
 
   // 初始化列高度
   const initColumnHeights = useCallback(() => {
@@ -101,16 +102,13 @@ const WaterfallLayout = memo(({
 
         if (img) {
           if (img.complete) {
-            // 图片已加载完成
             setTimeout(doLayout, 10)
           } else {
-            // 设置加载超时，防止图片加载卡住
             const timeout = setTimeout(() => {
               console.log(`⚠️ 图片加载超时，强制布局: ${img.src}`)
               doLayout()
-            }, 3000) // 优化：减少超时时间至3秒，提升响应速度
+            }, 3000)
 
-            // 等待图片加载完成
             img.onload = () => {
               clearTimeout(timeout)
               setTimeout(doLayout, 10)
@@ -122,7 +120,6 @@ const WaterfallLayout = memo(({
             }
           }
         } else {
-          // 没有图片，直接布局
           setTimeout(doLayout, 10)
         }
       })
@@ -146,51 +143,46 @@ const WaterfallLayout = memo(({
     })
   }, [items, columns, gap, initColumnHeights, getShortestColumn])
 
-  // 移除批处理逻辑，由store内部处理
+  // 使用IntersectionObserver替代scroll事件监听
+  useEffect(() => {
+    if (!loadMore || !sentinelRef.current) return
 
-  // 监听滚动加载更多 - 添加节流机制
-  const throttledHandleScroll = useThrottle(() => {
-    // 如果正在加载，直接返回
-    if (loading) {
-      console.log(`⏳ 滚动检测: 正在加载中，跳过`)
-      return
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries
+        if (entry.isIntersecting && hasMore && !loading) {
+          console.log('🎯 哨兵元素进入视口，触发加载更多')
+          handleLoadMore()
+        }
+      },
+      {
+        rootMargin: '100px 0px',
+        threshold: 0
+      }
+    )
+
+    observerRef.current.observe(sentinelRef.current)
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect()
+      }
+    }
+  }, [loadMore, hasMore, loading, handleLoadMore])
+
+  // 监听窗口大小变化重新布局
+  useEffect(() => {
+    const handleResize = () => {
+      setTimeout(layoutItems, 100)
     }
     
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop
-    const windowHeight = window.innerHeight
-    const documentHeight = document.documentElement.scrollHeight
-    
-    // 距离底部100px时加载更多
-    const distanceToBottom = documentHeight - scrollTop - windowHeight
-    console.log(`📏 滚动状态: 距离底部 ${distanceToBottom}px, hasMore=${hasMore}, loadMore=${loadMore}`)
-    
-    if (distanceToBottom < 100 && hasMore) {
-      console.log(`🎯 距离底部 ${distanceToBottom}px，触发加载更多`)
-      handleLoadMore()
-    }
-  }, 300) // 增加到300ms节流，减少触发频率
-
-  useEffect(() => {
-    if (!loadMore) return
-
-    window.addEventListener('scroll', throttledHandleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', throttledHandleScroll)
-  }, [throttledHandleScroll, loadMore])
-
-  // 监听窗口大小变化重新布局 - 添加节流机制
-  const throttledHandleResize = useThrottle(() => {
-    setTimeout(layoutItems, 100)
-  }, 200) // 200ms节流，避免频繁重新布局
-
-  useEffect(() => {
-    window.addEventListener('resize', throttledHandleResize)
-    return () => window.removeEventListener('resize', throttledHandleResize)
-  }, [throttledHandleResize])
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [layoutItems])
 
   // 布局项目 - 响应数据变化
   useEffect(() => {
     if (items.length > 0) {
-      // 根据是否是初始加载决定延迟时间
       const isFirstLoad = items.length <= 15
       const delay = isFirstLoad ? WATERFALL_CONFIG.DELAYS.INITIAL_LOAD : WATERFALL_CONFIG.DELAYS.SCROLL_LOAD
       
@@ -312,6 +304,21 @@ const WaterfallLayout = memo(({
             </div>
           </div>
         ))}
+        
+        {hasMore && (
+          <div 
+            ref={sentinelRef}
+            style={{
+              position: 'absolute',
+              bottom: '100px',
+              left: 0,
+              width: '100%',
+              height: '1px',
+              pointerEvents: 'none',
+              visibility: 'hidden'
+            }}
+          />
+        )}
       </div>
 
       {loading && !initialLoading && (
