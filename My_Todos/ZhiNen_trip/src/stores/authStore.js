@@ -376,17 +376,68 @@ const useAuthStore = create(
         if (!user) return { success: false, error: '用户未登录' }
         
         try {
-          // 基于用户信息生成个性化提示词
-          const userPrompt = `friendly ${user.nickname || user.username}, travel enthusiast, outdoor adventurer`
+          // 生成更丰富的个性化提示词
+          const generateUserPrompt = (user) => {
+            const name = user.nickname || user.username || 'traveler'
+            const age = user.age ? `${user.age} years old` : 'young adult'
+            
+            // 基础描述
+            const baseDescriptions = [
+              `${name}, ${age}, friendly and adventurous`,
+              `${name}, passionate travel enthusiast`,
+              `${name}, outdoor adventure lover`,
+              `${name}, curious world explorer`
+            ]
+            
+            // 旅行风格描述
+            const travelStyles = [
+              'loves discovering new cultures and places',
+              'enjoys both urban exploration and nature adventures',
+              'passionate about photography and capturing memories',
+              'seeks authentic local experiences',
+              'embraces spontaneous travel adventures',
+              'values sustainable and responsible tourism'
+            ]
+            
+            // 外观特征（可选）
+            const appearances = [
+              'warm smile and bright eyes',
+              'confident and approachable demeanor',
+              'casual travel-ready outfit',
+              'natural and relaxed appearance'
+            ]
+            
+            // 随机组合生成个性化prompt
+            const baseDesc = baseDescriptions[Math.floor(Math.random() * baseDescriptions.length)]
+            const travelStyle = travelStyles[Math.floor(Math.random() * travelStyles.length)]
+            const appearance = appearances[Math.floor(Math.random() * appearances.length)]
+            
+            return `${baseDesc}, ${travelStyle}, ${appearance}`
+          }
+          
+          const userPrompt = generateUserPrompt(user)
+          console.log('生成的用户prompt:', userPrompt)
           
           // 使用豆包API生成AI旅行头像
           const result = await generateTravelAvatar(userPrompt)
           
           if (result.success) {
             const updatedUser = { ...user, avatar: result.url }
+            
+            // 重新生成包含新头像的JWT token
+            const newJwtToken = generateJWT(updatedUser, 24 * 60 * 60)
+            tokenManager.setToken(newJwtToken)
+            
+            // 同时更新localStorage（兼容性）
             localStorage.setItem('zhilvUser', JSON.stringify(updatedUser))
             
-            set({ user: updatedUser })
+            set({ 
+              user: updatedUser,
+              token: newJwtToken,
+              tokenExpiresIn: getTokenRemainingTime(newJwtToken)
+            })
+            
+            console.log('✅ AI头像生成成功，JWT token已更新')
             
             return { 
               success: true, 
@@ -400,9 +451,21 @@ const useAuthStore = create(
             const fallbackUrl = await getRandomAvatar()
             
             const updatedUser = { ...user, avatar: fallbackUrl }
+            
+            // 重新生成包含新头像的JWT token
+            const newJwtToken = generateJWT(updatedUser, 24 * 60 * 60)
+            tokenManager.setToken(newJwtToken)
+            
+            // 同时更新localStorage（兼容性）
             localStorage.setItem('zhilvUser', JSON.stringify(updatedUser))
             
-            set({ user: updatedUser })
+            set({ 
+              user: updatedUser,
+              token: newJwtToken,
+              tokenExpiresIn: getTokenRemainingTime(newJwtToken)
+            })
+            
+            console.log('✅ 降级头像生成成功，JWT token已更新')
             
             return { 
               success: true, 
@@ -418,9 +481,21 @@ const useAuthStore = create(
           try {
             const fallbackUrl = await getRandomAvatar()
             const updatedUser = { ...user, avatar: fallbackUrl }
+            
+            // 重新生成包含新头像的JWT token
+            const newJwtToken = generateJWT(updatedUser, 24 * 60 * 60)
+            tokenManager.setToken(newJwtToken)
+            
+            // 同时更新localStorage（兼容性）
             localStorage.setItem('zhilvUser', JSON.stringify(updatedUser))
             
-            set({ user: updatedUser })
+            set({ 
+              user: updatedUser,
+              token: newJwtToken,
+              tokenExpiresIn: getTokenRemainingTime(newJwtToken)
+            })
+            
+            console.log('✅ 最终降级头像生成成功，JWT token已更新')
             
             return { 
               success: true, 

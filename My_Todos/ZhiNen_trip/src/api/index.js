@@ -55,19 +55,58 @@ const createRequest = async (url, options = {}) => {
     }
 }
 
-// 生成旅行头像的主函数 - 集成缓存机制
+// 旅行场景配置
+const TRAVEL_SCENARIOS = {
+    landscapes: [
+        'standing in front of majestic mountains with snow peaks',
+        'on a beautiful beach with crystal clear water and palm trees',
+        'exploring ancient temples with traditional architecture',
+        'in a vibrant city skyline during golden hour',
+        'beside a serene lake surrounded by autumn forests',
+        'at a scenic viewpoint overlooking vast valleys',
+        'in front of famous landmarks and monuments',
+        'walking through colorful flower fields'
+    ],
+    activities: [
+        'hiking with a backpack and trekking poles',
+        'taking photos with a professional camera',
+        'reading a map while exploring new places',
+        'enjoying local street food at a market',
+        'camping under a starry night sky',
+        'cycling through scenic countryside',
+        'snorkeling in tropical waters',
+        'watching sunrise from a mountain peak'
+    ],
+    styles: [
+        'adventurous explorer with outdoor gear',
+        'casual backpacker with comfortable clothing',
+        'cultural enthusiast visiting museums',
+        'nature photographer capturing wildlife',
+        'luxury traveler enjoying fine experiences',
+        'solo wanderer discovering hidden gems',
+        'group traveler making new friends',
+        'digital nomad working remotely'
+    ]
+}
+
+// 随机选择旅行场景元素
+const getRandomTravelScenario = () => {
+    const categories = Object.keys(TRAVEL_SCENARIOS)
+    const randomCategory = categories[Math.floor(Math.random() * categories.length)]
+    const scenarios = TRAVEL_SCENARIOS[randomCategory]
+    return scenarios[Math.floor(Math.random() * scenarios.length)]
+}
+
+// 生成旅行头像的主函数 - 修改缓存机制确保每次生成唯一头像
 export const generateTravelAvatar = async (prompt) => {
-    const optimizedPrompt = `Portrait of a traveler, ${prompt}, professional photography, high quality, travel style, friendly expression, outdoor lighting, 4K resolution`
+    // 随机选择一个旅行场景
+    const travelScenario = getRandomTravelScenario()
     
-    // 生成缓存键
-    const cacheKey = `avatar_${btoa(optimizedPrompt).slice(0, 32)}`
+    // 构建丰富的旅行主题prompt
+    const optimizedPrompt = `Professional portrait of a friendly traveler, ${prompt}, ${travelScenario}, beautiful travel photography, high quality, natural lighting, warm and inviting expression, travel lifestyle, outdoor adventure, 4K resolution, cinematic composition`
     
-    // 检查缓存
-    const cachedResult = avatarCache.get(cacheKey)
-    if (cachedResult) {
-        console.log('🎯 使用缓存的头像结果')
-        return { ...cachedResult, fromCache: true }
-    }
+    // 头像生成不使用缓存，确保每次都生成新的头像
+    console.log('🎨 每次都生成新的旅行头像，不使用缓存')
     
     console.log('🎨 开始生成旅行头像...')
     console.log('📝 提示词:', optimizedPrompt)
@@ -101,9 +140,7 @@ export const generateTravelAvatar = async (prompt) => {
                 prompt: optimizedPrompt
             }
             
-            // 缓存成功结果
-            avatarCache.set(cacheKey, result)
-            
+            // 不缓存头像生成结果，确保每次都是新的
             return result
         } else {
             console.warn('⚠️ 豆包API返回格式异常:', response)
@@ -127,9 +164,7 @@ export const generateTravelAvatar = async (prompt) => {
             fallback: true
         }
         
-        // 缓存降级结果（较短时间）
-        avatarCache.set(cacheKey, fallbackResult)
-        
+        // 不缓存降级结果，确保每次都尝试重新生成
         return fallbackResult
     }
 }
