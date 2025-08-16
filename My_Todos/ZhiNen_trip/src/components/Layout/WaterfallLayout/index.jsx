@@ -48,6 +48,11 @@ const WaterfallLayout = ({
   const lastLoadTimeRef = useRef(0)
   const sentinelRef = useRef(null)
   const observerRef = useRef(null)
+  
+  // 增量布局优化缓存
+  const layoutedItemsCache = useRef(new Map()) // 缓存已布局元素的位置信息
+  const lastLayoutedCount = useRef(0) // 跟踪已布局的元素数量
+  const isFullRelayout = useRef(false) // 标记是否需要完整重新布局
 
   // 初始化列高度
   const initColumnHeights = useCallback(() => {
@@ -69,19 +74,56 @@ const WaterfallLayout = ({
     return shortestIndex
   }, [])
 
-  // 布局项目 - 优化版本
+  // 增量布局项目 - 性能优化版本
   const layoutItems = useCallback(() => {
-    if (!containerRef.current || items.length === 0) return
-
     const container = containerRef.current
+    if (!container || items.length === 0) return
+
+    const startTime = performance.now()
     const containerWidth = container.offsetWidth
-    const columnWidth = Math.floor((containerWidth - (columns - 1) * gap) / columns)
+    const columnWidth = (containerWidth - (columns - 1) * gap) / columns
 
-    // 重置列高度
-    initColumnHeights()
+    // 检测是否需要完整重新布局
+    const needsFullRelayout = isFullRelayout.current || 
+                             items.length < lastLayoutedCount.current ||
+                             layoutedItemsCache.current.size === 0
 
+    if (needsFullRelayout) {
+      console.log(`🔄 执行完整重新布局: ${items.length} 个元素`)
+      // 完整重新布局：重置所有缓存和列高度
+      initColumnHeights()
+      layoutedItemsCache.current.clear()
+      lastLayoutedCount.current = 0
+      isFullRelayout.current = false
+    } else {
+      console.log(`⚡ 执行增量布局: 新增 ${items.length - lastLayoutedCount.current} 个元素`)
+      // 增量布局：从缓存恢复已布局元素的列高度
+      const cachedHeights = Array.from(layoutedItemsCache.current.values())
+      if (cachedHeights.length > 0) {
+        // 重建列高度状态
+        initColumnHeights()
+        cachedHeights.forEach(({ columnIndex, bottom }) => {
+          if (columnHeights.current[columnIndex] < bottom) {
+            columnHeights.current[columnIndex] = bottom
+          }
+        })
+      }
+    }
+
+    // 确定需要布局的元素范围
+    const startIndex = needsFullRelayout ? 0 : lastLayoutedCount.current
+    const itemsToLayout = items.slice(startIndex)
+    
+    if (itemsToLayout.length === 0) {
+      console.log(`⏭️ 跳过布局: 没有新元素需要布局`)
+      return
+    }
+
+    // 批量DOM操作队列
+    const domOperations = []
+    
     // 使用Promise来确保所有图片加载完成后再布局
-    const layoutPromises = items.map((item) => {
+    const layoutPromises = itemsToLayout.map((item, index) => {
       return new Promise((resolve) => {
         const element = itemsRef.current[item.id]
         if (!element) {
@@ -89,8 +131,10 @@ const WaterfallLayout = ({
           return
         }
 
-        // 设置宽度
-        element.style.width = `${columnWidth}px`
+        // 批量设置宽度
+        domOperations.push(() => {
+          element.style.width = `${columnWidth}px`
+        })
         
         // 查找元素中的图片
         const img = element.querySelector('img')
@@ -103,13 +147,26 @@ const WaterfallLayout = ({
           const x = columnIndex * (columnWidth + gap)
           const y = columnHeights.current[columnIndex]
           
-          // 设置位置
-          element.style.transform = `translate3d(${x}px, ${y}px, 0)`
-          element.style.opacity = '1'
+          // 批量设置位置和透明度
+          domOperations.push(() => {
+            element.style.transform = `translate3d(${x}px, ${y}px, 0)`
+            element.style.opacity = '1'
+          })
           
           // 更新列高度
           const elementHeight = element.offsetHeight
-          columnHeights.current[columnIndex] += elementHeight + gap
+          const newHeight = columnHeights.current[columnIndex] + elementHeight + gap
+          columnHeights.current[columnIndex] = newHeight
+          
+          // 缓存布局信息
+          layoutedItemsCache.current.set(item.id, {
+            x,
+            y,
+            columnIndex,
+            bottom: newHeight,
+            width: columnWidth,
+            height: elementHeight
+          })
           
           resolve()
         }
@@ -143,19 +200,29 @@ const WaterfallLayout = ({
       })
     })
 
-    // 所有元素布局完成后更新容器高度
+    // 所有元素布局完成后批量执行DOM操作并更新容器高度
     Promise.all(layoutPromises).then(() => {
-      const maxHeight = Math.max(...columnHeights.current)
-      container.style.height = `${maxHeight}px`
-      
-      console.log(`布局完成: 容器高度 ${maxHeight}px, 元素数量 ${items.length}`)
-      
-      // 如果有自动滚动回调，执行它
-      if (autoScrollCallbackRef.current) {
-        console.log(`执行自动滚动回调`)
-        autoScrollCallbackRef.current()
-        autoScrollCallbackRef.current = null
-      }
+      // 使用requestAnimationFrame批量执行DOM操作
+      requestAnimationFrame(() => {
+        domOperations.forEach(operation => operation())
+        
+        const maxHeight = Math.max(...columnHeights.current)
+        container.style.height = `${maxHeight}px`
+        
+        // 更新已布局元素计数
+        lastLayoutedCount.current = items.length
+        
+        const endTime = performance.now()
+        const layoutType = needsFullRelayout ? '完整布局' : '增量布局'
+        console.log(`✅ ${layoutType}完成: 容器高度 ${maxHeight}px, 元素数量 ${items.length}, 耗时 ${(endTime - startTime).toFixed(2)}ms`)
+        
+        // 如果有自动滚动回调，执行它
+        if (autoScrollCallbackRef.current) {
+          console.log(`执行自动滚动回调`)
+          autoScrollCallbackRef.current()
+          autoScrollCallbackRef.current = null
+        }
+      })
     }).catch(error => {
       console.error('布局过程中出现错误:', error)
       setError('布局失败，请刷新页面重试')
@@ -320,9 +387,11 @@ const WaterfallLayout = ({
     }
   }, [loadMore, hasMore, loading, handleLoadMore])
 
-  // 监听窗口大小变化重新布局
+  // 监听窗口大小变化重新布局 - 优化版本
   useEffect(() => {
     const handleResize = () => {
+      console.log('🔄 窗口大小变化，触发完整重新布局')
+      isFullRelayout.current = true // 标记需要完整重新布局
       setTimeout(layoutItems, 100)
     }
     
@@ -346,17 +415,20 @@ const WaterfallLayout = ({
     }
   }, [items, layoutItems, page])
 
-  // 响应容器尺寸变化
+  // 响应容器尺寸变化 - 优化版本
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
 
-    const resizeObserver = new ResizeObserver(() => {
+    const handleResize = () => {
+      console.log('📐 容器尺寸变化，触发完整重新布局')
+      isFullRelayout.current = true // 标记需要完整重新布局
       setTimeout(layoutItems, WATERFALL_CONFIG.DELAYS.RESIZE)
-    })
-    
+    }
+
+    const resizeObserver = new ResizeObserver(handleResize)
     resizeObserver.observe(container)
-    
+
     return () => {
       resizeObserver.disconnect()
     }

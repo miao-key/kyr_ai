@@ -29,6 +29,7 @@ const Train = lazy(() => import('@/pages/Train'))
 const Taxi = lazy(() => import('@/pages/Taxi'))
 const Tourism = lazy(() => import('@/pages/Tourism'))
 const Coze = lazy(() => import('@/pages/AI_chat/coze'))
+const AvatarTest = lazy(() => import('@/pages/AvatarTest'))
 
 // 主应用组件包装器
 const AppContent = () => {
@@ -107,6 +108,11 @@ const AppContent = () => {
           <Route path='/coze' element={
             <ProtectedRoute>
               <Coze />
+            </ProtectedRoute>
+          } />
+          <Route path='/avatar-test' element={
+            <ProtectedRoute>
+              <AvatarTest />
             </ProtectedRoute>
           } />
           
