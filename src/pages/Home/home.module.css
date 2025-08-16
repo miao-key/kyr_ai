@@ -1,0 +1,289 @@
+.container {
+  padding: 0;
+  margin: 0;
+  /* 青绿色渐变背景覆盖整个容器 */
+  background: linear-gradient(135deg, #83d298 0%, #34D399 50%, #a1e5ca 100%);
+  min-height: 100vh;
+  width: 100vw;
+  box-sizing: border-box;
+  position: relative;
+  /* 为固定搜索框添加顶部内边距 */
+  padding-top: 80px;
+  padding-bottom: 80px;
+  overflow-x: hidden;
+}
+
+.searchContainer {
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 2px;
+  border: 1px solid #e5e5e5;
+  width: calc(100vw - 32px);
+  max-width: 360px;
+  margin: 0 auto 24px auto;
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+}
+
+.searchInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  background-color: transparent;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+}
+
+.searchButton {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  background-color: #1976d2;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 2px;
+  cursor: pointer;
+  color: white;
+}
+
+/* 导航区域 - 全宽度白色背景，延伸到页面底部 */
+.navigationGrid {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background: white;
+  border-radius: 20px 20px 0 0;
+  position: relative;
+  z-index: 1;
+  /* 确保白色背景覆盖整个剩余页面 */
+  min-height: calc(100vh - 100px);
+  margin-top: -20px;
+  box-sizing: border-box;
+  /* 改为垂直布局，包含导航和轮播 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 导航内容容器 - 独立的盒子 */
+.navigationContent {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  width: 340px;
+  margin: 0;
+  padding: 16px 0 24px 0;
+  justify-items: center;
+  align-items: start;
+  /* 为导航部分创建独立的容器 */
+  background: transparent;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+/* 导航项容器 */
+.navigationItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+/* 图标容器 */
+.iconContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background-color: #f8f9fa;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid #e9ecef;
+}
+
+.iconContainer:hover {
+  background-color: #e3f2fd;
+  border-color: #1976d2;
+  transform: translateY(-1px);
+}
+
+.iconContainer:active {
+  transform: translateY(0);
+  background-color: #bbdefb;
+}
+
+/* 图标表情符号 */
+.iconEmoji {
+  font-size: 20px;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+/* 图标文字 */
+.iconText {
+  font-size: 11px;
+  color: #666;
+  text-align: center;
+  line-height: 1.2;
+  font-weight: 500;
+}
+
+/* 特定图标的颜色主题 */
+.hotelIcon {
+  background-color: #fff3e0;
+  border-color: #ffb74d;
+}
+
+.hotelIcon:hover {
+  background-color: #ffe0b2;
+  border-color: #ff9800;
+}
+
+.flightIcon {
+  background-color: #e8f5e8;
+  border-color: #81c784;
+}
+
+.flightIcon:hover {
+  background-color: #c8e6c9;
+  border-color: #4caf50;
+}
+
+.trainIcon {
+  background-color: #f3e5f5;
+  border-color: #ba68c8;
+}
+
+.trainIcon:hover {
+  background-color: #e1bee7;
+  border-color: #9c27b0;
+}
+
+.taxiIcon {
+  background-color: #fff8e1;
+  border-color: #ffb74d;
+}
+
+.taxiIcon:hover {
+  background-color: #ffecb3;
+  border-color: #ffa726;
+}
+
+.tourismIcon {
+  background-color: #e0f2f1;
+  border-color: #4db6ac;
+}
+
+.tourismIcon:hover {
+  background-color: #b2dfdb;
+  border-color: #26a69a;
+}
+
+/* 轮播容器 */
+.carouselContainer {
+  width: 100%;
+  max-width: 360px;
+  margin: 8px auto 0 auto;
+  position: relative;
+  padding: 0 16px 16px 16px;
+  box-sizing: border-box;
+  background: transparent;
+  border-radius: 8px;
+}
+
+.carouselWrapper {
+  width: 100%;
+  height: 280px; /* 稍微减少高度以适应更多屏幕 */
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  position: relative;
+  user-select: none;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.carouselImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* 保持图片比例，填满容器 */
+  object-position: center; /* 居中显示 */
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  /* 高清图片渲染优化 */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: optimize-contrast;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  /* 确保图片完整加载 */
+  loading: eager;
+  /* 移除 min-height 和 min-width，避免图片溢出 */
+}
+
+.imageOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+  padding: 24px 20px 20px;
+  color: white;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+}
+
+.imageTitle {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: 0.5px;
+}
+
+.carouselDots {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 0;
+}
+
+.carouselDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  background-color: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  /* 确保导航点在高DPI屏幕上清晰显示 */
+  transform: translateZ(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.carouselDot.active {
+  background-color: #1976d2;
+  transform: scale(1.4) translateZ(0);
+  box-shadow: 0 3px 10px rgba(25, 118, 210, 0.5);
+}
+
+.carouselDot:hover {
+  background-color: rgba(25, 118, 210, 0.8);
+  transform: scale(1.2) translateZ(0);
+}

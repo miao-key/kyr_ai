@@ -1,0 +1,213 @@
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  margin-left: 20px;
+}
+
+.block {
+  background: #fff;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.signInBlock {
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.signInContent {
+  flex: 1;
+}
+
+.greeting {
+  font-size: 16px;
+  font-weight: 500;
+  color: #252933;
+  margin-bottom: 4px;
+}
+
+.subGreeting {
+  font-size: 13px;
+  color: #8a919f;
+}
+
+.signInButton {
+  background: #1e80ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.blockTitle {
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #252933;
+  font-size: 14px;
+  font-weight: 500;
+  border-bottom: 1px solid #f2f3f5;
+}
+
+.refresh {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: #8a919f;
+  cursor: pointer;
+}
+
+.refresh svg {
+  margin-right: 4px;
+}
+
+.topicTags {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f2f3f5;
+}
+
+.topicTag {
+  display: inline-block;
+  padding: 2px 10px;
+  margin: 0 8px 8px 0;
+  border-radius: 100px;
+  font-size: 12px;
+  color: #86909c;
+  background-color: #f2f3f5;
+  cursor: pointer;
+  transition: all 0.2s;
+  line-height: 20px;
+}
+
+.topicTag:hover {
+  background-color: #e4e6eb;
+}
+
+.activeTag {
+  color: #1e80ff;
+  background-color: #e8f3ff;
+}
+
+.topicList {
+  padding: 8px 0;
+}
+
+.topicItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 16px;
+  text-decoration: none;
+  color: #252933;
+  transition: background-color 0.2s;
+}
+
+.topicItem:hover {
+  background-color: #f7f8fa;
+}
+
+.topicName {
+  font-size: 13px;
+}
+
+.topicCount {
+  font-size: 12px;
+  color: #8a919f;
+}
+
+.appBlock {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  position: relative;
+}
+
+.appIcon {
+  width: 50px;
+  height: 50px;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.appInfo {
+  flex: 1;
+}
+
+.appTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: #252933;
+  margin-bottom: 4px;
+}
+
+.appDesc {
+  font-size: 12px;
+  color: #8a919f;
+}
+
+.appButton {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #1e80ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 3px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.appButton:hover {
+  background: #0e6fdb;
+}
+
+.footer {
+  padding: 16px;
+}
+
+.footerLinks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.footerLink {
+  margin-right: 16px;
+  margin-bottom: 10px;
+}
+
+.footerLink a {
+  color: #8a919f;
+  font-size: 12px;
+  text-decoration: none;
+  line-height: 20px;
+}
+
+.footerLink a:hover {
+  color: #1e80ff;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}

@@ -1,0 +1,55 @@
+.container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f4f5f5;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0;
+  box-sizing: border-box;
+  flex: 1;
+}
+
+.mainContent {
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+  position: relative;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+  .container {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* 防止iOS Safari底部工具栏遮挡 */
+@supports (-webkit-touch-callout: none) {
+  .container {
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* 滚动性能优化 */
+.content {
+  -webkit-overflow-scrolling: touch;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+.mainContent {
+  width: 100%;
+  min-width: 0; /* 防止内容溢出 */
+}

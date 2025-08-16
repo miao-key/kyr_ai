@@ -1,0 +1,68 @@
+.appDialog {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+}
+
+.appButton {
+  background: #1e80ff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(30, 128, 255, 0.3);
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  min-width: 100px;
+  text-align: center;
+}
+
+.appButton:hover {
+  background: #0066cc;
+  transform: translateX(-50%) translateY(-1px);
+  box-shadow: 0 4px 16px rgba(30, 128, 255, 0.4);
+}
+
+.appButton:active {
+  transform: translateX(-50%) translateY(0);
+  box-shadow: 0 2px 8px rgba(30, 128, 255, 0.3);
+}
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+  .appDialog {
+    bottom: 16px;
+  }
+  
+  .appButton {
+    font-size: 13px;
+    padding: 8px 16px;
+    min-width: 90px;
+  }
+}
+
+@media (max-width: 480px) {
+  .appDialog {
+    bottom: 12px;
+  }
+  
+  .appButton {
+    font-size: 12px;
+    padding: 6px 14px;
+    min-width: 80px;
+  }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  .appButton:hover {
+    background: #1e80ff;
+    transform: translateX(-50%);
+    box-shadow: 0 2px 12px rgba(30, 128, 255, 0.3);
+  }
+}
