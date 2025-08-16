@@ -131,23 +131,74 @@ const useAuthStore = create(
           const { username, password } = credentials
           
           if (username && password) {
-            // 生成随机头像
-            const avatar = await getRandomAvatar()
+            // 检查是否已有用户数据（模拟数据库查询）
+            let userData = null
+            const existingToken = tokenManager.getToken()
             
-            const userData = {
-              id: Date.now(),
-              username: username,
-              email: username.includes('@') ? username : `${username}@zhilv.com`,
-              avatar: avatar,
-              phone: '',
-              nickname: username,
-              createTime: new Date().toISOString(),
-              lastLoginTime: new Date().toISOString(),
-              preferences: {
-                favoriteDestinations: [],
-                interests: [],
-                travelStyle: ''
+            if (existingToken && verifyJWT(existingToken)) {
+              const existingUser = getUserFromToken(existingToken)
+              if (existingUser && existingUser.username === username) {
+                // 用户已存在，使用现有数据但更新登录时间
+                userData = {
+                  ...existingUser,
+                  lastLoginTime: new Date().toISOString()
+                }
+                console.log('🔄 检测到已存在用户，使用现有数据')
               }
+            }
+            
+            // 如果没有找到现有用户，创建新用户
+            if (!userData) {
+              userData = {
+                id: Date.now(),
+                username: username,
+                email: username.includes('@') ? username : `${username}@zhilv.com`,
+                avatar: null, // 先设为null，后面统一处理头像
+                phone: '',
+                nickname: username,
+                createTime: new Date().toISOString(),
+                lastLoginTime: new Date().toISOString(),
+                preferences: {
+                  favoriteDestinations: [],
+                  interests: [],
+                  travelStyle: ''
+                }
+              }
+              console.log('🆕 创建新用户数据')
+            }
+            
+            // 检查并获取头像
+            let needsAvatar = false
+            if (!userData.avatar || 
+                userData.avatar.includes('dicebear.com') || 
+                userData.avatar.includes('api.dicebear.com')) {
+              needsAvatar = true
+              console.log('🎭 用户需要获取头像')
+            }
+            
+            if (needsAvatar) {
+              try {
+                console.log('🔄 开始调用getRandomAvatar函数...')
+                const avatarResult = await getRandomAvatar()
+                console.log('📸 getRandomAvatar返回结果:', avatarResult)
+                
+                if (avatarResult && avatarResult.success && avatarResult.avatar) {
+                  userData.avatar = avatarResult.avatar
+                  console.log('✅ 成功获取头像:', avatarResult.avatar, '来源:', avatarResult.source)
+                  console.log('👤 用户数据已更新，头像URL:', userData.avatar)
+                } else {
+                  // 如果头像获取失败，使用DiceBear作为降级方案
+                  userData.avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.username}`
+                  console.log('⚠️ 头像获取失败，使用DiceBear降级方案:', userData.avatar)
+                }
+              } catch (avatarError) {
+                console.error('❌ 头像获取失败:', avatarError)
+                // 降级到DiceBear头像
+                userData.avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.username}`
+                console.log('⚠️ 头像获取异常，使用DiceBear降级方案:', userData.avatar)
+              }
+            } else {
+              console.log('ℹ️ 用户已有头像，跳过获取:', userData.avatar)
             }
             
             // 生成JWT token（24小时有效期）

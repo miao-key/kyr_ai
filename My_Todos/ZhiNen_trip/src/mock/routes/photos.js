@@ -249,54 +249,144 @@ router.get('/guide', optionalAuth, async (req, res) => {
 // 获取头像图片
 router.get('/avatar', optionalAuth, async (req, res) => {
   try {
-    const { count = 20 } = req.query
-    const limitNum = Math.min(50, Math.max(1, parseInt(count)))
-
+    logger.info('获取头像API被调用', { query: req.query })
+    
+    // 首先尝试从Pexels获取人物头像
+    const avatarKeywords = ['portrait', 'people face', 'headshot', 'person', 'human face']
+    const randomKeyword = avatarKeywords[Math.floor(Math.random() * avatarKeywords.length)]
+    
+    logger.info('尝试从Pexels获取头像', { 
+      keyword: randomKeyword,
+      apiKey: pexelsService.apiKey ? '已配置' : '未配置',
+      apiKeyLength: pexelsService.apiKey ? pexelsService.apiKey.length : 0
+    })
+    
     const pexelsResult = await pexelsService.searchPhotos({
-      query: 'portrait people',
+      query: randomKeyword,
       page: 1,
-      per_page: limitNum,
+      per_page: 10,
       orientation: 'portrait'
     })
     
-    if (!pexelsResult.success) {
-      throw new Error(pexelsResult.error || 'Pexels API调用失败')
+    logger.info('Pexels API调用结果', {
+      success: pexelsResult.success,
+      error: pexelsResult.error,
+      photosCount: pexelsResult.data?.photos?.length || 0,
+      totalResults: pexelsResult.data?.total_results || 0
+    })
+    
+    if (pexelsResult.success && pexelsResult.data && pexelsResult.data.photos && pexelsResult.data.photos.length > 0) {
+      // 随机选择一张Pexels头像
+      const randomIndex = Math.floor(Math.random() * pexelsResult.data.photos.length)
+      const selectedPhoto = pexelsResult.data.photos[randomIndex]
+      
+      const avatar = {
+        id: `pexels_avatar_${selectedPhoto.id}`,
+        title: selectedPhoto.alt || 'Portrait Avatar',
+        description: selectedPhoto.alt || 'Portrait from Pexels',
+        url: selectedPhoto.src.original,
+        thumbnail: selectedPhoto.src.medium,
+        small: selectedPhoto.src.small,
+        large: selectedPhoto.src.large2x || selectedPhoto.src.large,
+        width: selectedPhoto.width,
+        height: selectedPhoto.height,
+        photographer: selectedPhoto.photographer,
+        photographerUrl: selectedPhoto.photographer_url,
+        source: 'pexels',
+        sourceUrl: selectedPhoto.url,
+        avgColor: selectedPhoto.avg_color,
+        liked: false,
+        downloads: Math.floor(Math.random() * 10000),
+        views: Math.floor(Math.random() * 100000),
+        createdAt: new Date().toISOString()
+      }
+      
+      logger.info('成功获取Pexels头像', { 
+        avatarId: avatar.id, 
+        photographer: avatar.photographer,
+        keyword: randomKeyword 
+      })
+      
+      res.json({
+        photos: [avatar],
+        total_results: 1,
+        count: 1
+      })
+      return
     }
     
-    const photos = pexelsResult.data.photos.map(photo => ({
-      id: `pexels_${photo.id}`,
-      title: photo.alt || 'Portrait photo',
-      description: photo.alt,
-      url: photo.src.original,
-      thumbnail: photo.src.medium,
-      small: photo.src.small,
-      large: photo.src.large2x,
-      width: photo.width,
-      height: photo.height,
-      photographer: photo.photographer,
-      photographerUrl: photo.photographer_url,
-      source: 'pexels',
-      sourceUrl: photo.url,
-      avgColor: photo.avg_color,
-      liked: false,
-      downloads: Math.floor(Math.random() * 10000),
-      views: Math.floor(Math.random() * 100000),
-      createdAt: new Date().toISOString()
-    }))
-
-    logger.info('获取头像图片', { count: limitNum, total: pexelsResult.data.total_results })
-
-    res.json({
-      photos,
-      total_results: pexelsResult.data.total_results,
-      count: limitNum,
-      next_page: pexelsResult.data.next_page
+    // Pexels失败时，fallback到DiceBear头像
+    logger.warn('Pexels头像获取失败，使用DiceBear fallback', { 
+      pexelsSuccess: pexelsResult.success,
+      pexelsError: pexelsResult.error 
     })
-  } catch (error) {
-    logger.error('获取头像图片失败', { error: error.message })
     
-    // 错误时返回DiceBear头像
+    const avatarSeed = Math.random().toString(36).substring(7)
     const fallbackAvatar = {
+      id: 'dicebear_fallback_' + Date.now(),
+      title: 'DiceBear Avatar',
+      description: 'Generated avatar (Pexels fallback)',
+      url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}`,
+      thumbnail: `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}`,
+      small: `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}`,
+      large: `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}`,
+      width: 200,
+      height: 200,
+      photographer: 'DiceBear',
+      photographerUrl: 'https://dicebear.com',
+      source: 'dicebear',
+      sourceUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}`,
+      avgColor: '#f0f0f0',
+      liked: false,
+      downloads: 0,
+      views: 0,
+      createdAt: new Date().toISOString()
+    }
+    
+    logger.info('返回DiceBear fallback头像', { avatarId: fallbackAvatar.id, seed: avatarSeed })
+    
+    res.json({
+      photos: [fallbackAvatar],
+      total_results: 1,
+      count: 1
+    })
+    
+  } catch (error) {
+    logger.error('获取头像图片失败', { error: error.message, stack: error.stack })
+    
+    // 错误时返回默认DiceBear头像
+    const errorSeed = 'error_' + Date.now()
+    const errorAvatar = {
+      id: 'dicebear_error_' + Date.now(),
+      title: 'Error Fallback Avatar',
+      description: 'Default avatar (error fallback)',
+      url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${errorSeed}`,
+      thumbnail: `https://api.dicebear.com/7.x/avataaars/svg?seed=${errorSeed}`,
+      small: `https://api.dicebear.com/7.x/avataaars/svg?seed=${errorSeed}`,
+      large: `https://api.dicebear.com/7.x/avataaars/svg?seed=${errorSeed}`,
+      width: 200,
+      height: 200,
+      photographer: 'DiceBear',
+      photographerUrl: 'https://dicebear.com',
+      source: 'dicebear',
+      sourceUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${errorSeed}`,
+      avgColor: '#f0f0f0',
+      liked: false,
+      downloads: 0,
+      views: 0,
+      createdAt: new Date().toISOString()
+    }
+    
+    logger.info('返回错误fallback头像', { avatarId: errorAvatar.id })
+    res.json({ photos: [errorAvatar] })
+  }
+})
+
+// 获取单个头像图片
+router.get('/avatar/single', optionalAuth, async (req, res) => {
+  try {
+    // 直接返回DiceBear头像，避免Pexels CORS问题
+    const avatar = {
       id: 'dicebear_' + Date.now(),
       url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${Math.random()}`,
       photographer: 'DiceBear',
@@ -304,45 +394,8 @@ router.get('/avatar', optionalAuth, async (req, res) => {
       source: 'dicebear'
     }
     
-    res.json({ photos: [fallbackAvatar] })
-  }
-})
-
-// 获取单个头像图片
-router.get('/avatar/single', optionalAuth, async (req, res) => {
-  try {
-    const pexelsResult = await pexelsService.searchPhotos({
-      query: 'portrait',
-      page: 1,
-      per_page: 20
-    })
-    
-    if (pexelsResult.success && pexelsResult.data.photos && pexelsResult.data.photos.length > 0) {
-      const randomPhoto = pexelsResult.data.photos[Math.floor(Math.random() * pexelsResult.data.photos.length)]
-      
-      const avatar = {
-        id: `pexels_${randomPhoto.id}`,
-        url: randomPhoto.src.medium,
-        photographer: randomPhoto.photographer,
-        photographerUrl: randomPhoto.photographer_url,
-        source: 'pexels'
-      }
-
-      logger.info('获取头像图片', { avatarId: avatar.id })
-      res.json({ avatar })
-    } else {
-      // 如果没有找到图片，返回DiceBear头像
-      const fallbackAvatar = {
-        id: 'dicebear_' + Date.now(),
-        url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${Math.random()}`,
-        photographer: 'DiceBear',
-        photographerUrl: 'https://dicebear.com',
-        source: 'dicebear'
-      }
-      
-      logger.info('使用DiceBear头像', { avatarId: fallbackAvatar.id })
-      res.json({ avatar: fallbackAvatar })
-    }
+    logger.info('获取DiceBear头像', { avatarId: avatar.id })
+    res.json({ avatar })
   } catch (error) {
     logger.error('获取头像图片失败', { error: error.message })
     
@@ -586,6 +639,9 @@ router.get('/landscape', optionalAuth, async (req, res) => {
     })
   }
 })
+
+// 获取头像图片
+// 重复的avatar路由已删除，使用上面的实现
 
 // 获取单张图片详情
 router.get('/:id', optionalAuth, async (req, res) => {

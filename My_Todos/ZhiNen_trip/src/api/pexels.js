@@ -266,23 +266,98 @@ const generateMockPhotosForCategory = (categoryName, count) => {
 
 // 获取随机头像
 export const getRandomAvatar = async () => {
-    try {
-        const response = await backendRequest('/photos/avatar')
-        
-        if (response?.photos && response.photos.length > 0) {
-            // 随机选择一张照片
-            const randomPhoto = response.photos[Math.floor(Math.random() * response.photos.length)]
-            // 返回中等尺寸的头像
-            return randomPhoto.src.medium || randomPhoto.src.small
-        } else {
-            throw new Error('没有找到合适的头像图片')
-        }
-    } catch (error) {
-        console.error('❌ 获取头像失败:', error)
-        // 降级到DiceBear头像
-        const seed = Math.random().toString(36).substring(7)
-        return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`
+  console.log('🎯 开始获取随机头像...')
+  console.log('🌐 当前时间:', new Date().toLocaleTimeString())
+  
+  try {
+    console.log('📡 正在请求头像API: /api/photos/avatar')
+    const response = await fetch('/api/photos/avatar')
+    console.log('📡 头像API响应状态:', response.status)
+    console.log('📡 响应头信息:', Object.fromEntries(response.headers.entries()))
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
+    
+    const data = await response.json()
+    console.log('📦 头像API返回数据:', data)
+    console.log('📦 数据类型:', typeof data, '是否为数组:', Array.isArray(data))
+    
+    // 检查返回的数据结构
+    if (data.photos && data.photos.length > 0) {
+      // 随机选择一张照片
+      const randomIndex = Math.floor(Math.random() * data.photos.length)
+      const selectedPhoto = data.photos[randomIndex]
+      
+      console.log('📸 选中的头像数据:', {
+        id: selectedPhoto.id,
+        source: selectedPhoto.source,
+        photographer: selectedPhoto.photographer
+      })
+      
+      // 检查是否为DiceBear头像
+      if (selectedPhoto.source === 'dicebear') {
+        console.log('✅ 获取到DiceBear头像URL:', selectedPhoto.url)
+        return {
+          success: true,
+          avatar: selectedPhoto.url,
+          source: 'dicebear_api',
+          photographer: selectedPhoto.photographer
+        }
+      } else if (selectedPhoto.source === 'pexels') {
+        // 处理Pexels头像数据 - 使用新的数据结构
+        const avatarUrl = selectedPhoto.thumbnail || selectedPhoto.small || selectedPhoto.url
+        console.log('✅ 成功获取Pexels头像URL:', avatarUrl)
+        console.log('📸 Pexels头像详情:', {
+          id: selectedPhoto.id,
+          photographer: selectedPhoto.photographer,
+          title: selectedPhoto.title
+        })
+        
+        return {
+          success: true,
+          avatar: avatarUrl,
+          source: 'pexels',
+          photographer: selectedPhoto.photographer,
+          photographerUrl: selectedPhoto.photographerUrl,
+          title: selectedPhoto.title
+        }
+      } else {
+        // 未知来源，尝试使用url字段
+        const avatarUrl = selectedPhoto.url || selectedPhoto.thumbnail || selectedPhoto.small
+        console.log('⚠️ 未知头像来源，使用URL:', avatarUrl)
+        
+        return {
+          success: true,
+          avatar: avatarUrl,
+          source: selectedPhoto.source || 'unknown',
+          photographer: selectedPhoto.photographer
+        }
+      }
+    } else {
+      console.log('⚠️ 没有找到合适的头像，使用DiceBear降级')
+      // 降级使用DiceBear头像
+      const fallbackAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${Date.now()}`
+      console.log('🔄 生成DiceBear降级头像:', fallbackAvatar)
+      return {
+        success: true,
+        avatar: fallbackAvatar,
+        source: 'dicebear_fallback'
+      }
+    }
+  } catch (error) {
+    console.error('❌ 头像获取失败:', error)
+    console.error('❌ 错误详情:', error.message, error.stack)
+    // 降级使用DiceBear头像
+    const fallbackAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${Date.now()}`
+    console.log('🔄 使用DiceBear降级头像:', fallbackAvatar)
+    
+    return {
+      success: true,
+      avatar: fallbackAvatar,
+      source: 'dicebear_error_fallback'
+    }
+  }
 }
 
 // 导出工具函数
