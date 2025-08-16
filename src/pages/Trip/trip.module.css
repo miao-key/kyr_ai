@@ -1,0 +1,675 @@
+/* 行程页面主容器 */
+.tripContainer {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+}
+
+/* 头部区域 */
+.tripHeader {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.headerTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.tripTitle {
+  font-size: 32px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.createTripBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.createTripBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.createTripBtn:active {
+  transform: translateY(0);
+}
+
+.createIcon {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.tripStats {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+}
+
+.statItem {
+  text-align: center;
+  padding: 15px 20px;
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  border-radius: 15px;
+  color: white;
+  min-width: 80px;
+}
+
+.statNumber {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.statLabel {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* AI机器人按钮 */
+.aiRobotButton {
+  position: fixed;
+  bottom: 80px;
+  right: 30px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: linear-gradient(45deg, #ff6b6b, #feca57, #ff9ff3);
+  padding: 15px 25px;
+  border-radius: 50px;
+  cursor: pointer;
+  box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+  transition: all 0.3s ease;
+  z-index: 1001;
+  overflow: visible;
+}
+
+.aiRobotButton:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 12px 35px rgba(255, 107, 107, 0.4);
+}
+
+.aiRobotButton:active {
+  transform: translateY(-1px) scale(1.02);
+}
+
+.robotContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.robotHead {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(145deg, #fff8f0, #ffffff);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    inset 2px 2px 5px rgba(0, 0, 0, 0.1),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.9),
+    0 2px 8px rgba(0, 0, 0, 0.15);
+  position: relative;
+  border: 2px solid #ffebcd;
+  animation: robotFloat 3s ease-in-out infinite;
+}
+
+@keyframes robotFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-3px); }
+}
+
+.robotHead::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 8px;
+  background: linear-gradient(to top, #ff6b6b, #feca57);
+  border-radius: 2px;
+  animation: antennaGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes antennaGlow {
+  0% { box-shadow: 0 0 5px rgba(254, 202, 87, 0.5); }
+  100% { box-shadow: 0 0 10px rgba(254, 202, 87, 0.8); }
+}
+
+.robotHead::after {
+  content: '';
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  background: radial-gradient(circle, #feca57, #ff9f43);
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(254, 202, 87, 0.8);
+  animation: lightPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes lightPulse {
+  0%, 100% { 
+    transform: translateX(-50%) scale(1);
+    box-shadow: 0 0 8px rgba(254, 202, 87, 0.8);
+  }
+  50% { 
+    transform: translateX(-50%) scale(1.2);
+    box-shadow: 0 0 12px rgba(254, 202, 87, 1);
+  }
+}
+
+.robotFace {
+  position: relative;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.robotEyes {
+  display: flex;
+  justify-content: space-between;
+  width: 24px;
+  margin-bottom: 8px;
+}
+
+.robotEye {
+  width: 8px;
+  height: 8px;
+  background: radial-gradient(circle, #40e0d0, #00d4ff);
+  border-radius: 50%;
+  box-shadow: 
+    0 0 6px rgba(64, 224, 208, 0.8),
+    inset 0 1px 3px rgba(255, 255, 255, 0.4);
+  animation: robotBlink 4s infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.robotEye.right {
+  animation-delay: 0.1s;
+}
+
+.eyePupil {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 4px;
+  height: 4px;
+  background: #1a1a1a;
+  border-radius: 50%;
+  animation: eyeMove 6s ease-in-out infinite;
+}
+
+@keyframes eyeMove {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(1px, -1px); }
+  50% { transform: translate(-1px, 0); }
+  75% { transform: translate(0, 1px); }
+}
+
+.robotMouth {
+  width: 18px;
+  height: 4px;
+  background: #ff6b9d;
+  border-radius: 10px;
+  position: relative;
+  margin-top: 3px;
+  overflow: hidden;
+}
+
+.mouthSmile {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to right, #ff6b9d, #ff8fb3, #ff6b9d);
+  border-radius: 10px;
+  animation: smileAnimation 2s ease-in-out infinite;
+}
+
+@keyframes smileAnimation {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(1.1); }
+}
+
+@keyframes robotBlink {
+  0%, 85%, 100% { 
+    transform: scaleY(1);
+    box-shadow: 0 0 6px rgba(64, 224, 208, 0.8);
+  }
+  90%, 95% { 
+    transform: scaleY(0.2);
+    box-shadow: 0 0 3px rgba(64, 224, 208, 0.4);
+  }
+}
+
+.robotSparkles {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  pointer-events: none;
+}
+
+.sparkle {
+  position: absolute;
+  font-size: 12px;
+  animation: sparkleFloat 3s ease-in-out infinite;
+}
+
+.sparkle-1 {
+  top: -5px;
+  left: -5px;
+  animation-delay: 0s;
+}
+
+.sparkle-2 {
+  top: 10px;
+  right: -8px;
+  animation-delay: 1s;
+}
+
+.sparkle-3 {
+  bottom: 5px;
+  left: 5px;
+  animation-delay: 2s;
+}
+
+@keyframes sparkleFloat {
+  0%, 100% { 
+    transform: translate(0, 0) rotate(0deg) scale(0.8);
+    opacity: 0.6;
+  }
+  50% { 
+    transform: translate(2px, -3px) rotate(180deg) scale(1.2);
+    opacity: 1;
+  }
+}
+
+.robotText {
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+  white-space: nowrap;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* 行程列表 */
+.tripList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 25px;
+  margin-bottom: 100px;
+}
+
+/* 行程卡片 */
+.tripCard {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.tripCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+}
+
+.tripCardHeader {
+  display: flex;
+  padding: 20px;
+  gap: 15px;
+  position: relative;
+}
+
+.tripImage {
+  width: 80px;
+  height: 80px;
+  border-radius: 15px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.tripInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tripName {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.tripDates {
+  font-size: 14px;
+  color: #7f8c8d;
+  margin: 0;
+}
+
+.tripStatus {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  align-self: flex-start;
+}
+
+/* 删除按钮样式 */
+.deleteTripBtn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: #9ca3af;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(156, 163, 175, 0.3);
+  opacity: 1;
+  transform: scale(1);
+}
+
+.deleteTripBtn:hover {
+  background: #6b7280;
+  transform: scale(1.1);
+  box-shadow: 0 4px 10px rgba(107, 114, 128, 0.4);
+}
+
+.deleteTripBtn:active {
+  transform: scale(0.95);
+}
+
+.deleteIcon {
+  font-size: 14px;
+  color: white;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.tripDetails {
+  padding: 0 20px 20px;
+  border-top: 1px solid #ecf0f1;
+}
+
+.detailsTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 15px 0 12px 0;
+}
+
+.daysList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dayItem {
+  display: flex;
+  gap: 15px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  transition: background-color 0.2s ease;
+}
+
+.dayItem:hover {
+  background: #e9ecef;
+}
+
+.dayNumber {
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  align-self: flex-start;
+}
+
+.dayContent {
+  flex: 1;
+}
+
+.dayTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: #2c3e50;
+  margin-bottom: 4px;
+}
+
+.dayTime {
+  font-size: 12px;
+  color: #7f8c8d;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .tripContainer {
+    padding: 15px;
+  }
+  
+  .headerTop {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+  
+  .tripTitle {
+    font-size: 24px;
+  }
+  
+  .createTripBtn {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+  
+  .tripStats {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .statItem {
+    padding: 12px 20px;
+  }
+  
+  .statNumber {
+    font-size: 18px;
+  }
+  
+  .tripList {
+    grid-template-columns: 1fr;
+  }
+  
+  .aiRobotButton {
+    bottom: 70px;
+    right: 20px;
+    padding: 12px 20px;
+  }
+  
+    .robotHead {
+    width: 40px;
+    height: 40px;
+  }
+
+  .robotHead::before {
+    top: -6px;
+    width: 1.5px;
+    height: 6px;
+  }
+
+  .robotHead::after {
+    top: -9px;
+    width: 3px;
+    height: 3px;
+  }
+
+  .robotFace {
+    width: 28px;
+    height: 28px;
+  }
+
+  .robotEyes {
+    width: 16px;
+    margin-bottom: 4px;
+  }
+
+  .robotEye {
+    width: 5px;
+    height: 5px;
+  }
+
+  .robotMouth {
+    width: 12px;
+    height: 2px;
+  }
+  
+  .robotText {
+    font-size: 14px;
+  }
+  
+  .tripCardHeader {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .tripImage {
+    align-self: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .tripContainer {
+    padding: 10px;
+  }
+  
+  .tripHeader {
+    padding: 20px;
+  }
+  
+  .tripTitle {
+    font-size: 20px;
+  }
+  
+  .createTripBtn {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+  
+  .createIcon {
+    font-size: 16px;
+  }
+  
+  .statNumber {
+    font-size: 16px;
+  }
+  
+  .statLabel {
+    font-size: 12px;
+  }
+  
+  .aiRobotButton {
+    bottom: 60px;
+    right: 15px;
+    padding: 10px 16px;
+  }
+
+  .robotHead {
+    width: 35px;
+    height: 35px;
+  }
+
+  .robotHead::before {
+    top: -5px;
+    width: 1px;
+    height: 5px;
+  }
+
+  .robotHead::after {
+    top: -8px;
+    width: 2.5px;
+    height: 2.5px;
+  }
+
+  .robotFace {
+    width: 24px;
+    height: 24px;
+  }
+
+  .robotEyes {
+    width: 14px;
+    margin-bottom: 3px;
+  }
+
+  .robotEye {
+    width: 4px;
+    height: 4px;
+  }
+
+  .robotMouth {
+    width: 10px;
+    height: 2px;
+  }
+  
+  .robotText {
+    font-size: 12px;
+  }
+  
+  .dayItem {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .dayNumber {
+    align-self: flex-start;
+  }
+}

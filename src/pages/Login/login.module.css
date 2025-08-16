@@ -1,0 +1,485 @@
+/* 登录页面样式 - 智旅应用 */
+
+.loginContainer {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 右上角退出按钮 */
+.exitButton {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1000;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.exitButton:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.exitIcon {
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* 背景装饰元素 */
+.backgroundDecoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.circle1, .circle2, .circle3 {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  animation: float 6s ease-in-out infinite;
+}
+
+.circle1 {
+  width: 200px;
+  height: 200px;
+  top: 10%;
+  left: -50px;
+  animation-delay: -2s;
+}
+
+.circle2 {
+  width: 150px;
+  height: 150px;
+  bottom: 20%;
+  right: -30px;
+  animation-delay: -4s;
+}
+
+.circle3 {
+  width: 100px;
+  height: 100px;
+  top: 40%;
+  right: 20%;
+  animation-delay: -1s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(10deg);
+  }
+}
+
+/* 主要内容容器 */
+.loginContent {
+  width: 100%;
+  max-width: 400px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 24px;
+  padding: 40px 30px;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.1),
+    0 10px 25px rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 2;
+  animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 头部区域 */
+.header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.logoIcon {
+  font-size: 32px;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+.logoText {
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0 0 8px 0;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #7f8c8d;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* 表单容器 */
+.formContainer {
+  width: 100%;
+}
+
+/* 自定义表单字段样式 */
+.formContainer :global(.rv-field) {
+  margin-bottom: 16px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.formContainer :global(.rv-field:focus-within) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  background: #fff;
+}
+
+.formContainer :global(.rv-field__label) {
+  color: #495057;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.formContainer :global(.rv-field__control) {
+  padding: 16px 16px;
+  font-size: 16px;
+  color: #2c3e50;
+  line-height: 1.5;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+}
+
+.formContainer :global(.rv-field__control::placeholder) {
+  color: #adb5bd;
+}
+
+.formContainer :global(.rv-field__error-message) {
+  color: #e74c3c;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.formContainer :global(.rv-field__left-icon) {
+  color: #667eea;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+/* 确保输入框内容不被遮挡 */
+.formContainer :global(.rv-field__body) {
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+}
+
+.formContainer :global(.rv-field__input) {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #2c3e50;
+}
+
+/* 按钮组 */
+.buttonGroup {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.primaryButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  height: 48px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
+  transition: all 0.3s ease !important;
+}
+
+.primaryButton:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+}
+
+.primaryButton:active {
+  transform: translateY(0) !important;
+}
+
+.secondaryButton {
+  background: transparent !important;
+  border: 1px solid #e9ecef !important;
+  border-radius: 12px !important;
+  height: 44px !important;
+  color: #667eea !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+}
+
+.secondaryButton:hover {
+  background: #f8f9fa !important;
+  border-color: #667eea !important;
+}
+
+.demoButton {
+  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  height: 44px !important;
+  color: #fff !important;
+  font-weight: 500 !important;
+  box-shadow: 0 4px 12px rgba(255, 154, 158, 0.3) !important;
+  transition: all 0.3s ease !important;
+}
+
+.demoButton:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 16px rgba(255, 154, 158, 0.4) !important;
+}
+
+/* 底部区域 */
+.footer {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.footerText {
+  font-size: 12px;
+  color: #95a5a6;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.link {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* 响应式设计 */
+@media (max-width: 480px) {
+  .loginContainer {
+    padding: 16px;
+  }
+  
+  .loginContent {
+    padding: 32px 24px;
+    margin: 0;
+    border-radius: 20px;
+  }
+  
+  .logo {
+    gap: 8px;
+  }
+  
+  .logoIcon {
+    font-size: 28px;
+  }
+  
+  .logoText {
+    font-size: 24px;
+  }
+  
+  .title {
+    font-size: 20px;
+  }
+  
+  .subtitle {
+    font-size: 13px;
+  }
+  
+  .circle1 {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .circle2 {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .circle3 {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+/* 加载状态动画 */
+.formContainer :global(.rv-button--loading) {
+  pointer-events: none;
+}
+
+.formContainer :global(.rv-loading) {
+  color: #fff !important;
+}
+
+/* 错误状态样式 */
+.formContainer :global(.rv-field--error) {
+  border-color: #e74c3c !important;
+  background: #fdf2f2 !important;
+}
+
+.formContainer :global(.rv-field--error:focus-within) {
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1) !important;
+}
+
+/* 成功反馈动画 */
+@keyframes successPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.successFeedback {
+  animation: successPulse 0.6s ease;
+}
+
+/* 过渡动画 */
+.formContainer * {
+  transition: all 0.3s ease;
+}
+
+/* 优化移动端输入体验 */
+@media (max-width: 768px) {
+  .formContainer :global(.rv-field) {
+    min-height: 60px;
+  }
+  
+  .formContainer :global(.rv-field__control) {
+    font-size: 16px; /* 防止iOS缩放 */
+    padding: 18px 16px;
+    line-height: 1.4;
+    min-height: 28px;
+  }
+  
+  .formContainer :global(.rv-field__label) {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+  
+  /* 移动端退出按钮适配 */
+  .exitButton {
+    top: 15px;
+    right: 15px;
+    width: 36px;
+    height: 36px;
+  }
+  
+  .exitIcon {
+    font-size: 16px;
+  }
+}
+
+/* 深色模式支持预留 */
+@media (prefers-color-scheme: dark) {
+  .loginContent {
+    background: rgba(30, 30, 30, 0.95);
+    color: #fff;
+  }
+  
+  .title {
+    color: #fff;
+  }
+  
+  .subtitle {
+    color: #bbb;
+  }
+  
+  .formContainer :global(.rv-field) {
+    background: #2a2a2a;
+    border-color: #404040;
+    color: #fff;
+  }
+  
+  .formContainer :global(.rv-field__label) {
+    color: #ccc;
+  }
+  
+  .formContainer :global(.rv-field__control) {
+    color: #fff;
+  }
+  
+  .footerText {
+    color: #888;
+  }
+}
