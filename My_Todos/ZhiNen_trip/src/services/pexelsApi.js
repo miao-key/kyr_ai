@@ -3,46 +3,62 @@
  * 提供图片搜索和获取功能
  */
 
-// Pexels API 基础配置
-const PEXELS_API_BASE = 'https://api.pexels.com/v1'
-const API_KEY = import.meta.env.VITE_PEXELS_API
-
-// 请求头配置
-const headers = {
-  'Authorization': API_KEY,
+// 本地后端API配置
+const BACKEND_BASE_URL = 'http://localhost:3001/api'
+const HEADERS = {
   'Content-Type': 'application/json'
 }
 
 /**
- * 通用的 Pexels API 请求函数
+ * 通用的后端API请求函数 - 带重试机制
  * @param {string} endpoint - API端点
- * @param {Object} params - 查询参数
+ * @param {Object} params - 请求参数
+ * @param {number} retryCount - 当前重试次数
  * @returns {Promise<Object>} API响应数据
  */
-async function pexelsRequest(endpoint, params = {}) {
-  if (!API_KEY) {
-    console.warn('Pexels API密钥未配置，使用默认图片')
-    return null
-  }
-
+const backendRequest = async (endpoint, params = {}, retryCount = 0) => {
+  const maxRetries = 3
+  const baseDelay = 1000 // 1秒基础延迟
+  
   try {
-    const url = new URL(`${PEXELS_API_BASE}${endpoint}`)
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        url.searchParams.append(key, value)
+    const url = new URL(`${BACKEND_BASE_URL}${endpoint}`)
+    Object.keys(params).forEach(key => {
+      if (params[key] !== undefined && params[key] !== null) {
+        url.searchParams.append(key, params[key])
       }
     })
 
-    const response = await fetch(url, { headers })
-    
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers: HEADERS
+    })
+
     if (!response.ok) {
-      throw new Error(`Pexels API错误: ${response.status} ${response.statusText}`)
+      // 如果是429错误且还有重试次数，进行重试
+      if (response.status === 429 && retryCount < maxRetries) {
+        const delay = baseDelay * Math.pow(2, retryCount) // 指数退避
+        console.warn(`⚠️ 遇到429错误，${delay}ms后进行第${retryCount + 1}次重试...`)
+        
+        await new Promise(resolve => setTimeout(resolve, delay))
+        return await backendRequest(endpoint, params, retryCount + 1)
+      }
+      
+      throw new Error(`后端API错误: ${response.status} ${response.statusText}`)
     }
 
     return await response.json()
   } catch (error) {
-    console.error('Pexels API请求失败:', error)
-    return null
+    // 如果是网络错误且还有重试次数，进行重试
+    if (retryCount < maxRetries && (error.name === 'TypeError' || error.message.includes('fetch'))) {
+      const delay = baseDelay * Math.pow(2, retryCount)
+      console.warn(`⚠️ 网络错误，${delay}ms后进行第${retryCount + 1}次重试...`)
+      
+      await new Promise(resolve => setTimeout(resolve, delay))
+      return await backendRequest(endpoint, params, retryCount + 1)
+    }
+    
+    console.error('❌ 后端API请求失败:', error)
+    throw error
   }
 }
 
@@ -78,7 +94,7 @@ export async function searchPhotos(query, options = {}) {
     locale
   }
 
-  return await pexelsRequest('/search', params)
+  return await backendRequest('/photos/search', params)
 }
 
 /**
@@ -99,7 +115,7 @@ export async function getCuratedPhotos(options = {}) {
     per_page
   }
 
-  return await pexelsRequest('/curated', params)
+  return await backendRequest('/photos/curated', params)
 }
 
 /**
@@ -108,89 +124,61 @@ export async function getCuratedPhotos(options = {}) {
  * @returns {Promise<Object>} 图片数据
  */
 export async function getPhotoById(id) {
-  return await pexelsRequest(`/photos/${id}`)
+  return await backendRequest(`/photos/${id}`)
 }
 
 /**
- * 获取旅游相关的图片集合
- * @param {string} category - 分类：'landscape', 'mountain', 'beach', 'city', 'nature'
- * @param {Object} options - 选项
- * @returns {Promise<Array>} 图片数组
+ * 获取旅行相关照片
+ * @param {number} count - 照片数量
+ * @returns {Promise<Array>} 照片数组
  */
-export async function getTravelPhotos(category = 'travel', options = {}) {
-  const categoryQueries = {
-    landscape: '风景 山水 自然风光',
-    mountain: '山峰 高山 雪山',
-    beach: '海滩 海岸 沙滩',
-    city: '城市 建筑 都市',
-    nature: '自然 森林 湖泊',
-    travel: '旅游 风景 目的地',
-    culture: '文化 古建筑 传统',
-    adventure: '探险 户外 极限运动'
+export const getTravelPhotos = async (count = 12) => {
+  const cacheKey = `travel_photos_${count}`
+  
+  // 检查缓存
+  const cached = getCachedData(cacheKey)
+  if (cached) {
+    console.log('🎯 使用缓存的旅行照片')
+    return cached
   }
 
-  const query = categoryQueries[category] || categoryQueries.travel
-  const result = await searchPhotos(query, {
-    orientation: 'landscape',
-    per_page: 20,
-    ...options
-  })
+  try {
+    const data = await backendRequest('/photos/travel', {
+      count,
+      page: Math.floor(Math.random() * 3) + 1
+    })
 
-  return result ? result.photos : []
+    if (data?.photos) {
+      const photos = data.photos.map(photo => ({
+        id: photo.id,
+        url: (photo.src && photo.src.large) || photo.url || '',
+        thumbnail: photo.thumbnail || (photo.src && photo.src.medium) || photo.url || '',
+        alt: photo.alt || '旅行照片',
+        photographer: photo.photographer,
+        photographer_url: photo.photographer_url
+      }))
+      
+      // 缓存结果
+      setCachedData(cacheKey, photos)
+      console.log('🏞️ 获取旅行照片成功:', photos.length + '张')
+      return photos
+    }
+
+    return generateDefaultTravelPhotos(count)
+  } catch (error) {
+    console.error('获取旅行照片失败:', error)
+    return generateDefaultTravelPhotos(count)
+  }
 }
 
 /**
- * 获取轮播图片
+ * 获取轮播图片 - 直接使用默认图片
  * @param {number} count - 图片数量，默认4
  * @returns {Promise<Array>} 轮播图片数组
  */
 export async function getCarouselPhotos(count = 4) {
-  // 定义特定景点的搜索关键词，确保图片匹配内容
-  const specificQueries = [
-    'Jiuzhaigou colorful lakes mountain scenery', // 九寨沟 - 彩色湖泊山景
-    'Guilin Li River karst mountains water',      // 桂林 - 漓江山水
-    'West Lake Hangzhou China water scenic',      // 西湖 - 水景
-    'Zhangjiajie mountains peaks Avatar landscape' // 张家界 - 山峰景观
-  ]
-  
-  const allPhotos = []
-  
-  // 为每个景点获取对应的图片
-  for (let i = 0; i < Math.min(count, specificQueries.length); i++) {
-    const result = await searchPhotos(specificQueries[i], {
-      orientation: 'landscape',
-      per_page: 1
-    })
-    
-    if (result && result.photos && result.photos.length > 0) {
-      allPhotos.push(result.photos[0])
-    }
-  }
-  
-  // 如果获取的图片不足，用通用风景图片补充
-  if (allPhotos.length < count) {
-    const generalPhotos = await getTravelPhotos('landscape', { 
-      per_page: count - allPhotos.length 
-    })
-    if (generalPhotos && generalPhotos.length > 0) {
-      allPhotos.push(...generalPhotos.slice(0, count - allPhotos.length))
-    }
-  }
-  
-  if (allPhotos.length === 0) {
-    // 返回备用图片
-    return getDefaultCarouselPhotos()
-  }
-
-  return allPhotos.slice(0, count).map((photo, index) => ({
-    id: photo.id,
-    url: photo.src.large2x,
-    title: getPhotoTitle(photo, index),
-    description: getPhotoDescription(photo, index),
-    photographer: photo.photographer,
-    photographerUrl: photo.photographer_url,
-    pexelsUrl: photo.url
-  }))
+  console.log('🎠 使用默认轮播图片')
+  return getDefaultCarouselPhotos()
 }
 
 /**
@@ -208,56 +196,34 @@ export async function getGuidePhotos(count = 20, page = 1) {
     console.log(`📦 使用缓存数据: ${cacheKey}`)
     return cached
   }
-
-  // 优化：减少并行请求，使用单个请求获取更多数据
-  const categories = ['travel', 'landscape'] // 减少分类数量
-  const photosPerCategory = Math.ceil(count / categories.length)
   
   try {
-    // 串行请求而非并行，减少API压力
-    const allPhotos = []
-    
-    for (const category of categories) {
-      try {
-        const photos = await getTravelPhotos(category, { 
-          per_page: photosPerCategory,
-          page: page
-        })
-        if (photos && photos.length > 0) {
-          allPhotos.push(...photos)
-        }
-        // 添加请求间隔，避免API限流
-        await new Promise(resolve => setTimeout(resolve, 100))
-      } catch (error) {
-        console.warn(`分类 ${category} 请求失败:`, error)
-        continue
-      }
+    const data = await backendRequest('/photos/guide', {
+      count,
+      page
+    })
+
+    if (data?.photos && data.photos.length > 0) {
+      const result = data.photos.map((photo, index) => ({
+        id: `pexels_${photo.id}_p${page}_${index}_${Date.now()}`,
+        pexelsId: photo.id,
+        image: photo.thumbnail || (photo.src && photo.src.medium) || photo.url || '',
+        title: getGuideTitle(photo, index + (page - 1) * count),
+        description: getGuideDescription(photo, index + (page - 1) * count),
+        tag: getGuideTag(index + (page - 1) * count),
+        price: getRandomPrice(),
+        location: getGuideLocation(index + (page - 1) * count),
+        pexelsUrl: photo.sourceUrl || photo.url || ''
+      }))
+
+      // 缓存结果，延长缓存时间
+      setCachedData(cacheKey, result, 10 * 60 * 1000) // 10分钟缓存
+      console.log('📖 获取攻略图片成功:', result.length + '张')
+      return result
     }
 
-    if (allPhotos.length === 0) {
-      return getDefaultGuidePhotos(count, page)
-    }
-
-    // 为每页生成不同的随机种子，确保分页数据不重复
-    const seed = page * 1000
-    const shuffled = allPhotos.sort(() => Math.sin(seed + Math.random()) * 2 - 1)
-    
-    const result = shuffled.slice(0, count).map((photo, index) => ({
-      id: `pexels_${photo.id}_p${page}_${index}_${Date.now()}`,
-      pexelsId: photo.id,
-      image: photo.src.medium,
-      title: getGuideTitle(photo, index + (page - 1) * count),
-      description: getGuideDescription(photo, index + (page - 1) * count),
-      tag: getGuideTag(index + (page - 1) * count),
-      price: getRandomPrice(),
-      location: getGuideLocation(index + (page - 1) * count),
-      pexelsUrl: photo.url
-    }))
-
-    // 缓存结果，延长缓存时间
-    setCachedData(cacheKey, result, 10 * 60 * 1000) // 10分钟缓存
-    
-    return result
+    console.log('⚠️ 后端返回数据为空，使用默认攻略图片')
+    return getDefaultGuidePhotos(count, page)
   } catch (error) {
     console.error('获取攻略图片失败:', error)
     return getDefaultGuidePhotos(count, page)
@@ -372,25 +338,25 @@ function getDefaultCarouselPhotos() {
   return [
     {
       id: 1,
-      url: 'https://images.unsplash.com/photo-1528127269322-539801943592?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80', // 九寨沟彩色湖泊
+      url: '/images/1.jpg',
       title: '九寨沟风光',
       description: '人间仙境，水色斑斓'
     },
     {
       id: 2,
-      url: 'https://images.unsplash.com/photo-1569949381669-ecf31ae8e613?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80', // 桂林漓江山水
+      url: '/images/2.jpg',
       title: '桂林山水',
       description: '山水甲天下，如诗如画'
     },
     {
       id: 3,
-      url: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80', // 西湖水景
+      url: '/images/3.jpg',
       title: '西湖美景',
       description: '淡妆浓抹总相宜'
     },
     {
       id: 4,
-      url: 'https://images.unsplash.com/photo-1580674684081-7617fbf3d745?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80', // 张家界山峰
+      url: '/images/4.jpg',
       title: '张家界天门山',
       description: '天门洞开，云雾缭绕'
     }

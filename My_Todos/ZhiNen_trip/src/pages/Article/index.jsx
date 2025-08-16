@@ -1238,17 +1238,19 @@ const Article = () => {
         // 将pexels图片数据转换为旅记数据
         const newArticles = photos.map((photo, index) => {
           const user = generateMockUser(activeTab) // 传入当前分类
+          // 安全访问photo.src属性，防止undefined错误
+          const photoSrc = photo?.src || {}
           return {
             id: `${activeTab}-${pageNum}-${index}-${photo.id}`, // 使用photo.id确保唯一性
             user,
             content: generateContentByCategory(activeTab), // 使用分类内容
             images: [{
               ...photo,
-              url: photo.src.medium || photo.src.small,
+              url: photoSrc.medium || photoSrc.small || photo.url || '',
               src: {
-                medium: photo.src.medium,
-                small: photo.src.small,
-                large: photo.src.large
+                medium: photoSrc.medium || '',
+                small: photoSrc.small || '',
+                large: photoSrc.large || photoSrc.original || ''
               }
             }], // 使用真实图片数据
             tags: generateTagsByCategory(activeTab), // 使用分类标签
