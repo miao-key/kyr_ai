@@ -16,27 +16,39 @@ const UserAvatar = ({
   onClick = null,
   showOnlineStatus = false,
   round = true,
-  alt = null
+  alt = null,
+  userInfo: externalUserInfo = null // 新增：允许外部传入用户信息
 }) => {
   const { user, isAuthenticated } = useAuthStore()
   const [imgError, setImgError] = useState(false)
   
-  // 统一的用户信息获取逻辑
-  const userInfo = {
+  // 统一的用户信息获取逻辑 - 优先使用外部传入的userInfo
+  const userInfo = externalUserInfo || {
     nickname: user ? formatUserDisplayName(user) : '游客',
     avatar: user?.avatar || (user ? generateAvatarUrl(user) : null)
   }
   
+  // 调试日志
+  console.log('👤 UserAvatar组件渲染:', {
+    externalUserInfo,
+    user,
+    userInfo,
+    isAuthenticated,
+    imgError
+  })
+  
   // 头像源优先级：用户自定义头像 > 生成头像 > 本地占位符
   const getAvatarSrc = () => {
-    if (imgError || !userInfo.avatar) {
-      // 使用本地生成的SVG头像作为fallback
-      return imageUtils.placeholder(size, size, userInfo.nickname || '用户')
+    // 如果图片加载失败或没有头像，使用占位符
+    if (imgError || !userInfo?.avatar) {
+      return imageUtils.placeholder(size, size, userInfo?.name?.charAt(0) || 'U')
     }
+    
     return userInfo.avatar
   }
   
   const handleImageError = () => {
+    console.log('🖼️ UserAvatar图片加载失败，切换到占位符')
     setImgError(true)
   }
   

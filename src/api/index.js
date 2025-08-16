@@ -14,30 +14,42 @@
 
 import { avatarCache, imageCache } from '@utils/apiCache'
 
+import { ApiConfig } from '../utils/apiConfig.js'
+
+// 获取API配置
+const apiConfig = new ApiConfig()
+const config = apiConfig.getDoubaoConfig()
+
 // API 配置 - 使用代理路径，API密钥由代理服务器处理
 const API_CONFIG = {
     // 在开发环境通过 Vite 代理；在 Vercel 生产环境由 Serverless 处理
-    BASE_URL: '/api/doubao',
+    BASE_URL: config.baseUrl,
     IMAGE_MODEL: 'ep-20250804182253-ckvjk', // 专用图像生成模型
-    TIMEOUT: 30000
+    TIMEOUT: 30000,
+    USE_SERVERLESS: config.useServerless,
+    API_KEY: config.apiKey
 }
 
-// 安全的请求拦截器 - API密钥由代理服务器自动添加
-const createRequest = async (url, options = {}) => {
-    const config = {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            // 注意：Authorization头由vite.config.js代理自动添加，无需在前端处理
-            ...options.headers
-        },
-        timeout: API_CONFIG.TIMEOUT,
-        ...options
-    }
+// 智能请求函数 - 根据环境选择调用方式
+const smartRequest = async (endpoint, options = {}) => {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.TIMEOUT)
 
     try {
-        const response = await fetch(url, config)
-        
+        // 使用API配置构建URL和请求配置
+        const url = apiConfig.buildUrl(config, endpoint)
+        const requestConfig = apiConfig.createRequestConfig(config, {
+            ...options,
+            signal: controller.signal
+        })
+
+        console.log('📡 发送请求到:', url)
+        console.log('🔧 请求配置:', requestConfig)
+
+        const response = await fetch(url, requestConfig)
+
+        clearTimeout(timeoutId)
+
         if (!response.ok) {
             const errorText = await response.text()
             console.error('豆包API请求失败:', {
@@ -50,24 +62,67 @@ const createRequest = async (url, options = {}) => {
 
         return await response.json()
     } catch (error) {
+        clearTimeout(timeoutId)
+        if (error.name === 'AbortError') {
+            throw new Error('请求超时')
+        }
         console.error('豆包API网络错误:', error)
         throw error
     }
 }
 
-// 生成旅行头像的主函数 - 集成缓存机制
+// 旅行场景配置
+const TRAVEL_SCENARIOS = {
+    landscapes: [
+        'standing in front of majestic mountains with snow peaks',
+        'on a beautiful beach with crystal clear water and palm trees',
+        'exploring ancient temples with traditional architecture',
+        'in a vibrant city skyline during golden hour',
+        'beside a serene lake surrounded by autumn forests',
+        'at a scenic viewpoint overlooking vast valleys',
+        'in front of famous landmarks and monuments',
+        'walking through colorful flower fields'
+    ],
+    activities: [
+        'hiking with a backpack and trekking poles',
+        'taking photos with a professional camera',
+        'reading a map while exploring new places',
+        'enjoying local street food at a market',
+        'camping under a starry night sky',
+        'cycling through scenic countryside',
+        'snorkeling in tropical waters',
+        'watching sunrise from a mountain peak'
+    ],
+    styles: [
+        'adventurous explorer with outdoor gear',
+        'casual backpacker with comfortable clothing',
+        'cultural enthusiast visiting museums',
+        'nature photographer capturing wildlife',
+        'luxury traveler enjoying fine experiences',
+        'solo wanderer discovering hidden gems',
+        'group traveler making new friends',
+        'digital nomad working remotely'
+    ]
+}
+
+// 随机选择旅行场景元素
+const getRandomTravelScenario = () => {
+    const categories = Object.keys(TRAVEL_SCENARIOS)
+    const randomCategory = categories[Math.floor(Math.random() * categories.length)]
+    const scenarios = TRAVEL_SCENARIOS[randomCategory]
+    return scenarios[Math.floor(Math.random() * scenarios.length)]
+}
+
+// 生成旅行头像的主函数 - 修改缓存机制确保每次生成唯一头像
 export const generateTravelAvatar = async (prompt) => {
-    const optimizedPrompt = `Portrait of a traveler, ${prompt}, professional photography, high quality, travel style, friendly expression, outdoor lighting, 4K resolution`
+    // 随机选择一个旅行场景
+    const travelScenario = getRandomTravelScenario()
     
-    // 生成缓存键
-    const cacheKey = `avatar_${btoa(optimizedPrompt).slice(0, 32)}`
+    // 构建丰富的旅行主题prompt
+    const optimizedPrompt = `Professional portrait of a friendly traveler, ${prompt}, ${travelScenario}, beautiful travel photography, high quality, natural lighting, warm and inviting expression, travel lifestyle, outdoor adventure, 4K resolution, cinematic composition`
     
-    // 检查缓存
-    const cachedResult = avatarCache.get(cacheKey)
-    if (cachedResult) {
-        console.log('🎯 使用缓存的头像结果')
-        return { ...cachedResult, fromCache: true }
-    }
+    // 头像生成不使用缓存，确保每次都生成新的头像
+    console.log('🎨 每次都生成新的旅行头像，不使用缓存')
     
     console.log('🎨 开始生成旅行头像...')
     console.log('📝 提示词:', optimizedPrompt)
@@ -83,7 +138,7 @@ export const generateTravelAvatar = async (prompt) => {
         }
 
         console.log('📡 发送请求到豆包API...')
-        const response = await createRequest(`${API_CONFIG.BASE_URL}/v3/images/generations`, {
+        const response = await smartRequest('/v3/images/generations', {
             method: 'POST',
             body: JSON.stringify(requestBody)
         })
@@ -101,9 +156,7 @@ export const generateTravelAvatar = async (prompt) => {
                 prompt: optimizedPrompt
             }
             
-            // 缓存成功结果
-            avatarCache.set(cacheKey, result)
-            
+            // 不缓存头像生成结果，确保每次都是新的
             return result
         } else {
             console.warn('⚠️ 豆包API返回格式异常:', response)
@@ -127,9 +180,7 @@ export const generateTravelAvatar = async (prompt) => {
             fallback: true
         }
         
-        // 缓存降级结果（较短时间）
-        avatarCache.set(cacheKey, fallbackResult)
-        
+        // 不缓存降级结果，确保每次都尝试重新生成
         return fallbackResult
     }
 }
@@ -164,7 +215,7 @@ export const generateRealisticImage = async (prompt, options = {}) => {
             watermark
         }
 
-        const response = await createRequest(`${API_CONFIG.BASE_URL}/v3/images/generations`, {
+        const response = await smartRequest('/v3/images/generations', {
             method: 'POST',
             body: JSON.stringify(requestBody)
         })

@@ -199,6 +199,24 @@ const Account = () => {
         ...extendedUserInfo
     }
     
+    // 调试日志 - 显示头像信息
+    console.log('🏠 Account页面 - 用户头像信息:', {
+        userAvatar: user?.avatar,
+        userInfoAvatar: userInfo.avatar,
+        user: user
+    })
+
+    // 页面调试信息
+    const debugInfo = {
+        isAuthenticated,
+        userExists: !!user,
+        userAvatar: user?.avatar,
+        userInfoAvatar: userInfo.avatar,
+        avatarType: user?.avatar && typeof user.avatar === 'string' ? 
+            (user.avatar.includes('dicebear') ? 'DiceBear' : 
+             user.avatar.includes('pexels') ? 'Pexels' : 'Other') : 'None'
+    }
+    
     useTitle('智旅-我的')
     const [showAvatarSheet, setShowAvatarSheet] = useState(false)
     const [showAchievementDetail, setShowAchievementDetail] = useState(false)
@@ -613,6 +631,8 @@ const Account = () => {
 
     return (
         <div className={styles.travelAccountPage}>
+
+            
             {/* 旅行档案头部 */}
             <div className={styles.travelProfileHeader}>
                 <div className={styles.headerBackground}>
@@ -643,6 +663,7 @@ const Account = () => {
                                 round={true}
                                 onClick={() => setShowAvatarSheet(true)}
                                 className={styles.avatarImage}
+                                userInfo={userInfo}
                             />
                             <div className={styles.cameraIcon}>
                                 <PhotoO size={16} />

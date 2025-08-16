@@ -3,83 +3,97 @@
  * 提供图片搜索和获取功能
  */
 
-// Pexels API 基础配置
-const PEXELS_API_BASE = 'https://api.pexels.com/v1'
-const API_KEY = import.meta.env.VITE_PEXELS_API
+import axios from 'axios';
+import { defaultCache as apiCache } from '../utils/apiCache';
+import { getPexelsConfig, createRequestConfig, buildUrl } from '../utils/apiConfig';
 
-// 请求头配置
-const headers = {
-  'Authorization': API_KEY,
-  'Content-Type': 'application/json'
-}
+const CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
 
-/**
- * 通用的 Pexels API 请求函数
- * @param {string} endpoint - API端点
- * @param {Object} params - 查询参数
- * @returns {Promise<Object>} API响应数据
- */
-async function pexelsRequest(endpoint, params = {}) {
-  if (!API_KEY) {
-    console.warn('Pexels API密钥未配置，使用默认图片')
-    return null
-  }
-
-  try {
-    const url = new URL(`${PEXELS_API_BASE}${endpoint}`)
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        url.searchParams.append(key, value)
+// 智能API请求函数，根据环境选择调用方式
+const smartRequest = async (endpoint, options = {}) => {
+  const config = getPexelsConfig();
+  const maxRetries = 3;
+  const baseDelay = 1000;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      let url, requestConfig;
+      
+      if (config.useServerless) {
+        // 生产环境：使用serverless函数
+        url = buildUrl(config, endpoint);
+        requestConfig = {
+          method: 'GET',
+          timeout: 10000,
+          ...options
+        };
+      } else {
+        // 本地环境：直接调用Pexels API
+        url = buildUrl(config, endpoint);
+        requestConfig = createRequestConfig(config, {
+          method: 'GET',
+          timeout: 10000,
+          ...options
+        });
       }
-    })
+      
+      const response = await axios({
+        url,
+        ...requestConfig
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error(`请求失败 (尝试 ${attempt}/${maxRetries}):`, error.message);
+      
+      // 如果是429错误或网络错误，进行重试
+      if (attempt < maxRetries && 
+          (error.response?.status === 429 || 
+           error.code === 'NETWORK_ERROR' || 
+           error.code === 'ECONNABORTED')) {
+        const delay = baseDelay * Math.pow(2, attempt - 1);
+        console.log(`等待 ${delay}ms 后重试...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      
+      throw error;
+    }
+  }
+};
 
-    const response = await fetch(url, { headers })
-    
-    if (!response.ok) {
-      throw new Error(`Pexels API错误: ${response.status} ${response.statusText}`)
+export const searchPhotos = async (query, page = 1, perPage = 20) => {
+  try {
+    const cacheKey = `search_${query}_${page}_${perPage}`;
+    const cached = apiCache.get(cacheKey);
+    if (cached) {
+      return cached;
     }
 
-    return await response.json()
+    const config = getPexelsConfig();
+    let endpoint;
+    
+    if (config.useServerless) {
+      // 生产环境：调用serverless函数
+      endpoint = `/search?query=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}`;
+    } else {
+      // 本地环境：直接调用Pexels API
+      endpoint = `/search?query=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}`;
+    }
+
+    const data = await smartRequest(endpoint);
+    
+    if (data && data.photos) {
+      apiCache.set(cacheKey, data, CACHE_DURATION);
+      return data;
+    }
+    
+    throw new Error('Invalid response format');
   } catch (error) {
-    console.error('Pexels API请求失败:', error)
-    return null
+    console.error('搜索图片失败:', error);
+    throw error;
   }
-}
-
-/**
- * 搜索图片
- * @param {string} query - 搜索关键词
- * @param {Object} options - 搜索选项
- * @param {number} options.page - 页码，默认1
- * @param {number} options.per_page - 每页数量，默认15
- * @param {string} options.orientation - 图片方向: 'landscape', 'portrait', 'square'
- * @param {string} options.size - 图片尺寸: 'large', 'medium', 'small'
- * @param {string} options.color - 颜色筛选
- * @param {string} options.locale - 语言设置，默认'zh-CN'
- * @returns {Promise<Object>} 搜索结果
- */
-export async function searchPhotos(query, options = {}) {
-  const {
-    page = 1,
-    per_page = 15,
-    orientation,
-    size,
-    color,
-    locale = 'zh-CN'
-  } = options
-
-  const params = {
-    query,
-    page,
-    per_page,
-    orientation,
-    size,
-    color,
-    locale
-  }
-
-  return await pexelsRequest('/search', params)
-}
+};
 
 /**
  * 获取精选图片
@@ -94,12 +108,36 @@ export async function getCuratedPhotos(options = {}) {
     per_page = 15
   } = options
 
-  const params = {
-    page,
-    per_page
-  }
+  try {
+    const cacheKey = `curated_${page}_${per_page}`;
+    const cached = apiCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
 
-  return await pexelsRequest('/curated', params)
+    const config = getPexelsConfig();
+    let endpoint;
+    
+    if (config.useServerless) {
+      // 生产环境：调用serverless函数
+      endpoint = `/curated?page=${page}&per_page=${per_page}`;
+    } else {
+      // 本地环境：直接调用Pexels API
+      endpoint = `/curated?page=${page}&per_page=${per_page}`;
+    }
+
+    const data = await smartRequest(endpoint);
+    
+    if (data && data.photos) {
+      apiCache.set(cacheKey, data, CACHE_DURATION);
+      return data;
+    }
+    
+    throw new Error('Invalid response format');
+  } catch (error) {
+    console.error('获取精选图片失败:', error);
+    throw error;
+  }
 }
 
 /**
@@ -108,35 +146,88 @@ export async function getCuratedPhotos(options = {}) {
  * @returns {Promise<Object>} 图片数据
  */
 export async function getPhotoById(id) {
-  return await pexelsRequest(`/photos/${id}`)
+  try {
+    const cacheKey = `photo_${id}`;
+    const cached = apiCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const config = getPexelsConfig();
+    let endpoint;
+    
+    if (config.useServerless) {
+      // 生产环境：调用serverless函数
+      endpoint = `/photos/${id}`;
+    } else {
+      // 本地环境：直接调用Pexels API
+      endpoint = `/photos/${id}`;
+    }
+
+    const data = await smartRequest(endpoint);
+    
+    if (data && data.id) {
+      apiCache.set(cacheKey, data, CACHE_DURATION);
+      return data;
+    }
+    
+    throw new Error('Invalid response format');
+  } catch (error) {
+    console.error('获取图片详情失败:', error);
+    throw error;
+  }
 }
 
 /**
- * 获取旅游相关的图片集合
- * @param {string} category - 分类：'landscape', 'mountain', 'beach', 'city', 'nature'
- * @param {Object} options - 选项
- * @returns {Promise<Array>} 图片数组
+ * 获取旅行相关照片
+ * @param {number} count - 照片数量
+ * @returns {Promise<Array>} 照片数组
  */
-export async function getTravelPhotos(category = 'travel', options = {}) {
-  const categoryQueries = {
-    landscape: '风景 山水 自然风光',
-    mountain: '山峰 高山 雪山',
-    beach: '海滩 海岸 沙滩',
-    city: '城市 建筑 都市',
-    nature: '自然 森林 湖泊',
-    travel: '旅游 风景 目的地',
-    culture: '文化 古建筑 传统',
-    adventure: '探险 户外 极限运动'
+export const getTravelPhotos = async (count = 12) => {
+  const cacheKey = `travel_photos_${count}`
+  
+  // 检查缓存
+  const cached = getCachedData(cacheKey)
+  if (cached) {
+    console.log('🎯 使用缓存的旅行照片')
+    return cached
   }
 
-  const query = categoryQueries[category] || categoryQueries.travel
-  const result = await searchPhotos(query, {
-    orientation: 'landscape',
-    per_page: 20,
-    ...options
-  })
+  try {
+    const config = getPexelsConfig();
+    let endpoint;
+    
+    if (config.useServerless) {
+      // 生产环境：调用serverless函数
+      endpoint = `/search?query=travel&page=${Math.floor(Math.random() * 3) + 1}&per_page=${count}`;
+    } else {
+      // 本地环境：直接调用Pexels API
+      endpoint = `/search?query=travel&page=${Math.floor(Math.random() * 3) + 1}&per_page=${count}`;
+    }
 
-  return result ? result.photos : []
+    const data = await smartRequest(endpoint);
+
+    if (data?.photos) {
+      const photos = data.photos.map(photo => ({
+        id: photo.id,
+        url: (photo.src && photo.src.large) || photo.url || '',
+        thumbnail: photo.thumbnail || (photo.src && photo.src.medium) || photo.url || '',
+        alt: photo.alt || '旅行照片',
+        photographer: photo.photographer,
+        photographer_url: photo.photographer_url
+      }))
+      
+      // 缓存结果
+      setCachedData(cacheKey, photos)
+      console.log('🏞️ 获取旅行照片成功:', photos.length + '张')
+      return photos
+    }
+
+    return generateDefaultTravelPhotos(count)
+  } catch (error) {
+    console.error('获取旅行照片失败:', error)
+    return generateDefaultTravelPhotos(count)
+  }
 }
 
 /**
@@ -145,52 +236,42 @@ export async function getTravelPhotos(category = 'travel', options = {}) {
  * @returns {Promise<Array>} 轮播图片数组
  */
 export async function getCarouselPhotos(count = 4) {
-  // 定义特定景点的搜索关键词，确保图片匹配内容
-  const specificQueries = [
-    'Jiuzhaigou colorful lakes mountain scenery', // 九寨沟 - 彩色湖泊山景
-    'Guilin Li River karst mountains water',      // 桂林 - 漓江山水
-    'West Lake Hangzhou China water scenic',      // 西湖 - 水景
-    'Zhangjiajie mountains peaks Avatar landscape' // 张家界 - 山峰景观
-  ]
-  
-  const allPhotos = []
-  
-  // 为每个景点获取对应的图片
-  for (let i = 0; i < Math.min(count, specificQueries.length); i++) {
-    const result = await searchPhotos(specificQueries[i], {
-      orientation: 'landscape',
-      per_page: 1
-    })
-    
-    if (result && result.photos && result.photos.length > 0) {
-      allPhotos.push(result.photos[0])
+  try {
+    const cacheKey = 'carousel_photos';
+    const cached = apiCache.get(cacheKey);
+    if (cached) {
+      return cached;
     }
-  }
-  
-  // 如果获取的图片不足，用通用风景图片补充
-  if (allPhotos.length < count) {
-    const generalPhotos = await getTravelPhotos('landscape', { 
-      per_page: count - allPhotos.length 
-    })
-    if (generalPhotos && generalPhotos.length > 0) {
-      allPhotos.push(...generalPhotos.slice(0, count - allPhotos.length))
-    }
-  }
-  
-  if (allPhotos.length === 0) {
-    // 返回备用图片
-    return getDefaultCarouselPhotos()
-  }
 
-  return allPhotos.slice(0, count).map((photo, index) => ({
-    id: photo.id,
-    url: photo.src.large2x,
-    title: getPhotoTitle(photo, index),
-    description: getPhotoDescription(photo, index),
-    photographer: photo.photographer,
-    photographerUrl: photo.photographer_url,
-    pexelsUrl: photo.url
-  }))
+    const config = getPexelsConfig();
+    let endpoint;
+    
+    if (config.useServerless) {
+      // 生产环境：调用serverless函数
+      endpoint = '/search?query=landscape&page=1&per_page=3';
+    } else {
+      // 本地环境：直接调用Pexels API
+      endpoint = '/search?query=landscape&page=1&per_page=3';
+    }
+
+    try {
+      const data = await smartRequest(endpoint);
+      
+      if (data && data.photos) {
+        apiCache.set(cacheKey, data, CACHE_DURATION);
+        return data;
+      }
+    } catch (apiError) {
+      console.warn('API调用失败，使用默认图片:', apiError.message);
+    }
+    
+    // 如果API调用失败，使用默认图片
+    console.log('🎠 使用默认轮播图片')
+    return getDefaultCarouselPhotos()
+  } catch (error) {
+    console.error('获取轮播图片失败:', error);
+    throw error;
+  }
 }
 
 /**
@@ -208,56 +289,42 @@ export async function getGuidePhotos(count = 20, page = 1) {
     console.log(`📦 使用缓存数据: ${cacheKey}`)
     return cached
   }
-
-  // 优化：减少并行请求，使用单个请求获取更多数据
-  const categories = ['travel', 'landscape'] // 减少分类数量
-  const photosPerCategory = Math.ceil(count / categories.length)
   
   try {
-    // 串行请求而非并行，减少API压力
-    const allPhotos = []
+    const config = getPexelsConfig();
+    let endpoint;
     
-    for (const category of categories) {
-      try {
-        const photos = await getTravelPhotos(category, { 
-          per_page: photosPerCategory,
-          page: page
-        })
-        if (photos && photos.length > 0) {
-          allPhotos.push(...photos)
-        }
-        // 添加请求间隔，避免API限流
-        await new Promise(resolve => setTimeout(resolve, 100))
-      } catch (error) {
-        console.warn(`分类 ${category} 请求失败:`, error)
-        continue
-      }
+    if (config.useServerless) {
+      // 生产环境：调用serverless函数
+      endpoint = `/search?query=travel&page=${page}&per_page=${count}`;
+    } else {
+      // 本地环境：直接调用Pexels API
+      endpoint = `/search?query=travel&page=${page}&per_page=${count}`;
     }
 
-    if (allPhotos.length === 0) {
-      return getDefaultGuidePhotos(count, page)
+    const data = await smartRequest(endpoint);
+
+    if (data?.photos && data.photos.length > 0) {
+      const result = data.photos.map((photo, index) => ({
+        id: `pexels_${photo.id}_p${page}_${index}_${Date.now()}`,
+        pexelsId: photo.id,
+        image: photo.thumbnail || (photo.src && photo.src.medium) || photo.url || '',
+        title: getGuideTitle(photo, index + (page - 1) * count),
+        description: getGuideDescription(photo, index + (page - 1) * count),
+        tag: getGuideTag(index + (page - 1) * count),
+        price: getRandomPrice(),
+        location: getGuideLocation(index + (page - 1) * count),
+        pexelsUrl: photo.sourceUrl || photo.url || ''
+      }))
+
+      // 缓存结果，延长缓存时间
+      setCachedData(cacheKey, result, 10 * 60 * 1000) // 10分钟缓存
+      console.log('📖 获取攻略图片成功:', result.length + '张')
+      return result
     }
 
-    // 为每页生成不同的随机种子，确保分页数据不重复
-    const seed = page * 1000
-    const shuffled = allPhotos.sort(() => Math.sin(seed + Math.random()) * 2 - 1)
-    
-    const result = shuffled.slice(0, count).map((photo, index) => ({
-      id: `pexels_${photo.id}_p${page}_${index}_${Date.now()}`,
-      pexelsId: photo.id,
-      image: photo.src.medium,
-      title: getGuideTitle(photo, index + (page - 1) * count),
-      description: getGuideDescription(photo, index + (page - 1) * count),
-      tag: getGuideTag(index + (page - 1) * count),
-      price: getRandomPrice(),
-      location: getGuideLocation(index + (page - 1) * count),
-      pexelsUrl: photo.url
-    }))
-
-    // 缓存结果，延长缓存时间
-    setCachedData(cacheKey, result, 10 * 60 * 1000) // 10分钟缓存
-    
-    return result
+    console.log('⚠️ API返回数据为空，使用默认攻略图片')
+    return getDefaultGuidePhotos(count, page)
   } catch (error) {
     console.error('获取攻略图片失败:', error)
     return getDefaultGuidePhotos(count, page)
@@ -372,25 +439,25 @@ function getDefaultCarouselPhotos() {
   return [
     {
       id: 1,
-      url: 'https://images.unsplash.com/photo-1528127269322-539801943592?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80', // 九寨沟彩色湖泊
+      url: '/images/1.jpg',
       title: '九寨沟风光',
       description: '人间仙境，水色斑斓'
     },
     {
       id: 2,
-      url: 'https://images.unsplash.com/photo-1569949381669-ecf31ae8e613?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80', // 桂林漓江山水
+      url: '/images/2.jpg',
       title: '桂林山水',
       description: '山水甲天下，如诗如画'
     },
     {
       id: 3,
-      url: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80', // 西湖水景
+      url: '/images/3.jpg',
       title: '西湖美景',
       description: '淡妆浓抹总相宜'
     },
     {
       id: 4,
-      url: 'https://images.unsplash.com/photo-1580674684081-7617fbf3d745?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80', // 张家界山峰
+      url: '/images/4.jpg',
       title: '张家界天门山',
       description: '天门洞开，云雾缭绕'
     }
@@ -495,19 +562,19 @@ function getDefaultGuidePhotos(count = 20, page = 1) {
 // 简单的内存缓存系统
 // 优化缓存管理
 const cache = new Map()
-const CACHE_DURATION = 10 * 60 * 1000 // 10分钟
+const GUIDE_CACHE_DURATION = 10 * 60 * 1000 // 10分钟
 const MAX_CACHE_SIZE = 50 // 最大缓存条目数
 
 function getCachedData(key) {
   const cached = cache.get(key)
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+  if (cached && Date.now() - cached.timestamp < GUIDE_CACHE_DURATION) {
     return cached.data
   }
   cache.delete(key)
   return null
 }
 
-function setCachedData(key, data, duration = CACHE_DURATION) {
+function setCachedData(key, data, duration = GUIDE_CACHE_DURATION) {
   // 清理过期缓存
   if (cache.size >= MAX_CACHE_SIZE) {
     const oldestKey = cache.keys().next().value

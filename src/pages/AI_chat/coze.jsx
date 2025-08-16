@@ -1,8 +1,9 @@
 import { useRef, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import useTitle from '@/hooks/useTitle'
-import { useAuthStore } from '../../stores'
+import { useTitle } from 'ahooks'
+import useAuthStore from '@/stores/authStore'
 import { UserAvatar } from '@/components/UI'
+import { ApiConfig } from '@/utils/apiConfig'
 import styles from './coze.module.css'
 
 // 增强的Markdown格式化函数
@@ -273,23 +274,76 @@ const Coze = () => {
   // 使用统一的认证系统
   const { user, isAuthenticated } = useAuthStore()
 
+  // 获取API配置
+  const apiConfig = new ApiConfig()
+  const config = apiConfig.getCozeConfig()
+  
   // Coze工作流API配置
-  const workflowUrl = '/api/coze/workflow/run'
-  // 生产由 Vercel 函数注入鉴权，不再从前端读取 token
-  const patToken = import.meta.env.VITE_PAT_TOKEN
   const workflow_id = '7534974379706794024'
+  
+  // localStorage键名
+  const STORAGE_KEY = 'coze-chat-messages'
+  
+  // 从localStorage加载聊天记录
+  const loadMessagesFromStorage = () => {
+    try {
+      const savedMessages = localStorage.getItem(STORAGE_KEY)
+      if (savedMessages) {
+        const parsedMessages = JSON.parse(savedMessages)
+        if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
+          return parsedMessages
+        }
+      }
+    } catch (error) {
+      console.error('加载聊天记录失败:', error)
+    }
+    return null
+  }
+  
+  // 保存聊天记录到localStorage
+  const saveMessagesToStorage = (messages) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages))
+    } catch (error) {
+      console.error('保存聊天记录失败:', error)
+    }
+  }
+  
+  // 清空聊天记录
+  const clearChatHistory = () => {
+    const welcomeMessage = {
+      id: 1,
+      type: 'bot',
+      content: '您好！我是智旅AI助手 🤖\n\n我可以帮助您：\n• 规划个性化旅行路线\n• 推荐热门景点和美食\n• 制定详细行程安排\n• 解答旅行相关问题\n\n请告诉我您想去哪里旅行，或者有什么旅行计划需要帮助？',
+      timestamp: new Date().toLocaleTimeString()
+    }
+    setMessages([welcomeMessage])
+    localStorage.removeItem(STORAGE_KEY)
+  }
 
-  // 调用Coze工作流API
+  // 智能调用Coze工作流API - 根据环境选择调用方式
   const callCozeWorkflow = async (userInput) => {
     try {
-      const response = await fetch(workflowUrl, {
+      let url, headers
+      
+      if (config.useServerless) {
+        // 生产环境：使用serverless函数
+        url = '/api/coze/workflow/run'
+        headers = {
+          'Content-Type': 'application/json'
+        }
+      } else {
+        // 本地开发：使用Vite代理路径避免CORS问题
+        url = '/api/coze/workflow/run'
+        headers = {
+          'Content-Type': 'application/json'
+          // Authorization头由Vite代理自动添加，不需要手动设置
+        }
+      }
+      
+      const response = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // 在本地开发时通过 Vite 代理加上 Authorization；
-          // 在 Vercel 生产环境由无服务函数处理，无需此头
-          ...(patToken ? { 'Authorization': `Bearer ${patToken}` } : {})
-        },
+        headers,
         body: JSON.stringify({
           workflow_id,
           parameters: {
@@ -366,16 +420,29 @@ const Coze = () => {
     }
   }
 
-  // 机器人默认欢迎消息
+  // 初始化聊天记录 - 优先从localStorage加载
   useEffect(() => {
-    const welcomeMessage = {
-      id: 1,
-      type: 'bot',
-      content: '您好！我是智旅AI助手 🤖\n\n我可以帮助您：\n• 规划个性化旅行路线\n• 推荐热门景点和美食\n• 制定详细行程安排\n• 解答旅行相关问题\n\n请告诉我您想去哪里旅行，或者有什么旅行计划需要帮助？',
-      timestamp: new Date().toLocaleTimeString()
+    const savedMessages = loadMessagesFromStorage()
+    if (savedMessages) {
+      setMessages(savedMessages)
+    } else {
+      // 如果没有保存的记录，显示默认欢迎消息
+      const welcomeMessage = {
+        id: 1,
+        type: 'bot',
+        content: '您好！我是智旅AI助手 🤖\n\n我可以帮助您：\n• 规划个性化旅行路线\n• 推荐热门景点和美食\n• 制定详细行程安排\n• 解答旅行相关问题\n\n请告诉我您想去哪里旅行，或者有什么旅行计划需要帮助？',
+        timestamp: new Date().toLocaleTimeString()
+      }
+      setMessages([welcomeMessage])
     }
-    setMessages([welcomeMessage])
   }, [])
+  
+  // 监听messages变化，自动保存到localStorage
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveMessagesToStorage(messages)
+    }
+  }, [messages])
 
   // 自动滚动到底部
   useEffect(() => {
@@ -469,7 +536,16 @@ const Coze = () => {
           <h2 className={styles.chatTitle}>AI智能助手</h2>
           <span className={styles.onlineStatus}>● 在线</span>
         </div>
-        <div className={styles.robotAvatar}>🤖</div>
+        <div className={styles.headerActions}>
+          <button
+            className={styles.clearButton}
+            onClick={clearChatHistory}
+            title="清空聊天记录"
+          >
+            🗑️
+          </button>
+          <div className={styles.robotAvatar}>🤖</div>
+        </div>
       </div>
 
       {/* 聊天消息区域 */}
