@@ -169,9 +169,11 @@ class PexelsService {
 
   // 搜索图片
   async searchPhotos(queryOrOptions, options = {}) {
+    // 在函数开始就声明变量，避免作用域问题
+    let query, finalOptions;
+    
     try {
       // 支持对象参数和传统参数两种调用方式
-      let query, finalOptions;
       if (typeof queryOrOptions === 'object' && queryOrOptions !== null) {
         // 新的对象参数方式: searchPhotos({query, page, per_page})
         query = queryOrOptions.query;
@@ -194,6 +196,11 @@ class PexelsService {
           color: options.color || 'all',
           locale: options.locale || 'en-US'
         };
+      }
+      
+      // 验证 query 参数
+      if (!query) {
+        throw new Error('搜索关键词不能为空')
       }
       
       const params = {

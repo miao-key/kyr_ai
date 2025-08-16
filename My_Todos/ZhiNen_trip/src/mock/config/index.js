@@ -2,9 +2,11 @@ import dotenv from 'dotenv'
 import path from 'path'
 
 // 加载根目录的.env.local文件
-dotenv.config({ path: path.resolve(process.cwd(), '.env.local') })
+// 由于后端在 src/mock 目录下运行，需要向上两级找到项目根目录
+const rootDir = path.resolve(process.cwd(), '../../')
+dotenv.config({ path: path.resolve(rootDir, '.env.local') })
 // 也加载默认的.env文件作为备选
-dotenv.config()
+dotenv.config({ path: path.resolve(rootDir, '.env') })
 
 const config = {
   // 服务器配置
@@ -121,6 +123,10 @@ if (config.server.env === 'development') {
   console.log(`   环境: ${config.server.env}`)
   console.log(`   CORS源: ${config.cors.origin.join(', ')}`)
   console.log(`   JWT过期时间: ${config.jwt.expiresIn}`)
+  console.log(`   Pexels API密钥: ${config.apis.pexels.apiKey ? '已配置' : '未配置'}`)
+  if (config.apis.pexels.apiKey) {
+    console.log(`   API密钥前缀: ${config.apis.pexels.apiKey.substring(0, 10)}...`)
+  }
 }
 
 export default config
