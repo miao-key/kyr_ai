@@ -61,38 +61,6 @@ export default defineConfig(({ command, mode }) => {
         ]
       },
       proxy: {
-        // 代理本地后端API请求 (photos相关)
-        "/api/photos": {
-          target: "http://localhost:3001",
-          changeOrigin: true,
-          configure: (proxy, options) => {
-            proxy.on('error', (err, req, res) => {
-              console.log('❌ 后端API代理错误:', err);
-            });
-            proxy.on('proxyReq', (proxyReq, req, res) => {
-              console.log('📡 代理后端API请求:', req.url);
-            });
-            proxy.on('proxyRes', (proxyRes, req, res) => {
-              console.log('📥 后端API代理响应:', req.url, proxyRes.statusCode);
-            });
-          }
-        },
-        // 代理本地后端API请求 (auth相关)
-        "/api/auth": {
-          target: "http://localhost:3001",
-          changeOrigin: true,
-          configure: (proxy, options) => {
-            proxy.on('error', (err, req, res) => {
-              console.log('❌ 后端API代理错误:', err);
-            });
-            proxy.on('proxyReq', (proxyReq, req, res) => {
-              console.log('📡 代理后端API请求:', req.url);
-            });
-            proxy.on('proxyRes', (proxyRes, req, res) => {
-              console.log('📥 后端API代理响应:', req.url, proxyRes.statusCode);
-            });
-          }
-        },
         // 代理Doubao API请求
         "/api/doubao": {
           target: "https://ark.cn-beijing.volces.com",

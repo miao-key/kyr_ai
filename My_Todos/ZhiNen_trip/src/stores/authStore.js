@@ -131,74 +131,23 @@ const useAuthStore = create(
           const { username, password } = credentials
           
           if (username && password) {
-            // 检查是否已有用户数据（模拟数据库查询）
-            let userData = null
-            const existingToken = tokenManager.getToken()
+            // 生成随机头像
+            const avatar = await getRandomAvatar()
             
-            if (existingToken && verifyJWT(existingToken)) {
-              const existingUser = getUserFromToken(existingToken)
-              if (existingUser && existingUser.username === username) {
-                // 用户已存在，使用现有数据但更新登录时间
-                userData = {
-                  ...existingUser,
-                  lastLoginTime: new Date().toISOString()
-                }
-                console.log('🔄 检测到已存在用户，使用现有数据')
+            const userData = {
+              id: Date.now(),
+              username: username,
+              email: username.includes('@') ? username : `${username}@zhilv.com`,
+              avatar: avatar,
+              phone: '',
+              nickname: username,
+              createTime: new Date().toISOString(),
+              lastLoginTime: new Date().toISOString(),
+              preferences: {
+                favoriteDestinations: [],
+                interests: [],
+                travelStyle: ''
               }
-            }
-            
-            // 如果没有找到现有用户，创建新用户
-            if (!userData) {
-              userData = {
-                id: Date.now(),
-                username: username,
-                email: username.includes('@') ? username : `${username}@zhilv.com`,
-                avatar: null, // 先设为null，后面统一处理头像
-                phone: '',
-                nickname: username,
-                createTime: new Date().toISOString(),
-                lastLoginTime: new Date().toISOString(),
-                preferences: {
-                  favoriteDestinations: [],
-                  interests: [],
-                  travelStyle: ''
-                }
-              }
-              console.log('🆕 创建新用户数据')
-            }
-            
-            // 检查并获取头像
-            let needsAvatar = false
-            if (!userData.avatar || 
-                userData.avatar.includes('dicebear.com') || 
-                userData.avatar.includes('api.dicebear.com')) {
-              needsAvatar = true
-              console.log('🎭 用户需要获取头像')
-            }
-            
-            if (needsAvatar) {
-              try {
-                console.log('🔄 开始调用getRandomAvatar函数...')
-                const avatarResult = await getRandomAvatar()
-                console.log('📸 getRandomAvatar返回结果:', avatarResult)
-                
-                if (avatarResult && avatarResult.success && avatarResult.avatar) {
-                  userData.avatar = avatarResult.avatar
-                  console.log('✅ 成功获取头像:', avatarResult.avatar, '来源:', avatarResult.source)
-                  console.log('👤 用户数据已更新，头像URL:', userData.avatar)
-                } else {
-                  // 如果头像获取失败，使用DiceBear作为降级方案
-                  userData.avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.username}`
-                  console.log('⚠️ 头像获取失败，使用DiceBear降级方案:', userData.avatar)
-                }
-              } catch (avatarError) {
-                console.error('❌ 头像获取失败:', avatarError)
-                // 降级到DiceBear头像
-                userData.avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.username}`
-                console.log('⚠️ 头像获取异常，使用DiceBear降级方案:', userData.avatar)
-              }
-            } else {
-              console.log('ℹ️ 用户已有头像，跳过获取:', userData.avatar)
             }
             
             // 生成JWT token（24小时有效期）
@@ -376,68 +325,17 @@ const useAuthStore = create(
         if (!user) return { success: false, error: '用户未登录' }
         
         try {
-          // 生成更丰富的个性化提示词
-          const generateUserPrompt = (user) => {
-            const name = user.nickname || user.username || 'traveler'
-            const age = user.age ? `${user.age} years old` : 'young adult'
-            
-            // 基础描述
-            const baseDescriptions = [
-              `${name}, ${age}, friendly and adventurous`,
-              `${name}, passionate travel enthusiast`,
-              `${name}, outdoor adventure lover`,
-              `${name}, curious world explorer`
-            ]
-            
-            // 旅行风格描述
-            const travelStyles = [
-              'loves discovering new cultures and places',
-              'enjoys both urban exploration and nature adventures',
-              'passionate about photography and capturing memories',
-              'seeks authentic local experiences',
-              'embraces spontaneous travel adventures',
-              'values sustainable and responsible tourism'
-            ]
-            
-            // 外观特征（可选）
-            const appearances = [
-              'warm smile and bright eyes',
-              'confident and approachable demeanor',
-              'casual travel-ready outfit',
-              'natural and relaxed appearance'
-            ]
-            
-            // 随机组合生成个性化prompt
-            const baseDesc = baseDescriptions[Math.floor(Math.random() * baseDescriptions.length)]
-            const travelStyle = travelStyles[Math.floor(Math.random() * travelStyles.length)]
-            const appearance = appearances[Math.floor(Math.random() * appearances.length)]
-            
-            return `${baseDesc}, ${travelStyle}, ${appearance}`
-          }
-          
-          const userPrompt = generateUserPrompt(user)
-          console.log('生成的用户prompt:', userPrompt)
+          // 基于用户信息生成个性化提示词
+          const userPrompt = `friendly ${user.nickname || user.username}, travel enthusiast, outdoor adventurer`
           
           // 使用豆包API生成AI旅行头像
           const result = await generateTravelAvatar(userPrompt)
           
           if (result.success) {
             const updatedUser = { ...user, avatar: result.url }
-            
-            // 重新生成包含新头像的JWT token
-            const newJwtToken = generateJWT(updatedUser, 24 * 60 * 60)
-            tokenManager.setToken(newJwtToken)
-            
-            // 同时更新localStorage（兼容性）
             localStorage.setItem('zhilvUser', JSON.stringify(updatedUser))
             
-            set({ 
-              user: updatedUser,
-              token: newJwtToken,
-              tokenExpiresIn: getTokenRemainingTime(newJwtToken)
-            })
-            
-            console.log('✅ AI头像生成成功，JWT token已更新')
+            set({ user: updatedUser })
             
             return { 
               success: true, 
@@ -451,21 +349,9 @@ const useAuthStore = create(
             const fallbackUrl = await getRandomAvatar()
             
             const updatedUser = { ...user, avatar: fallbackUrl }
-            
-            // 重新生成包含新头像的JWT token
-            const newJwtToken = generateJWT(updatedUser, 24 * 60 * 60)
-            tokenManager.setToken(newJwtToken)
-            
-            // 同时更新localStorage（兼容性）
             localStorage.setItem('zhilvUser', JSON.stringify(updatedUser))
             
-            set({ 
-              user: updatedUser,
-              token: newJwtToken,
-              tokenExpiresIn: getTokenRemainingTime(newJwtToken)
-            })
-            
-            console.log('✅ 降级头像生成成功，JWT token已更新')
+            set({ user: updatedUser })
             
             return { 
               success: true, 
@@ -481,21 +367,9 @@ const useAuthStore = create(
           try {
             const fallbackUrl = await getRandomAvatar()
             const updatedUser = { ...user, avatar: fallbackUrl }
-            
-            // 重新生成包含新头像的JWT token
-            const newJwtToken = generateJWT(updatedUser, 24 * 60 * 60)
-            tokenManager.setToken(newJwtToken)
-            
-            // 同时更新localStorage（兼容性）
             localStorage.setItem('zhilvUser', JSON.stringify(updatedUser))
             
-            set({ 
-              user: updatedUser,
-              token: newJwtToken,
-              tokenExpiresIn: getTokenRemainingTime(newJwtToken)
-            })
-            
-            console.log('✅ 最终降级头像生成成功，JWT token已更新')
+            set({ user: updatedUser })
             
             return { 
               success: true, 
