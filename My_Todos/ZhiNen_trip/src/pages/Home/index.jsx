@@ -17,49 +17,6 @@ import useDebounce from '@/hooks/useDebounce';
 import useThrottle from '@/hooks/useThrottle';
 import styles from './home.module.css';
 
-// 轮播骨架屏组件
-const CarouselSkeleton = () => {
-  return (
-    <div className={styles.carouselContainer}>
-      <div className={styles.carouselWrapper}>
-        <div className={styles.skeletonWrapper}>
-          {/* 主要骨架屏内容 */}
-          <div className={styles.skeletonImage}>
-            <div className={styles.skeletonShimmer}></div>
-          </div>
-          
-          {/* 骨架屏文字覆盖层 */}
-          <div className={styles.skeletonOverlay}>
-            <div className={styles.skeletonTitle}>
-              <div className={styles.skeletonShimmer}></div>
-            </div>
-            <div className={styles.skeletonDescription}>
-              <div className={styles.skeletonShimmer}></div>
-            </div>
-          </div>
-          
-          {/* 骨架屏箭头 */}
-          <div className={`${styles.skeletonArrow} ${styles.skeletonArrowLeft}`}>
-            <div className={styles.skeletonShimmer}></div>
-          </div>
-          <div className={`${styles.skeletonArrow} ${styles.skeletonArrowRight}`}>
-            <div className={styles.skeletonShimmer}></div>
-          </div>
-        </div>
-      </div>
-      
-      {/* 骨架屏指示器 */}
-      <div className={styles.carouselDots}>
-        {[...Array(4)].map((_, index) => (
-          <div key={index} className={`${styles.skeletonDot} ${index === 0 ? styles.active : ''}`}>
-            <div className={styles.skeletonShimmer}></div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
 // 重构后的轮播组件 - 使用Pexels API + 无缝循环
 const ImageCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(1); // 初始位置设为1（真实的第一张）
@@ -249,9 +206,17 @@ const ImageCarousel = () => {
     resetTimer();
   }, 150); // 150ms防抖，避免快速重复点击
 
-  // 修改ImageCarousel组件的loading状态
+  // 如果还在加载或没有图片，显示加载状态
   if (loading || images.length === 0) {
-    return <CarouselSkeleton />;
+    return (
+      <div className={styles.carouselContainer}>
+        <div className={styles.carouselWrapper} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ color: '#666', fontSize: '14px' }}>
+            {loading ? '加载中...' : '暂无图片'}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

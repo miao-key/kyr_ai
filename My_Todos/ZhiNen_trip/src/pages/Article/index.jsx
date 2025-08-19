@@ -4,6 +4,7 @@ import { LikeO, Star, ChatO, Location, Edit } from '@react-vant/icons'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores'
 import useTitle from '@/hooks/useTitle'
+import useThrottle from '@/hooks/useThrottle'
 import { getMixedTravelContent } from '@/api/pexels'
 import styles from './article.module.css'
 
@@ -888,10 +889,6 @@ const Article = () => {
   const [currentToastMessage, setCurrentToastMessage] = useState('') // 当前显示的Toast消息
   const isMountedRef = useRef(true)
   const isUpdatingRef = useRef(false) // 添加更新状态锁
-  
-  // 添加 IntersectionObserver 相关状态
-  const sentinelRef = useRef(null)
-  const observerRef = useRef(null)
 
   // 使用useEffect处理Toast显示，避免在渲染过程中调用
   useEffect(() => {
@@ -1214,7 +1211,7 @@ const Article = () => {
     return { photos, total_results: 1000 }
   }
 
-  // 使用真实API加载旅记数据
+  // 简化的加载旅记数据
   const loadArticles = useCallback(async (pageNum = 1, isRefresh = false) => {
     // 防止重复调用
     if (loading && !isRefresh) return Promise.resolve()
@@ -1225,8 +1222,11 @@ const Article = () => {
         setLoading(true)
         console.log('🔄 开始加载旅记数据:', { page: pageNum, activeTab })
         
-        // 使用真实的pexels API
-        const response = await getMixedTravelContent(pageNum, 8)
+        // 模拟网络延迟，让用户看到加载状态
+        await new Promise(r => setTimeout(r, 600))
+        
+        // 根据当前分类生成对应内容
+        const response = generateImagesByCategory(activeTab, pageNum, 8) // 每页8条数据
         const photos = response.photos || []
         
         if (photos.length === 0) {
@@ -1235,22 +1235,14 @@ const Article = () => {
           return
         }
 
-        // 将pexels图片数据转换为旅记数据
+        // 将图片数据转换为旅记数据
         const newArticles = photos.map((photo, index) => {
           const user = generateMockUser(activeTab) // 传入当前分类
           return {
-            id: `${activeTab}-${pageNum}-${index}-${photo.id}`, // 使用photo.id确保唯一性
+            id: `${activeTab}-${pageNum}-${index}-${Date.now()}`, // 包含分类信息确保唯一性
             user,
             content: generateContentByCategory(activeTab), // 使用分类内容
-            images: [{
-              ...photo,
-              url: photo.src.medium || photo.src.small,
-              src: {
-                medium: photo.src.medium,
-                small: photo.src.small,
-                large: photo.src.large
-              }
-            }], // 使用真实图片数据
+            images: [photo], // 所有旅记都有图片
             tags: generateTagsByCategory(activeTab), // 使用分类标签
             likes: Math.floor(Math.random() * 1000) + 50,
             comments: Math.floor(Math.random() * 100) + 5,
@@ -1270,7 +1262,7 @@ const Article = () => {
           setArticles(prev => [...prev, ...newArticles])
         }
         
-        setHasMore(pageNum < 10) // 增加页数限制
+        setHasMore(pageNum < 8) // 每个分类最多8页
         setHasLoadedOnce(true) // 标记首次加载完成
         console.log('✅ 旅记数据加载完成:', newArticles.length, '条')
         
@@ -1339,36 +1331,27 @@ const Article = () => {
     }
   }, [loading, hasMore, page, loadArticles])
 
-  // 使用 IntersectionObserver 替代滚动监听
-  useEffect(() => {
-    const sentinel = sentinelRef.current
-    if (!sentinel) return
+  // 简化的滚动监听
+  const throttledHandleScroll = useThrottle(() => {
+    if (loading || !hasMore) return
     
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0]
-        if (entry.isIntersecting && !loading && hasMore) {
-          console.log('🔍 哨兵元素进入视口，触发加载更多')
-          loadMore()
-        }
-      },
-      {
-        root: null,
-        rootMargin: '100px',
-        threshold: 0
-      }
-    )
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+    const windowHeight = window.innerHeight
+    const documentHeight = document.documentElement.scrollHeight
     
-    observer.observe(sentinel)
-    observerRef.current = observer
+    // 距离底部150px时加载更多
+    const distanceToBottom = documentHeight - scrollTop - windowHeight
     
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect()
-        observerRef.current = null
-      }
+    if (distanceToBottom < 150) {
+      loadMore()
     }
-  }, [loading, hasMore, loadMore])
+  }, 500) // 增加节流时间到500ms，减少频繁触发
+
+  // 添加滚动监听器
+  useEffect(() => {
+    window.addEventListener('scroll', throttledHandleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', throttledHandleScroll)
+  }, [throttledHandleScroll])
 
   // 优化的交互操作 - 确保只有变化的项目才更新引用
   const handleLike = useCallback((articleId) => {
@@ -1596,22 +1579,7 @@ const Article = () => {
             )}
             
             {/* 内容列表 - 使用提前计算好的渲染结果 */}
-            {articles.length > 0 && (
-              <>
-                {renderedArticles}
-                
-                {/* 添加哨兵元素 */}
-                <div 
-                  ref={sentinelRef}
-                  className={styles.sentinel}
-                  style={{
-                    height: '20px',
-                    background: 'transparent',
-                    pointerEvents: 'none'
-                  }}
-                />
-              </>
-            )}
+            {articles.length > 0 && renderedArticles}
             
             {/* 加载更多状态：有内容时的加载状态 */}
             {loading && articles.length > 0 && (

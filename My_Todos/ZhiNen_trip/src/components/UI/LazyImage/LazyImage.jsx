@@ -14,42 +14,6 @@ import { useState, useRef, useEffect, useCallback, memo } from 'react'
 import PropTypes from 'prop-types'
 import styles from './lazy-image.module.css'
 
-// 全局 WebP 支持检测（避免重复检测）
-let webpSupportCache = null
-const checkWebPSupport = () => {
-  if (webpSupportCache !== null) return webpSupportCache
-  
-  const canvas = document.createElement('canvas')
-  canvas.width = 1
-  canvas.height = 1
-  const dataURL = canvas.toDataURL('image/webp')
-  webpSupportCache = dataURL.indexOf('data:image/webp') === 0
-  return webpSupportCache
-}
-
-// 全局 IntersectionObserver 实例（复用）
-let globalObserver = null
-const observerCallbacks = new Map()
-
-const getGlobalObserver = (threshold = 0.1, rootMargin = '50px') => {
-  if (!globalObserver) {
-    globalObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const callback = observerCallbacks.get(entry.target)
-          if (callback && entry.isIntersecting) {
-            callback()
-            observerCallbacks.delete(entry.target)
-            globalObserver.unobserve(entry.target)
-          }
-        })
-      },
-      { threshold, rootMargin }
-    )
-  }
-  return globalObserver
-}
-
 const LazyImage = memo(({
   src,
   alt = '',
@@ -71,25 +35,50 @@ const LazyImage = memo(({
   style = {},
   ...props
 }) => {
-  const [loadState, setLoadState] = useState('idle')
+  const [loadState, setLoadState] = useState('idle') // idle, loading, loaded, error
   const [imageSrc, setImageSrc] = useState('')
   const [retries, setRetries] = useState(0)
   const [isInView, setIsInView] = useState(false)
+  const [supportsWebP, setSupportsWebP] = useState(false)
   
   const imgRef = useRef(null)
-  const supportsWebP = webpSupport ? checkWebPSupport() : false
+  const observerRef = useRef(null)
 
-  // 获取优化后的图片 URL（简化版本）
+  // 检测 WebP 支持
+  useEffect(() => {
+    if (!webpSupport) return
+
+    const checkWebPSupport = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = 1
+      canvas.height = 1
+      const dataURL = canvas.toDataURL('image/webp')
+      setSupportsWebP(dataURL.indexOf('data:image/webp') === 0)
+    }
+
+    checkWebPSupport()
+  }, [webpSupport])
+
+  // 获取优化后的图片 URL
   const getOptimizedImageUrl = useCallback((originalSrc) => {
     if (!originalSrc) return ''
-    return originalSrc // 简化处理，避免复杂的URL转换
-  }, [])
+
+    // 如果支持 WebP 且原图不是 WebP，尝试转换
+    if (supportsWebP && webpSupport && !originalSrc.includes('.webp')) {
+      // 这里可以根据实际的图片服务配置 WebP 转换
+      // 示例：如果使用 CDN 服务，可能需要添加参数
+      return originalSrc // 暂时返回原图，可根据具体 CDN 配置修改
+    }
+
+    return originalSrc
+  }, [supportsWebP, webpSupport])
 
   // 获取渐进式图片 URL（低质量版本用于预览）
   const getProgressiveImageUrl = useCallback((originalSrc, isLowQuality = false) => {
     if (!progressive || !originalSrc) return originalSrc
 
     // 这里可以根据实际的图片服务配置不同质量
+    // 示例：添加质量参数
     if (isLowQuality) {
       // 返回低质量版本用于快速预览
       return originalSrc // + '?quality=20&blur=5' // 根据实际CDN配置
@@ -104,34 +93,44 @@ const LazyImage = memo(({
     onLoad?.(imgRef.current)
   }, [onLoad])
 
-  // 图片错误处理（优化重试逻辑）
+  // 图片错误处理
   const handleImageError = useCallback(() => {
     if (retries < retryCount) {
       setRetries(prev => prev + 1)
-      // 减少重试延迟，使用线性退避
       setTimeout(() => {
         setLoadState('loading')
         setImageSrc(getOptimizedImageUrl(src))
-      }, 500 * (retries + 1))
+      }, 1000 * Math.pow(2, retries)) // 指数退避重试
     } else {
       setLoadState('error')
       onError?.(imgRef.current)
     }
   }, [retries, retryCount, src, getOptimizedImageUrl, onError])
 
-  // 使用全局 IntersectionObserver
+  // Intersection Observer 设置
   useEffect(() => {
     if (!imgRef.current || isInView) return
 
-    const observer = getGlobalObserver(threshold, rootMargin)
-    const element = imgRef.current
-    
-    observerCallbacks.set(element, () => setIsInView(true))
-    observer.observe(element)
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsInView(true)
+            observer.disconnect()
+          }
+        })
+      },
+      {
+        threshold: threshold,
+        rootMargin: rootMargin
+      }
+    )
+
+    observer.observe(imgRef.current)
+    observerRef.current = observer
 
     return () => {
-      observerCallbacks.delete(element)
-      observer.unobserve(element)
+      observer.disconnect()
     }
   }, [threshold, rootMargin, isInView])
 
@@ -165,6 +164,13 @@ const LazyImage = memo(({
     getOptimizedImageUrl, 
     handleImageError
   ])
+
+  // 清理函数
+  useEffect(() => {
+    return () => {
+      observerRef.current?.disconnect()
+    }
+  }, [])
 
   // 渲染占位符
   const renderPlaceholder = () => {

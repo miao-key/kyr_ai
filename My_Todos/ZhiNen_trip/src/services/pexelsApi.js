@@ -199,8 +199,9 @@ export async function getCarouselPhotos(count = 4) {
  * @param {number} page - 页码，默认1
  * @returns {Promise<Array>} 攻略图片数组
  */
-// 优化后的 getGuidePhotos 函数
 export async function getGuidePhotos(count = 20, page = 1) {
+  const categories = ['mountain', 'beach', 'city', 'nature', 'culture']
+  
   // 缓存键
   const cacheKey = `guide_photos_${count}_${page}`
   const cached = getCachedData(cacheKey)
@@ -209,59 +210,55 @@ export async function getGuidePhotos(count = 20, page = 1) {
     return cached
   }
 
-  // 优化：减少并行请求，使用单个请求获取更多数据
-  const categories = ['travel', 'landscape'] // 减少分类数量
-  const photosPerCategory = Math.ceil(count / categories.length)
+  // 并行请求所有分类，大幅提升加载速度
+  const photoPromises = categories.map(category => 
+    getTravelPhotos(category, { 
+      per_page: Math.ceil(count / categories.length),
+      page: page
+    }).catch(error => {
+      console.warn(`分类 ${category} 请求失败:`, error)
+      return [] // 单个分类失败不影响其他分类
+    })
+  )
+
+  const allPhotos = []
   
   try {
-    // 串行请求而非并行，减少API压力
-    const allPhotos = []
-    
-    for (const category of categories) {
-      try {
-        const photos = await getTravelPhotos(category, { 
-          per_page: photosPerCategory,
-          page: page
-        })
-        if (photos && photos.length > 0) {
-          allPhotos.push(...photos)
-        }
-        // 添加请求间隔，避免API限流
-        await new Promise(resolve => setTimeout(resolve, 100))
-      } catch (error) {
-        console.warn(`分类 ${category} 请求失败:`, error)
-        continue
+    // 并行等待所有请求完成
+    const results = await Promise.all(photoPromises)
+    results.forEach(photos => {
+      if (photos && photos.length > 0) {
+        allPhotos.push(...photos)
       }
-    }
-
-    if (allPhotos.length === 0) {
-      return getDefaultGuidePhotos(count, page)
-    }
-
-    // 为每页生成不同的随机种子，确保分页数据不重复
-    const seed = page * 1000
-    const shuffled = allPhotos.sort(() => Math.sin(seed + Math.random()) * 2 - 1)
-    
-    const result = shuffled.slice(0, count).map((photo, index) => ({
-      id: `pexels_${photo.id}_p${page}_${index}_${Date.now()}`,
-      pexelsId: photo.id,
-      image: photo.src.medium,
-      title: getGuideTitle(photo, index + (page - 1) * count),
-      description: getGuideDescription(photo, index + (page - 1) * count),
-      tag: getGuideTag(index + (page - 1) * count),
-      price: getRandomPrice(),
-      location: getGuideLocation(index + (page - 1) * count),
-      pexelsUrl: photo.url
-    }))
-
-    // 缓存结果，延长缓存时间
-    setCachedData(cacheKey, result, 10 * 60 * 1000) // 10分钟缓存
-    
-    return result
+    })
   } catch (error) {
-    console.error('获取攻略图片失败:', error)
+    console.error('并行请求失败:', error)
+  }
+
+  if (allPhotos.length === 0) {
     return getDefaultGuidePhotos(count, page)
   }
+
+  // 为每页生成不同的随机种子，确保分页数据不重复
+  const seed = page * 1000
+  const shuffled = allPhotos.sort(() => Math.sin(seed + Math.random()) * 2 - 1)
+  
+  const result = shuffled.slice(0, count).map((photo, index) => ({
+    id: `pexels_${photo.id}_p${page}_${index}_${Date.now()}`, // 使用页码和索引确保唯一ID
+    pexelsId: photo.id, // 保留原始Pexels ID
+    image: photo.src.medium,
+    title: getGuideTitle(photo, index + (page - 1) * count),
+    description: getGuideDescription(photo, index + (page - 1) * count),
+    tag: getGuideTag(index + (page - 1) * count),
+    price: getRandomPrice(),
+    location: getGuideLocation(index + (page - 1) * count),
+    pexelsUrl: photo.url
+  }))
+
+  // 缓存结果
+  setCachedData(cacheKey, result)
+  
+  return result
 }
 
 // 工具函数：生成图片标题
@@ -493,11 +490,14 @@ function getDefaultGuidePhotos(count = 20, page = 1) {
 }
 
 // 简单的内存缓存系统
-// 优化缓存管理
 const cache = new Map()
-const CACHE_DURATION = 10 * 60 * 1000 // 10分钟
-const MAX_CACHE_SIZE = 50 // 最大缓存条目数
+const CACHE_DURATION = 5 * 60 * 1000 // 5分钟缓存
 
+/**
+ * 获取缓存数据
+ * @param {string} key - 缓存键
+ * @returns {any|null} 缓存的数据或null
+ */
 function getCachedData(key) {
   const cached = cache.get(key)
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
@@ -507,15 +507,20 @@ function getCachedData(key) {
   return null
 }
 
-function setCachedData(key, data, duration = CACHE_DURATION) {
-  // 清理过期缓存
-  if (cache.size >= MAX_CACHE_SIZE) {
-    const oldestKey = cache.keys().next().value
-    cache.delete(oldestKey)
-  }
-  
+/**
+ * 设置缓存数据
+ * @param {string} key - 缓存键
+ * @param {any} data - 要缓存的数据
+ */
+function setCachedData(key, data) {
   cache.set(key, {
     data,
     timestamp: Date.now()
   })
+  
+  // 限制缓存大小，防止内存泄露
+  if (cache.size > 50) {
+    const oldestKey = cache.keys().next().value
+    cache.delete(oldestKey)
+  }
 }

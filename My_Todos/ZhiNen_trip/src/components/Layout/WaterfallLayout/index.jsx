@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { getGuidePhotos } from '@/services/pexelsApi'
+import { useThrottle } from '@hooks'
 import { LazyImage, LoadingSpinner, EmptyState } from '@components/UI'
 import { WATERFALL_CONFIG, ERROR_MESSAGES } from '@constants'
 import { imageUtils } from '@/utils'
@@ -12,7 +13,7 @@ import styles from './waterfall.module.css'
  * 功能特性:
  * - 真正的瀑布流效果，自动计算最佳位置
  * - 响应式列数调整
- * - 无限滚动加载 (使用 IntersectionObserver)
+ * - 无限滚动加载
  * - 图片懒加载
  * - 性能优化
  * - 自动滚动到新内容
@@ -46,13 +47,6 @@ const WaterfallLayout = ({
   const autoScrollCallbackRef = useRef(null)
   const loadingLockRef = useRef(false)
   const lastLoadTimeRef = useRef(0)
-  const sentinelRef = useRef(null)
-  const observerRef = useRef(null)
-  
-  // 增量布局优化缓存
-  const layoutedItemsCache = useRef(new Map()) // 缓存已布局元素的位置信息
-  const lastLayoutedCount = useRef(0) // 跟踪已布局的元素数量
-  const isFullRelayout = useRef(false) // 标记是否需要完整重新布局
 
   // 初始化列高度
   const initColumnHeights = useCallback(() => {
@@ -74,56 +68,19 @@ const WaterfallLayout = ({
     return shortestIndex
   }, [])
 
-  // 增量布局项目 - 性能优化版本
+  // 布局项目 - 优化版本
   const layoutItems = useCallback(() => {
+    if (!containerRef.current || items.length === 0) return
+
     const container = containerRef.current
-    if (!container || items.length === 0) return
-
-    const startTime = performance.now()
     const containerWidth = container.offsetWidth
-    const columnWidth = (containerWidth - (columns - 1) * gap) / columns
+    const columnWidth = Math.floor((containerWidth - (columns - 1) * gap) / columns)
 
-    // 检测是否需要完整重新布局
-    const needsFullRelayout = isFullRelayout.current || 
-                             items.length < lastLayoutedCount.current ||
-                             layoutedItemsCache.current.size === 0
+    // 重置列高度
+    initColumnHeights()
 
-    if (needsFullRelayout) {
-      console.log(`🔄 执行完整重新布局: ${items.length} 个元素`)
-      // 完整重新布局：重置所有缓存和列高度
-      initColumnHeights()
-      layoutedItemsCache.current.clear()
-      lastLayoutedCount.current = 0
-      isFullRelayout.current = false
-    } else {
-      console.log(`⚡ 执行增量布局: 新增 ${items.length - lastLayoutedCount.current} 个元素`)
-      // 增量布局：从缓存恢复已布局元素的列高度
-      const cachedHeights = Array.from(layoutedItemsCache.current.values())
-      if (cachedHeights.length > 0) {
-        // 重建列高度状态
-        initColumnHeights()
-        cachedHeights.forEach(({ columnIndex, bottom }) => {
-          if (columnHeights.current[columnIndex] < bottom) {
-            columnHeights.current[columnIndex] = bottom
-          }
-        })
-      }
-    }
-
-    // 确定需要布局的元素范围
-    const startIndex = needsFullRelayout ? 0 : lastLayoutedCount.current
-    const itemsToLayout = items.slice(startIndex)
-    
-    if (itemsToLayout.length === 0) {
-      console.log(`⏭️ 跳过布局: 没有新元素需要布局`)
-      return
-    }
-
-    // 批量DOM操作队列
-    const domOperations = []
-    
     // 使用Promise来确保所有图片加载完成后再布局
-    const layoutPromises = itemsToLayout.map((item, index) => {
+    const layoutPromises = items.map((item) => {
       return new Promise((resolve) => {
         const element = itemsRef.current[item.id]
         if (!element) {
@@ -131,10 +88,8 @@ const WaterfallLayout = ({
           return
         }
 
-        // 批量设置宽度
-        domOperations.push(() => {
-          element.style.width = `${columnWidth}px`
-        })
+        // 设置宽度
+        element.style.width = `${columnWidth}px`
         
         // 查找元素中的图片
         const img = element.querySelector('img')
@@ -147,26 +102,13 @@ const WaterfallLayout = ({
           const x = columnIndex * (columnWidth + gap)
           const y = columnHeights.current[columnIndex]
           
-          // 批量设置位置和透明度
-          domOperations.push(() => {
-            element.style.transform = `translate3d(${x}px, ${y}px, 0)`
-            element.style.opacity = '1'
-          })
+          // 设置位置
+          element.style.transform = `translate3d(${x}px, ${y}px, 0)`
+          element.style.opacity = '1'
           
           // 更新列高度
           const elementHeight = element.offsetHeight
-          const newHeight = columnHeights.current[columnIndex] + elementHeight + gap
-          columnHeights.current[columnIndex] = newHeight
-          
-          // 缓存布局信息
-          layoutedItemsCache.current.set(item.id, {
-            x,
-            y,
-            columnIndex,
-            bottom: newHeight,
-            width: columnWidth,
-            height: elementHeight
-          })
+          columnHeights.current[columnIndex] += elementHeight + gap
           
           resolve()
         }
@@ -200,29 +142,19 @@ const WaterfallLayout = ({
       })
     })
 
-    // 所有元素布局完成后批量执行DOM操作并更新容器高度
+    // 所有元素布局完成后更新容器高度
     Promise.all(layoutPromises).then(() => {
-      // 使用requestAnimationFrame批量执行DOM操作
-      requestAnimationFrame(() => {
-        domOperations.forEach(operation => operation())
-        
-        const maxHeight = Math.max(...columnHeights.current)
-        container.style.height = `${maxHeight}px`
-        
-        // 更新已布局元素计数
-        lastLayoutedCount.current = items.length
-        
-        const endTime = performance.now()
-        const layoutType = needsFullRelayout ? '完整布局' : '增量布局'
-        console.log(`✅ ${layoutType}完成: 容器高度 ${maxHeight}px, 元素数量 ${items.length}, 耗时 ${(endTime - startTime).toFixed(2)}ms`)
-        
-        // 如果有自动滚动回调，执行它
-        if (autoScrollCallbackRef.current) {
-          console.log(`执行自动滚动回调`)
-          autoScrollCallbackRef.current()
-          autoScrollCallbackRef.current = null
-        }
-      })
+      const maxHeight = Math.max(...columnHeights.current)
+      container.style.height = `${maxHeight}px`
+      
+      console.log(`布局完成: 容器高度 ${maxHeight}px, 元素数量 ${items.length}`)
+      
+      // 如果有自动滚动回调，执行它
+      if (autoScrollCallbackRef.current) {
+        console.log(`执行自动滚动回调`)
+        autoScrollCallbackRef.current()
+        autoScrollCallbackRef.current = null
+      }
     }).catch(error => {
       console.error('布局过程中出现错误:', error)
       setError('布局失败，请刷新页面重试')
@@ -268,87 +200,92 @@ const WaterfallLayout = ({
         }))
         
         if (isLoadMore) {
-          // 加载更多：追加到现有数据
-          setItems(prevItems => {
-            const existingIds = new Set(prevItems.map(item => item.id))
-            const uniqueNewItems = itemsWithHeight.filter(item => !existingIds.has(item.id))
-            
-            if (uniqueNewItems.length === 0) {
-              console.log('没有新的唯一项目，停止加载更多')
-              setHasMore(false)
-              return prevItems
-            }
-            
-            console.log(`加载更多: 新增 ${uniqueNewItems.length} 个项目`)
-            
-            // 设置自动滚动回调，在布局完成后执行
-            if (uniqueNewItems.length > 0) {
-              autoScrollCallbackRef.current = () => {
-                const newContainerHeight = containerRef.current?.offsetHeight || 0
-                const heightDiff = newContainerHeight - currentContainerHeight
-                
-                if (heightDiff > 100) { // 只有当高度变化超过100px时才滚动
-                  const targetScrollTop = currentScrollTop + Math.min(heightDiff * 0.3, 200)
-                  window.scrollTo({
-                    top: targetScrollTop,
-                    behavior: 'smooth'
-                  })
-                  console.log(`自动滚动到新内容: ${currentScrollTop} -> ${targetScrollTop}`)
-                }
-              }
-            }
-            
-            return [...prevItems, ...uniqueNewItems]
+          // 加载更多时，检查是否有重复的ID
+          setItems(prev => {
+            const existingIds = new Set(prev.map(item => item.id))
+            const filteredNewItems = itemsWithHeight.filter(item => !existingIds.has(item.id))
+            return [...prev, ...filteredNewItems]
           })
           
-          setPage(pageNum + 1)
-          
-          // 如果返回的数据少于预期，可能没有更多数据了
-          if (newItems.length < 15) {
-            console.log(`返回数据不足，可能没有更多数据: ${newItems.length}/15`)
-            setHasMore(false)
+          // 设置自动滚动回调，在布局完成后执行
+          autoScrollCallbackRef.current = () => {
+            // 延迟执行自动滚动，确保布局完全稳定
+            setTimeout(() => {
+              const newContainerHeight = containerRef.current?.offsetHeight || 0
+              const heightDifference = newContainerHeight - currentContainerHeight
+              const currentScroll = window.pageYOffset || document.documentElement.scrollTop
+              
+              console.log(`自动滚动检查: 容器高度变化 ${heightDifference}px (${currentContainerHeight} -> ${newContainerHeight})`)
+              
+              // 如果有新内容且容器高度增加了，则滚动到新内容区域
+              if (heightDifference > 50 && currentContainerHeight > 0) {
+                // 计算新内容的起始位置（保留一些上下文）
+                const newContentStartPosition = currentContainerHeight - 150 // 向上偏移150px显示上下文
+                const targetScrollPosition = Math.max(0, Math.min(newContentStartPosition, newContainerHeight - window.innerHeight))
+                
+                // 只有当目标位置与当前位置差距较大时才滚动
+                if (Math.abs(targetScrollPosition - currentScroll) > 50) {
+                  console.log(`自动滚动: ${currentScroll}px -> ${targetScrollPosition}px，新内容高度: ${heightDifference}px`)
+                  
+                  // 平滑滚动到新内容位置
+                  window.scrollTo({
+                    top: targetScrollPosition,
+                    behavior: 'smooth'
+                  })
+                } else {
+                  console.log(`跳过自动滚动: 滚动距离太小 (${Math.abs(targetScrollPosition - currentScroll)}px)`)
+                }
+              } else {
+                console.log(`跳过自动滚动: 高度变化不足 (${heightDifference}px)`)
+              }
+            }, 200) // 200ms延迟，确保DOM完全更新
           }
         } else {
-          // 初始加载：替换所有数据
-          console.log(`初始加载: ${itemsWithHeight.length} 个项目`)
+          // 首次加载，直接设置数据
           setItems(itemsWithHeight)
-          setPage(2) // 下次加载第2页
           setInitialLoading(false)
-          
-          // 如果初始数据就不足，说明没有更多了
-          if (newItems.length < 15) {
-            setHasMore(false)
-          }
+        }
+        
+        setPage(pageNum + 1)
+        
+        // 检查数据来源：如果是默认数据（ID包含"default"），则支持无限滚动
+        const isDefaultData = newItems.some(item => item.id && item.id.includes('default'))
+        
+        console.log(`数据检查: 新数据量=${newItems.length}, 是否默认数据=${isDefaultData}, 是否加载更多=${isLoadMore}`)
+        
+        // 只有当是加载更多、数据量不足、且不是默认数据时，才说明没有更多数据了
+        if (isLoadMore && newItems.length < 15 && !isDefaultData) {
+          console.log(`设置hasMore=false: 数据不足且非默认数据`)
+          setHasMore(false)
+        } else {
+          console.log(`保持hasMore=true: 有足够数据或为默认数据`)
         }
       } else {
-        console.log('没有获取到数据')
+        setHasMore(false)
         if (!isLoadMore) {
-          setItems([])
           setInitialLoading(false)
         }
-        setHasMore(false)
       }
-    } catch (err) {
-      console.error('加载数据失败:', err)
-      const errorMessage = err.message || ERROR_MESSAGES.NETWORK_ERROR
-      setError(errorMessage)
-      
+    } catch (error) {
+      console.error('加载瀑布流数据失败:', error)
+      setError(ERROR_MESSAGES.LOAD_FAILED)
+      setHasMore(false)
       if (!isLoadMore) {
         setInitialLoading(false)
       }
     } finally {
       setLoading(false)
-      // 延迟释放加载锁，防止快速重复触发
-      setTimeout(() => {
-        loadingLockRef.current = false
-      }, 300)
+      // 释放加载锁
+      loadingLockRef.current = false
     }
   }, [loading, onLoadData])
 
-  // 处理加载更多
+  // 加载更多
   const handleLoadMore = useCallback(() => {
-    if (!loading && hasMore && loadMore && !loadingLockRef.current) {
-      console.log(`触发加载更多: 第${page}页`)
+    console.log(`handleLoadMore 检查: loading=${loading}, lockRef=${loadingLockRef.current}, hasMore=${hasMore}, loadMore=${loadMore}, page=${page}`)
+    
+    if (!loading && !loadingLockRef.current && hasMore && loadMore) {
+      console.log(`触发加载更多: 页码 ${page}`)
       loadData(page, true)
     } else {
       console.log(`跳过加载更多: loading=${loading}, lockRef=${loadingLockRef.current}, hasMore=${hasMore}, loadMore=${loadMore}`)
@@ -360,44 +297,44 @@ const WaterfallLayout = ({
     onItemClick?.(item, event)
   }, [onItemClick])
 
-  // 使用 IntersectionObserver 监听哨兵元素
-  useEffect(() => {
-    if (!loadMore || !sentinelRef.current) return
-
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries
-        if (entry.isIntersecting && hasMore && !loading) {
-          console.log('🎯 哨兵元素进入视口，触发加载更多')
-          handleLoadMore()
-        }
-      },
-      {
-        rootMargin: '100px 0px',
-        threshold: 0
-      }
-    )
-
-    observerRef.current.observe(sentinelRef.current)
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect()
-      }
-    }
-  }, [loadMore, hasMore, loading, handleLoadMore])
-
-  // 监听窗口大小变化重新布局 - 优化版本
-  useEffect(() => {
-    const handleResize = () => {
-      console.log('🔄 窗口大小变化，触发完整重新布局')
-      isFullRelayout.current = true // 标记需要完整重新布局
-      setTimeout(layoutItems, 100)
+  // 监听滚动加载更多 - 添加节流机制
+  const throttledHandleScroll = useThrottle(() => {
+    // 如果正在加载，直接返回
+    if (loading || loadingLockRef.current) {
+      console.log(`滚动检测: 正在加载中，跳过 (loading=${loading}, lockRef=${loadingLockRef.current})`)
+      return
     }
     
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [layoutItems])
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+    const windowHeight = window.innerHeight
+    const documentHeight = document.documentElement.scrollHeight
+    
+    // 距离底部100px时加载更多
+    const distanceToBottom = documentHeight - scrollTop - windowHeight
+    console.log(`滚动状态: 距离底部 ${distanceToBottom}px, hasMore=${hasMore}, loadMore=${loadMore}`)
+    
+    if (distanceToBottom < 100) {
+      console.log(`距离底部 ${distanceToBottom}px，触发加载更多`)
+      handleLoadMore()
+    }
+  }, 300) // 增加到300ms节流，减少触发频率
+
+  useEffect(() => {
+    if (!loadMore) return
+
+    window.addEventListener('scroll', throttledHandleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', throttledHandleScroll)
+  }, [throttledHandleScroll, loadMore])
+
+  // 监听窗口大小变化重新布局 - 添加节流机制
+  const throttledHandleResize = useThrottle(() => {
+    setTimeout(layoutItems, 100)
+  }, 200) // 200ms节流，避免频繁重新布局
+
+  useEffect(() => {
+    window.addEventListener('resize', throttledHandleResize)
+    return () => window.removeEventListener('resize', throttledHandleResize)
+  }, [throttledHandleResize])
 
   // 布局项目 - 响应数据变化
   useEffect(() => {
@@ -407,7 +344,7 @@ const WaterfallLayout = ({
       const delay = isFirstLoad ? WATERFALL_CONFIG.DELAYS.INITIAL_LOAD : WATERFALL_CONFIG.DELAYS.SCROLL_LOAD
       
       const timer = setTimeout(() => {
-        console.log(`触发布局: ${items.length} 个元素${isFirstLoad ? ' (初始加载)' : ' (滚动加载)'})`)
+        console.log(`触发布局: ${items.length} 个元素${isFirstLoad ? ' (初始加载)' : ' (滚动加载)'}`)
         layoutItems()
       }, delay)
       
@@ -415,20 +352,17 @@ const WaterfallLayout = ({
     }
   }, [items, layoutItems, page])
 
-  // 响应容器尺寸变化 - 优化版本
+  // 响应容器尺寸变化
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
 
-    const handleResize = () => {
-      console.log('📐 容器尺寸变化，触发完整重新布局')
-      isFullRelayout.current = true // 标记需要完整重新布局
+    const resizeObserver = new ResizeObserver(() => {
       setTimeout(layoutItems, WATERFALL_CONFIG.DELAYS.RESIZE)
-    }
-
-    const resizeObserver = new ResizeObserver(handleResize)
+    })
+    
     resizeObserver.observe(container)
-
+    
     return () => {
       resizeObserver.disconnect()
     }
@@ -553,21 +487,6 @@ const WaterfallLayout = ({
             </div>
           </div>
         ))}
-        
-        {/* 哨兵元素 - 用于 IntersectionObserver 监听 */}
-        {loadMore && hasMore && (
-          <div 
-            ref={sentinelRef}
-            style={{
-              position: 'absolute',
-              bottom: '100px',
-              left: 0,
-              width: '100%',
-              height: '1px',
-              pointerEvents: 'none'
-            }}
-          />
-        )}
       </div>
 
       {loading && !initialLoading && (

@@ -1,9 +1,11 @@
 /**
- * 瀑布流布局组件
+ * 修复后的瀑布流布局组件
+ * 简化逻辑，专注于核心功能
  */
 
 import { useEffect, useRef, useCallback, memo } from 'react'
 import { useWaterfallStore } from '../../stores'
+import { useThrottle } from '@/hooks'
 import { LazyImage, LoadingSpinner, EmptyState } from '@/components/UI'
 import { WATERFALL_CONFIG } from '@/constants'
 import { imageUtils } from '@/utils'
@@ -28,13 +30,6 @@ const WaterfallFixed = memo(({
   const containerRef = useRef(null)
   const columnHeights = useRef([])
   const itemsRef = useRef({})
-  const sentinelRef = useRef(null)
-  const observerRef = useRef(null)
-  
-  // 增量布局优化缓存
-  const layoutedItemsCache = useRef(new Map()) // 缓存已布局元素的位置信息
-  const lastLayoutedCount = useRef(0) // 跟踪已布局的元素数量
-  const isFullRelayout = useRef(false) // 标记是否需要完整重新布局
 
   // 初始化列高度
   const initColumnHeights = useCallback(() => {
@@ -56,54 +51,20 @@ const WaterfallFixed = memo(({
     return shortestIndex
   }, [])
 
-  // 布局项目 - 增量布局优化版本
+  // 布局项目 - 简化版本
   const layoutItems = useCallback(() => {
     if (!containerRef.current || items.length === 0) return
 
-    const startTime = performance.now()
     const container = containerRef.current
     const containerWidth = container.offsetWidth
     const columnWidth = Math.floor((containerWidth - (columns - 1) * gap) / columns)
 
-    // 判断是否需要完整重新布局
-    const needsFullRelayout = isFullRelayout.current || 
-                             lastLayoutedCount.current === 0 || 
-                             lastLayoutedCount.current > items.length
+    // 重置列高度
+    initColumnHeights()
 
-    let startIndex = 0
-    
-    if (needsFullRelayout) {
-      console.log('🔄 执行完整重新布局')
-      // 完整重新布局：重置所有状态
-      initColumnHeights()
-      layoutedItemsCache.current.clear()
-      isFullRelayout.current = false
-    } else {
-      console.log(`⚡ 执行增量布局: 从第 ${lastLayoutedCount.current} 个元素开始`)
-      // 增量布局：从缓存中恢复列高度
-      startIndex = lastLayoutedCount.current
-      
-      // 恢复列高度到上次布局的状态
-      initColumnHeights()
-      for (let i = 0; i < startIndex; i++) {
-        const cachedItem = layoutedItemsCache.current.get(items[i]?.id)
-        if (cachedItem) {
-          columnHeights.current[cachedItem.columnIndex] = Math.max(
-            columnHeights.current[cachedItem.columnIndex],
-            cachedItem.bottom
-          )
-        }
-      }
-    }
-
-    // 批量DOM操作数组
-    const domUpdates = []
-
-    // 只处理新增的元素
-    for (let index = startIndex; index < items.length; index++) {
-      const item = items[index]
+    items.forEach((item, index) => {
       const element = itemsRef.current[item.id]
-      if (!element) continue
+      if (!element) return
 
       // 设置宽度
       element.style.width = `${columnWidth}px`
@@ -115,100 +76,65 @@ const WaterfallFixed = memo(({
       const x = columnIndex * (columnWidth + gap)
       const y = columnHeights.current[columnIndex]
       
-      // 收集DOM更新操作
-      domUpdates.push({
-        element,
-        transform: `translate3d(${x}px, ${y}px, 0)`,
-        opacity: '1'
-      })
+      // 设置位置
+      element.style.transform = `translate3d(${x}px, ${y}px, 0)`
+      element.style.opacity = '1'
       
       // 更新列高度
-      const elementHeight = element.offsetHeight || 300
-      const newColumnHeight = columnHeights.current[columnIndex] + elementHeight + gap
-      columnHeights.current[columnIndex] = newColumnHeight
-      
-      // 缓存布局信息
-      layoutedItemsCache.current.set(item.id, {
-        x,
-        y,
-        columnIndex,
-        bottom: newColumnHeight,
-        width: columnWidth,
-        height: elementHeight
-      })
-    }
-
-    // 使用 requestAnimationFrame 批量应用DOM更新
-    requestAnimationFrame(() => {
-      domUpdates.forEach(({ element, transform, opacity }) => {
-        element.style.transform = transform
-        element.style.opacity = opacity
-      })
-
-      // 更新容器高度
-      const maxHeight = Math.max(...columnHeights.current)
-      container.style.height = `${maxHeight}px`
-      
-      // 更新已布局元素计数
-      lastLayoutedCount.current = items.length
-      
-      const endTime = performance.now()
-      console.log(`✅ 布局完成: 容器高度 ${maxHeight}px, 处理元素 ${domUpdates.length}/${items.length}, 耗时 ${(endTime - startTime).toFixed(2)}ms`)
+      const elementHeight = element.offsetHeight || 300 // 默认高度
+      columnHeights.current[columnIndex] += elementHeight + gap
     })
+
+    // 更新容器高度
+    const maxHeight = Math.max(...columnHeights.current)
+    container.style.height = `${maxHeight}px`
+    
+    console.log(`📐 布局完成: 容器高度 ${maxHeight}px, 元素数量 ${items.length}`)
   }, [items, columns, gap, initColumnHeights, getShortestColumn])
 
-  // 使用IntersectionObserver替代scroll事件监听
-  useEffect(() => {
-    if (!loadMore || !sentinelRef.current) return
-
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries
-        if (entry.isIntersecting && hasMore && !loading) {
-          console.log('🎯 哨兵元素进入视口，触发加载更多')
-          handleLoadMore()
-        }
-      },
-      {
-        rootMargin: '200px 0px',
-        threshold: 0
-      }
-    )
-
-    observerRef.current.observe(sentinelRef.current)
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect()
-      }
-    }
-  }, [loadMore, hasMore, loading, handleLoadMore])
-
-  // 监听窗口大小变化重新布局 - 优化版本
-  useEffect(() => {
-    const handleResize = () => {
-      console.log('🪟 窗口尺寸变化，触发完整重新布局')
-      isFullRelayout.current = true // 标记需要完整重新布局
-      setTimeout(layoutItems, 100)
-    }
+  // 监听滚动加载更多
+  const throttledHandleScroll = useThrottle(() => {
+    if (loading || !loadMore) return
     
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [layoutItems])
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+    const windowHeight = window.innerHeight
+    const documentHeight = document.documentElement.scrollHeight
+    
+    const distanceToBottom = documentHeight - scrollTop - windowHeight
+    
+    if (distanceToBottom < 200 && hasMore) {
+      console.log(`🎯 距离底部 ${distanceToBottom}px，触发加载更多`)
+      handleLoadMore()
+    }
+  }, 300)
 
-  // 使用 ResizeObserver + 视口监听，解决从PC切到移动端时布局错位 - 优化版本
+  // 监听滚动事件
+  useEffect(() => {
+    if (!loadMore) return
+    window.addEventListener('scroll', throttledHandleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', throttledHandleScroll)
+  }, [throttledHandleScroll, loadMore])
+
+  // 监听窗口大小变化重新布局
+  const throttledHandleResize = useThrottle(() => {
+    setTimeout(layoutItems, 100)
+  }, 200)
+
+  useEffect(() => {
+    window.addEventListener('resize', throttledHandleResize)
+    return () => window.removeEventListener('resize', throttledHandleResize)
+  }, [throttledHandleResize])
+
+  // 使用 ResizeObserver + 视口监听，解决从PC切到移动端时布局错位
   useEffect(() => {
     if (!containerRef.current) return
 
-    const relayout = () => {
-      console.log('📐 容器/视口尺寸变化，触发完整重新布局')
-      isFullRelayout.current = true // 标记需要完整重新布局
-      setTimeout(layoutItems, 150)
-    }
+    const relayout = () => setTimeout(layoutItems, 150)
 
     const ro = new ResizeObserver(() => relayout())
     ro.observe(containerRef.current)
 
+    // 方向变化与视觉视口变化（DevTools 切换设备也会触发）
     window.addEventListener('orientationchange', relayout)
     const vv = window.visualViewport
     vv && vv.addEventListener('resize', relayout)
@@ -323,6 +249,7 @@ const WaterfallFixed = memo(({
                   }}
                   onLoad={() => {
                     console.log(`✅ 图片加载完成: ${item.title}`)
+                    // 图片加载完成后重新布局
                     setTimeout(layoutItems, 50)
                   }}
                   onError={(error) => {
@@ -342,21 +269,6 @@ const WaterfallFixed = memo(({
             </div>
           </div>
         ))}
-        
-        {hasMore && (
-          <div 
-            ref={sentinelRef}
-            style={{
-              position: 'absolute',
-              bottom: '200px',
-              left: 0,
-              width: '100%',
-              height: '1px',
-              pointerEvents: 'none',
-              visibility: 'hidden'
-            }}
-          />
-        )}
       </div>
 
       {loading && !initialLoading && (
