@@ -150,6 +150,8 @@ const useAuthStore = create(
               }
             }
             
+            console.log('✅ 登录时生成的用户数据:', userData)
+            
             // 生成JWT token（24小时有效期）
             const jwtToken = generateJWT(userData, 24 * 60 * 60)
             const tokenExpiresIn = getTokenRemainingTime(jwtToken)
@@ -226,6 +228,8 @@ const useAuthStore = create(
               travelStyle: ''
             }
           }
+          
+          console.log('✅ 注册时生成的用户数据:', userData)
           
           // 生成JWT token（24小时有效期）
           const jwtToken = generateJWT(userData, 24 * 60 * 60)
@@ -333,9 +337,13 @@ const useAuthStore = create(
           
           if (result.success) {
             const updatedUser = { ...user, avatar: result.url }
-            localStorage.setItem('zhilvUser', JSON.stringify(updatedUser))
             
-            set({ user: updatedUser })
+            // 使用updateUser方法确保头像更新到JWT token中
+            const updateResult = get().updateUser({ avatar: result.url })
+            
+            if (updateResult.success) {
+              console.log('✅ 头像已更新到JWT token中')
+            }
             
             return { 
               success: true, 
@@ -348,10 +356,12 @@ const useAuthStore = create(
             console.warn('豆包AI生成失败，使用Pexels随机头像')
             const fallbackUrl = await getRandomAvatar()
             
-            const updatedUser = { ...user, avatar: fallbackUrl }
-            localStorage.setItem('zhilvUser', JSON.stringify(updatedUser))
+            // 使用updateUser方法确保头像更新到JWT token中
+            const updateResult = get().updateUser({ avatar: fallbackUrl })
             
-            set({ user: updatedUser })
+            if (updateResult.success) {
+              console.log('✅ 降级头像已更新到JWT token中')
+            }
             
             return { 
               success: true, 
@@ -366,10 +376,13 @@ const useAuthStore = create(
           // 最终降级方案
           try {
             const fallbackUrl = await getRandomAvatar()
-            const updatedUser = { ...user, avatar: fallbackUrl }
-            localStorage.setItem('zhilvUser', JSON.stringify(updatedUser))
             
-            set({ user: updatedUser })
+            // 使用updateUser方法确保头像更新到JWT token中
+            const updateResult = get().updateUser({ avatar: fallbackUrl })
+            
+            if (updateResult.success) {
+              console.log('✅ 最终降级头像已更新到JWT token中')
+            }
             
             return { 
               success: true, 

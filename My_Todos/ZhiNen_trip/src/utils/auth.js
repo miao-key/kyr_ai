@@ -120,9 +120,13 @@ export const generateAvatarUrl = (user) => {
     return user.avatar
   }
   
-  // 使用用户名生成默认头像
-  const seed = user?.username || user?.email || 'default'
-  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`
+  // 使用用户ID和用户名生成稳定的默认头像
+  // 确保头像在刷新后保持一致
+  const seed = user?.id ? `${user.id}_${user.username || user.email || 'default'}` : (user?.username || user?.email || 'default')
+  const stableSeed = encodeURIComponent(seed)
+  
+  // 添加额外参数确保头像稳定性
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${stableSeed}&backgroundColor=b6e3f4,c0aede,d1d4f9&randomizeIds=false`
 }
 
 /**

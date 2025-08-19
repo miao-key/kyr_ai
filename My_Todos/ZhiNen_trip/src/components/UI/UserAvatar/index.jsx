@@ -30,8 +30,9 @@ const UserAvatar = ({
   // 头像源优先级：用户自定义头像 > 生成头像 > 本地占位符
   const getAvatarSrc = () => {
     if (imgError || !userInfo.avatar) {
-      // 使用本地生成的SVG头像作为fallback
-      return imageUtils.placeholder(size, size, userInfo.nickname || '用户')
+      // 使用本地生成的SVG头像作为fallback，确保稳定性
+      const stableSeed = user?.id || user?.username || userInfo.nickname || '用户'
+      return imageUtils.placeholder(size, size, stableSeed)
     }
     return userInfo.avatar
   }

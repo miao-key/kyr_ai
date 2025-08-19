@@ -413,13 +413,15 @@ const Account = () => {
         const reader = new FileReader()
         reader.onload = (e) => {
             if (isMountedRef.current) {
-                // 使用认证系统更新用户头像
+                // 使用认证系统更新用户头像，确保保存到JWT token中
                 const result = updateUser({ avatar: e.target.result })
                 if (result.success) {
+                    console.log('✅ 头像已通过文件上传更新到JWT token中')
                     setTimeout(() => {
                         safeNotify.success('头像更新成功！')
                     }, 100)
                 } else {
+                    console.error('❌ 头像更新失败:', result.error)
                     safeNotify.fail('头像更新失败')
                 }
             }
