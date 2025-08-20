@@ -1,5 +1,5 @@
 export const config = { 
-  runtime: 'nodejs',
+  runtime: 'nodejs18.x',
   maxDuration: 10
 }
 

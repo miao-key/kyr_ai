@@ -7,7 +7,7 @@
     "dev": "vite",
     "start": "vite",
     "build": "vite build",
-    "build:prod": "NODE_ENV=production vite build",
+    "build:prod": "vite build --mode production",
     "build:analyze": "ANALYZE=true vite build",
     "build:test": "node build-test.js",
     "build:report": "vite build && npx serve dist",
@@ -17,7 +17,7 @@
     "performance:test": "node -e \"import('./src/utils/performanceTest.js').then(m => m.quickPerformanceTest())\"",
     "performance:mid": "node -e \"import('./src/utils/midPriorityTest.js').then(m => m.quickMidPriorityTest())\"",
     "size:analyze": "vite build --mode analyze",
-    "vercel-build": "npm run build:prod"
+    "vercel-build": "npm run build"
   },
   "dependencies": {
     "@react-vant/icons": "^0.1.0",
