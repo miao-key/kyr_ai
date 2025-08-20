@@ -3,7 +3,7 @@
  * 简化逻辑，专注于核心功能
  */
 
-import { useEffect, useRef, useCallback, memo } from 'react'
+import React, { useEffect, useRef, useCallback, memo } from 'react'
 import { useWaterfallStore } from '../../stores'
 import { useThrottle } from '@/hooks'
 import { LazyImage, LoadingSpinner, EmptyState } from '@/components/UI'

@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import React, { memo } from 'react'
 import { useAuthStore } from '../../../stores'
 import { Navigate, useLocation } from 'react-router-dom'
 import { LoadingSpinner } from '@components/UI'

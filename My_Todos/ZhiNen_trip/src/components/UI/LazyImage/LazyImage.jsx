@@ -10,7 +10,7 @@
  * - 内存优化
  */
 
-import { useState, useRef, useEffect, useCallback, memo } from 'react'
+import React, { useState, useRef, useEffect, useCallback, memo } from 'react'
 import PropTypes from 'prop-types'
 import styles from './lazy-image.module.css'
 

@@ -1,4 +1,4 @@
-import { useMemo, memo } from 'react'
+import React, { useMemo, memo } from 'react'
 import { Loading } from 'react-vant'
 import PropTypes from 'prop-types'
 import styles from './loading-spinner.module.css'

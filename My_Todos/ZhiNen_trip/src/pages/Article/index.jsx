@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, memo, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useCallback, memo, useMemo } from 'react'
 import { Image, Loading, Empty, Button } from 'react-vant'
 import { LikeO, Star, ChatO, Location, Edit } from '@react-vant/icons'
 import { useNavigate } from 'react-router-dom'
