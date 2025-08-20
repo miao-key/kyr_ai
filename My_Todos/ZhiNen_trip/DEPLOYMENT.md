@@ -169,7 +169,7 @@ Access to fetch blocked by CORS policy
 当前配置的服务区域：
 - `hkg1` - 香港 (主要)
 - `sin1` - 新加坡 (备用)  
-- `nrt1` - 东京 (备用)
+- `hnd1` - 东京 (备用)
 
 ### 3. 监控告警
 建议设置以下监控告警：

@@ -57,6 +57,6 @@
   "env": {
     "NODE_ENV": "production"
   },
-  "regions": ["hkg1", "sin1", "nrt1"]
+  "regions": ["hkg1", "sin1", "hnd1"]
 }
 
