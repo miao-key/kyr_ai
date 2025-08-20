@@ -1,9 +1,9 @@
 {
   "version": 2,
-  "buildCommand": "pnpm install --registry=https://registry.npmmirror.com/ && pnpm build",
+  "buildCommand": "npm config set registry https://registry.npmmirror.com/ && npm install && npm run build",
   "outputDirectory": "dist",
-  "installCommand": "pnpm install --registry=https://registry.npmmirror.com/ --network-timeout=300000",
-  "devCommand": "pnpm dev",
+  "installCommand": "npm config set registry https://registry.npmmirror.com/ && npm install --registry=https://registry.npmmirror.com/ --timeout=300000",
+  "devCommand": "vite",
   "framework": "vite",
   "functions": {},
   "rewrites": [
@@ -24,6 +24,7 @@
     }
   ],
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "NPM_CONFIG_REGISTRY": "https://registry.npmmirror.com/"
   }
 }
