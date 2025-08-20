@@ -45,7 +45,7 @@
     "rollup-plugin-visualizer": "^6.0.3",
     "terser": "^5.43.1",
     "vite": "^6.3.5",
-    "vite-plugin-chunk-split": "^0.5.0",
+
     "vite-plugin-mock": "^3.0.2"
   },
   "browserslist": [

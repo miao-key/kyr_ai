@@ -248,7 +248,7 @@ VITE_PAT_TOKEN=your-coze-pat-token-here
 - **响应式设计**: 适配常见移动设备
 
 ### 构建优化
-- **代码分割**: vite-plugin-chunk-split
+- **代码分割**: Vite 内置 manualChunks
 - **打包分析**: rollup-plugin-visualizer
 - **性能测试**: 内置性能测试脚本
 - **压缩优化**: Terser压缩
