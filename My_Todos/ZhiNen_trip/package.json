@@ -7,6 +7,7 @@
     "dev": "vite",
     "start": "vite",
     "build": "vite build",
+    "build:prod": "NODE_ENV=production vite build",
     "build:analyze": "ANALYZE=true vite build",
     "build:test": "node build-test.js",
     "build:report": "vite build && npx serve dist",
@@ -15,7 +16,8 @@
     "lint:fix": "eslint . --fix",
     "performance:test": "node -e \"import('./src/utils/performanceTest.js').then(m => m.quickPerformanceTest())\"",
     "performance:mid": "node -e \"import('./src/utils/midPriorityTest.js').then(m => m.quickMidPriorityTest())\"",
-    "size:analyze": "vite build --mode analyze"
+    "size:analyze": "vite build --mode analyze",
+    "vercel-build": "pnpm install --registry=https://registry.npmmirror.com/ && pnpm build:prod"
   },
   "dependencies": {
     "@react-vant/icons": "^0.1.0",
@@ -52,5 +54,10 @@
     "> 1%",
     "last 2 versions",
     "not dead"
-  ]
+  ],
+  "packageManager": "pnpm@9.15.2",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=9.0.0"
+  }
 }

@@ -1,62 +1,29 @@
 {
+  "version": 2,
+  "buildCommand": "pnpm install --registry=https://registry.npmmirror.com/ && pnpm build",
+  "outputDirectory": "dist",
+  "installCommand": "pnpm install --registry=https://registry.npmmirror.com/ --network-timeout=300000",
+  "devCommand": "pnpm dev",
+  "framework": "vite",
+  "functions": {},
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "functions": {
-    "api/coze/workflow/run.js": {
-      "maxDuration": 60
-    },
-    "api/doubao/v3/images/generations.js": {
-      "maxDuration": 30
-    },
-    "api/pexels/[...path].js": {
-      "maxDuration": 10
-    }
-  },
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        },
-        {
-          "key": "Access-Control-Allow-Methods",
-          "value": "GET, POST, PUT, DELETE, OPTIONS"
-        },
-        {
-          "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization, X-Requested-With"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        }
-      ]
-    },
     {
       "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
       "headers": [
         {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "Referrer-Policy",
-          "value": "origin-when-cross-origin"
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
         }
       ]
     }
   ],
   "env": {
     "NODE_ENV": "production"
-  },
-  "regions": ["hkg1"]
+  }
 }
-
