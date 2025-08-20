@@ -5,7 +5,7 @@
   "installCommand": "npm config set registry https://registry.npmmirror.com/ && npm install --registry=https://registry.npmmirror.com/ --timeout=300000",
   "devCommand": "vite",
   "framework": "vite",
-  "functions": {},
+
   "rewrites": [
     {
       "source": "/(.*)",
