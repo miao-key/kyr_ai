@@ -1,11 +1,15 @@
 {
   "version": 2,
-  "buildCommand": "npm config set registry https://registry.npmmirror.com/ && npm install && npm run build",
+  "buildCommand": "npm install --legacy-peer-deps --registry=https://registry.npmmirror.com/ && npm run build:prod",
   "outputDirectory": "dist",
-  "installCommand": "npm config set registry https://registry.npmmirror.com/ && npm install --registry=https://registry.npmmirror.com/ --timeout=300000",
+  "installCommand": "npm install --legacy-peer-deps --registry=https://registry.npmmirror.com/",
   "devCommand": "vite",
-  "framework": "vite",
-
+  "framework": null,
+  "functions": {
+    "api/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
   "rewrites": [
     {
       "source": "/(.*)",
@@ -25,6 +29,8 @@
   ],
   "env": {
     "NODE_ENV": "production",
-    "NPM_CONFIG_REGISTRY": "https://registry.npmmirror.com/"
+    "NPM_CONFIG_REGISTRY": "https://registry.npmmirror.com/",
+    "NPM_CONFIG_LEGACY_PEER_DEPS": "true",
+    "NPM_CONFIG_FORCE": "false"
   }
 }

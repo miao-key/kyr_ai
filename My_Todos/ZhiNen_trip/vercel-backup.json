@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install --force --registry=https://registry.npmmirror.com/",
+  "devCommand": "vite",
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production",
+    "NPM_CONFIG_REGISTRY": "https://registry.npmmirror.com/",
+    "NPM_CONFIG_FORCE": "true"
+  }
+}

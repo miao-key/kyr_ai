@@ -17,7 +17,7 @@
     "performance:test": "node -e \"import('./src/utils/performanceTest.js').then(m => m.quickPerformanceTest())\"",
     "performance:mid": "node -e \"import('./src/utils/midPriorityTest.js').then(m => m.quickMidPriorityTest())\"",
     "size:analyze": "vite build --mode analyze",
-    "vercel-build": "pnpm install --registry=https://registry.npmmirror.com/ && pnpm build:prod"
+    "vercel-build": "npm run build:prod"
   },
   "dependencies": {
     "@react-vant/icons": "^0.1.0",
@@ -47,7 +47,6 @@
     "rollup-plugin-visualizer": "^6.0.3",
     "terser": "^5.43.1",
     "vite": "^6.3.5",
-
     "vite-plugin-mock": "^3.0.2"
   },
   "browserslist": [
@@ -58,6 +57,9 @@
   "packageManager": "pnpm@9.15.2",
   "engines": {
     "node": ">=18.0.0",
-    "pnpm": ">=9.0.0"
+    "npm": ">=8.0.0"
+  },
+  "overrides": {
+    "@eslint-community/eslint-utils": "^4.4.0"
   }
 }
