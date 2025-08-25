@@ -31,3 +31,14 @@
     b 放到 b 下面
     a 放到 b 下面
     一起打个包，成为一个文件
+
+## webpack 和vite 的区别
+- index.html 没有type="module" 怕浏览器不支持
+
+        html-webpack-plugin html template 在哪？
+    - devServer:    
+        http server 细节
+    web bundler 一切静态资源皆可打包
+    vite 快，不需要打包，但是有兼容性，生态、定制性不如webpack
+    webpack 打包，慢一点，但是兼容性好，生态丰富，可为
+    大型项目定制，有很长时间的业务验证。
