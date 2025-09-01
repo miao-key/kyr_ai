@@ -10,6 +10,7 @@ export const client = new OpenAI({
 })
 
 // 计算向量的余弦相似度
+
 export const cosineSimilarity = (v1, v2) => {
     // 计算向量的点积
     const dotProduct = v1.reduce((acc, curr, i) => acc + curr * v2[i], 0);
