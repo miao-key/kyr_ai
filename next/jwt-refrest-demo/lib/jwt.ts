@@ -2,8 +2,8 @@ import {
     SignJWT,
     jwtVerify
 } from 'jose';
-import { 
-    cookies 
+import {
+    cookies
 } from 'next/headers';
 
 const getJwtSecretKey = (() => {
@@ -40,21 +40,33 @@ export const createTokens = async (userId: number) => {
     }
 }
 
-export const setAuthCookie = async (accessToken: string,
+export const setAuthCookies = async (accessToken: string, 
     refreshToken: string) => {
-    const cookieStore =  await cookies();
-    cookieStore.set('accessToken', accessToken, {
-        // 黑客XSS 攻击 js 试图获得cookie
+    const cookieStore = await cookies();
+    console.log('//////////////////')
+    cookieStore.set('access_token', accessToken, {
+        // 黑客XSS 攻击 js  试图获得cookie 
         httpOnly: true, // 不能用javascript 操作cookie
         maxAge: 60*15,
         sameSite: 'strict',
         path: '/'
-    })
-    
-    cookieStore.set('refresh_Token', refreshToken, {
-        httpOnly: true,
-        maxAge: 60*60*24*7,
+    });
+    cookieStore.set('refresh_token', refreshToken, {
+        // 黑客XSS 攻击 js  试图获得cookie 
+        httpOnly: true, // 不能用javascript 操作cookie
+        maxAge: 60*60*24*7, // 7 天
         sameSite: 'strict',
         path: '/'
     })
+}
+
+export const verifyToken = async (token: string) => {
+    try {
+        const { payload } = await jwtVerify(token, 
+            getJwtSecretKey()
+        )
+        return payload;
+    } catch(error) {
+        return null
+    }
 }

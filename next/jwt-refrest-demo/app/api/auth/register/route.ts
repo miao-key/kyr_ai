@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
         }
 
         if (!password || !passwordRegex.test(password)) {
-            return Response.json(
+            return NextResponse.json(
                 { error: '密码需6-18位，且不能全为数字' },
                 { status: 400 }
             )

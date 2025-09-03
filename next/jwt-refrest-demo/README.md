@@ -88,6 +88,10 @@ bcryptjs 是一个纯 JavaScript 实现的密码哈希库，用于安全地加�
     - response.next() 放行
     - response.redirect() 跳转
 
+    - 通过jwt verify 方法拿到payload后，添加了自定义的请求头
+        x-user-id
+        后续页面就可以拿到这个值
+
 - JWT 的构成
     - 头部
         签名算法 HS256
@@ -114,5 +118,22 @@ bcryptjs 是一个纯 JavaScript 实现的密码哈希库，用于安全地加�
         data: {}
     })
 
+## 大文件上传
+当文件比较大的时候，由于各种原因，容易失败，而且上传速度慢。
+一旦失败，需要重新上传，会让用户沮丧。
+
+采用分片上传策略（并发，并发限流），将文件切分为多个小块并行上传，提升稳定性和效率。
+上传前通过Web Worker 计算文件整体以及分片的 hash，想服务器校验，若文件已存在则直接秒传。
+前端记录上传进度和已成功分片，支持断点续传。服务器按序接受分片，存储后进行合并，
+并检验最终文件的完整性，结合唯一标志和分片索引，确保上传可靠。整个过程配合进度条和错误重试机制，提升用户体验与系统健壮性。
+
+- worker hash计算
+- 性能优化
+    上传文件的处理函数 handleFile 使用 useCallback 缓存，避免重复创建
+- typescript 的 使用
+    - 主线程和worker 线程间的通信，数据约定
+    HashWorkerIn
+    HashWorkerOut
+    as 断言
 
 npx create-next-app@latest jwt-refrest-demo

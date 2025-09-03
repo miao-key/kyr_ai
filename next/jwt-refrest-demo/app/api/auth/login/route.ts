@@ -13,7 +13,7 @@ import bcrypt from 'bcryptjs';
 import {
     createTokens
 } from '@/lib/jwt';
-import { setAuthCookie } from '@/lib/jwt';
+import { setAuthCookies } from '@/lib/jwt';
 
 export async function POST(request: NextRequest) {
     try {
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
         })
 
         // 设置 Cookie
-        await setAuthCookie(accessToken, refreshToken);
+        await setAuthCookies(accessToken, refreshToken);
 
         return response;
 
