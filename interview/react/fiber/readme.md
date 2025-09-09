@@ -38,3 +38,24 @@
 - requestIdleCallback 时间不定，16.67ms (刷帧) - 优先任务的耗时 = 本次执行时间
 - 没有fiber react 组件一多，就会卡，fiber 解决性能问题，主要通过中断渲染，保障用户交互流畅，解决大型应用阻塞主线程的问题。
 - fiber 机制 中断渲染，保障用户交互流畅，解决大型应用阻塞主线程的问题。
+- fiber 节点，react 渲染的工作单元
+
+## Render分成两个阶段
+    - 渲染阶段 构建新的虚拟dom树,diff patchess []
+    - 提交阶段 把改变应用到DOM上
+
+## diff 算法
+- 同层级比较 不然时间复杂度是O(n^3)
+    - ABCDE  EABCD
+    DOM 开销比较大
+    diff 算法除了考虑本身的时间复杂度之外，还要考虑一个因素：DOM操作的次数。
+    移动操作比新增+删除操作要少，所以diff 算法会优先考虑移动操作。
+    insertBefore
+- 简单diff算法
+    ABCD DCAB
+    多节点diff 算法的目的是为了尽量复用节点，通过移动节点代替创建。
+
+    ABEC  ABC
+     new  newChildren[i]
+     newChildren[i-1] B
+     newChildren[i-1].nextSibling C
