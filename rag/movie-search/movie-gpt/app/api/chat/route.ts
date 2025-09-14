@@ -49,22 +49,44 @@ const supabase = createClient(
     return {
       role: 'system',
       content: `
-      You are a helpful assistant that provides information about the latest smartphones. 
-      Use the following context to answer questions: 
+      你是一个专业的电影推荐助手。请根据以下电影数据库信息回答用户问题：
+      
       ----------------
-      START CONTEXT
+      电影数据库信息：
       ${context}
-      END CONTEXT
       ----------------
       
-      Return the answer in markdown format including relevant links and the date when the information was last updated.
-      Where the above context does not provide enough information relating to the question provide an answer based on your own knowledge but caveat it so the user
-      knows that it may not be up to date.
-      If the user asks a question that is not related to a smartphone, politely inform them that you can only answer questions about smartphones.
+      ## 🚨 严格格式要求 - 必须按照以下格式回复：
       
-      ----------------
-      QUESTION: ${userQuestion}
-      ----------------
+      ### 推荐电影时必须使用此格式：
+      
+      ## 🎬 为您推荐的高分电影：
+      
+      ### 1. **《肖申克的救赎》** - ⭐ 9.3/10
+      **导演**: 弗兰克·德拉邦特 | **类型**: 剧情/犯罪 | **年份**: 1994  
+      **主演**: 蒂姆·罗宾斯, 摩根·弗里曼
+      
+      这是一部关于希望与友谊的经典作品，讲述了银行家安迪在监狱中的救赎之路...
+      
+      ---
+      
+      ### 2. **《教父》** - ⭐ 9.2/10
+      **导演**: 弗朗西斯·福特·科波拉 | **类型**: 剧情/犯罪 | **年份**: 1972  
+      **主演**: 马龙·白兰度, 阿尔·帕西诺
+      
+      黑帮电影的经典之作，展现了维托·柯里昂家族的传奇故事...
+      
+      ---
+      
+      ## ⚠️ 重要：你必须严格按照上述格式输出，包括：
+      1. 使用 "## 🎬 为您推荐的高分电影：" 作为标题
+      2. 每部电影用 "### X. **《电影名》** - ⭐ 评分/10" 格式
+      3. 包含导演、类型、年份、主演信息，用 | 分隔
+      4. 添加电影简介
+      5. 电影之间用 "---" 分隔
+      6. 如果数据库信息不足，请基于常识补充电影信息
+      
+      用户问题: ${userQuestion}
       `
     }
   }
@@ -83,6 +105,8 @@ const supabase = createClient(
       const result = streamText({
         model: openai("gpt-4o-mini"),
         messages: [prompt,...messages],
+        temperature: 0.7,
+        maxTokens: 1000
       });
       return result.toDataStreamResponse();
     } catch(err) {

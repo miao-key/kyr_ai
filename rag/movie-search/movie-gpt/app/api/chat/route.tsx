@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     const result = await streamText({
       model: openai("gpt-3.5-turbo"),
       messages: messages,
-      system: '你是一个有用的AI助手，请根据用户的问题提供准确、有帮助的回答。',
+      system: '你是一个回答有关电影方面的AI助手，请根据用户的问题提供准确、有帮助的回答。',
     });
 
     return result.toDataStreamResponse();
