@@ -1,4 +1,4 @@
-# movieGPT
+# CuisineGPT
 
 - chatbot
   组件、tailwindcss  messages
