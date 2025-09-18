@@ -10,3 +10,13 @@
   - 左侧 物料区域
   - 中间 编辑区域
   - 右侧 配置区域
+- 模块化开发
+  - components
+    - header
+    - Material
+    - EditArea
+    - Setting
+
+- zustand 状态管理
+  - json 数据，低代码编辑的本质
+  
