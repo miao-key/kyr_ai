@@ -53,9 +53,10 @@ vercel --prod
 ### 🔧 配置文件说明
 
 #### vercel.json
-- 配置构建和路由规则
-- 支持 SPA 路由
+- 现代化的 Vercel 配置格式
+- 支持 SPA 路由（使用 rewrites）
 - 静态资源缓存优化
+- 兼容最新版本 Vercel
 
 #### vite.config.ts
 - 优化构建配置
@@ -93,10 +94,16 @@ vercel --prod
 
 ### 🔍 故障排除
 
+#### "functions" 和 "builds" 冲突错误
+如果遇到 `"functions"属性不能与"builds"属性一起使用` 错误：
+- 使用现代化的 `vercel.json` 配置（已修复）
+- 避免同时使用旧版 `builds` 和新版 `functions`
+
 #### 构建失败
 - 检查依赖版本兼容性
 - 确保 TypeScript 编译无错误
 - 查看构建日志
+- 确认使用正确的包管理器（pnpm）
 
 #### 路由问题
 - 确保 `vercel.json` 中的路由配置正确
