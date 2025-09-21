@@ -1,16 +1,8 @@
 import type {CommonComponentProps} from '../../interface';
-import {
-  useComponentsStore
-} from '../../stores/components';
-import {
-  useComponentConfigStore
-} from '../../stores/component-config';
 import {useMaterialDrop} from '../../hooks/useMaterialDrop';
 
 const Container = ({id,children}: CommonComponentProps) => {
-  const {addComponent} = useComponentsStore();
-  const {componentConfigs} = useComponentConfigStore();
-  const {canDrop,drop} = useMaterialDrop(['Button','Container'],id);
+  const {canDrop,drop} = useMaterialDrop(['Button','Container','Text','Input'],id);
   return (
     <div 
       ref={drop}

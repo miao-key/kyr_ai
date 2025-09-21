@@ -13,7 +13,7 @@ function Page({id,children}: CommonComponentProps) {
   
   const [{ canDrop }, drop] = useDrop(()=>({
     // 允许释放的元素
-    accept: ['Button','Container'],
+    accept: ['Button','Container','Text','Input'],
     drop: (item: {type: string},monitor)=>{
       const didDrop = monitor.didDrop();
       if (didDrop) {

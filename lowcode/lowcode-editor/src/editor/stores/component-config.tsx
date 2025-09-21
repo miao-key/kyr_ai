@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import Container from '../materials/Container';
 import Button from '../materials/Button';
 import Page from '../materials/Page';
+import Text from '../materials/Text';
+import Input from '../materials/Input';
 
 export interface ComponentConfig {
     name: string;
@@ -38,6 +40,27 @@ export const useComponentConfigStore = create<State & Action>((set) => ({
             name: 'Page',
             defaultProps: {},
             component: Page,
+        },
+        Text: {
+            name: 'Text',
+            defaultProps: {
+                content: '文本内容',
+                fontSize: 14,
+                color: '#000000',
+                bold: false,
+                italic: false,
+            },
+            component: Text,
+        },
+        Input: {
+            name: 'Input',
+            defaultProps: {
+                placeholder: '请输入内容',
+                disabled: false,
+                size: 'middle',
+                type: 'text',
+            },
+            component: Input,
         },
     },
     // 添加配置

@@ -85,8 +85,18 @@ export const useComponentsStore = create<State & Action>(
                 }
             });
         },
-        updateComponentProps: (_componentId: number, _props: any) => {
-            // TODO: 实现更新组件属性逻辑
+        updateComponentProps: (componentId: number, props: any) => {
+            set((state) => {
+                const component = getComponentById(componentId, state.components);
+                if (component) {
+                    component.props = {
+                        ...component.props,
+                        ...props
+                    };
+                    return { components: [...state.components] };
+                }
+                return state;
+            });
         },
     })
   )
