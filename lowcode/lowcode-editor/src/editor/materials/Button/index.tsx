@@ -1,16 +1,21 @@
 import { Button as AntdButton } from 'antd';
-// button type primary|default|text
-import  type { ButtonType } from 'antd/es/button';
+import { forwardRef } from 'react';
+import type { ButtonType } from 'antd/es/button';
+import type { CommonComponentProps } from '../../interface';
 
-export interface ButtonProps {
+export interface ButtonProps extends Omit<CommonComponentProps, 'children'> {
   type: ButtonType;
   text: string;
 }
 
-const Button = ({ type, text }:ButtonProps) => {
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(({ type, text, id, name, ...props }, ref) => {
   return (
-    <AntdButton type={type}>{text}</AntdButton>
+    <AntdButton ref={ref} type={type} {...props}>
+      {text}
+    </AntdButton>
   )
-}
+})
+
+Button.displayName = 'Button';
 
 export default Button;

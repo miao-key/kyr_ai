@@ -1,13 +1,16 @@
 import type {CommonComponentProps} from '../../interface';
-  import {useDrop} from 'react-dnd';
-  import {useComponentsStore} from '../../stores/components';
-  import {
-    useComponentConfigStore
-  } from '../../stores/component-config';
-  
-  function Page({id,children,name}: CommonComponentProps) {
+import {useDrop} from 'react-dnd';
+import {useRef} from 'react';
+import {useComponentsStore} from '../../stores/components';
+import {
+  useComponentConfigStore
+} from '../../stores/component-config';
+
+function Page({id,children}: CommonComponentProps) {
   const {addComponent} = useComponentsStore();
   const {componentConfigs} = useComponentConfigStore();
+  const ref = useRef<HTMLDivElement>(null);
+  
   const [{ canDrop }, drop] = useDrop(()=>({
     // 允许释放的元素
     accept: ['Button','Container'],
@@ -37,13 +40,17 @@ import type {CommonComponentProps} from '../../interface';
       canDrop: monitor.canDrop()
     })
   }))
+
+  // 连接 drop ref
+  drop(ref);
+  
   return (
     <div 
-      ref={drop} 
+      ref={ref} 
       className={`p-[20px] h-[100%] box-border ${canDrop ? 'bg-blue-50 border-2 border-dashed border-blue-300' : ''}`}
     >
       {children}
     </div>
   )
-  }
-  export default Page;
+}
+export default Page;

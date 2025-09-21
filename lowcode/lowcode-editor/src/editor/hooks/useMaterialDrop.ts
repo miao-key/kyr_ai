@@ -1,4 +1,5 @@
 import { useDrop } from "react-dnd";
+import { useRef } from "react";
 import { useComponentConfigStore } from "../stores/component-config";
 import { useComponentsStore } from "../stores/components";
 
@@ -7,6 +8,8 @@ export function useMaterialDrop(accept: string[], id: number) {
         addComponent
     } = useComponentsStore();
     const { componentConfigs } = useComponentConfigStore();
+    const ref = useRef<HTMLDivElement>(null);
+    
     const [{ canDrop }, drop] = useDrop(()=>({
         accept,
         drop: (item: {type: string},monitor)=>{
@@ -24,8 +27,12 @@ export function useMaterialDrop(accept: string[], id: number) {
             canDrop: monitor.canDrop()
         })
     }))
+
+    // 连接 drop ref
+    drop(ref);
+    
     return {
         canDrop,
-        drop
+        drop: ref
     }
 }

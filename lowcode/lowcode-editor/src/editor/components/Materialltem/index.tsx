@@ -1,10 +1,14 @@
 import { useDrag } from 'react-dnd';
+import { useRef } from 'react';
+
 export interface MaterialItemProps {
   name: string;
 }
 
 export function MaterialItem(props: MaterialItemProps) {
   const { name } = props;
+  const ref = useRef<HTMLDivElement>(null);
+  
   const [{ isDragging }, drag] = useDrag({
     type: name,
     // 数据项
@@ -15,8 +19,12 @@ export function MaterialItem(props: MaterialItemProps) {
       isDragging: monitor.isDragging()
     })
   });
+
+  // 连接 drag ref
+  drag(ref);
+  
   return <div
-            ref={drag}
+            ref={ref}
             className={`
               border-dashed
               border-[1px]
