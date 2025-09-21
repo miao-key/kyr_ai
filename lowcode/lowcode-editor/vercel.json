@@ -4,19 +4,12 @@
   "installCommand": "pnpm install --frozen-lockfile",
   "devCommand": "pnpm run dev",
   "framework": "vite",
-  "nodejs": "20.x",
-  "crons": [],
   "env": {
     "NODE_ENV": "production"
   },
   "build": {
     "env": {
       "NODE_ENV": "production"
-    }
-  },
-  "functions": {
-    "app/api/**/*.js": {
-      "runtime": "nodejs20.x"
     }
   },
   "rewrites": [
