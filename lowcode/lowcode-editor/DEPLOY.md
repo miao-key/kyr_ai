@@ -1,5 +1,16 @@
 # Vercel 部署指南
 
+## 📋 部署前检查清单 (2025版)
+
+- [ ] 代码已推送到 GitHub
+- [ ] 所有依赖已正确安装
+- [ ] `pnpm-lock.yaml` 已提交到仓库
+- [ ] 本地构建成功 (`pnpm run build`)
+- [ ] 环境变量已配置
+- [ ] TypeScript 编译无错误
+- [ ] Node.js 版本与 `.nvmrc` 一致 (20.x)
+- [ ] 安全头配置已启用
+
 ## 🚀 快速部署到 Vercel
 
 ### 前提条件
@@ -99,6 +110,26 @@ vercel --prod
 - 使用现代化的 `vercel.json` 配置（已修复）
 - 避免同时使用旧版 `builds` 和新版 `functions`
 
+#### TypeScript 编译错误 (TS18003)
+如果遇到 `No inputs were found in config file` 错误：
+- 已优化 TypeScript 配置文件兼容性
+- 移除了较新的编译器选项，使用更稳定的配置
+- 指定 Node.js 20.x 版本确保环境一致性
+
+#### 依赖安装问题
+如果遇到依赖相关错误：
+- 确保 `pnpm-lock.yaml` 已提交到仓库
+- 使用 `--frozen-lockfile` 确保依赖版本一致
+- 检查 Node.js 版本是否与 `.nvmrc` 一致
+
+#### 安全头配置
+现已启用完整的安全头配置：
+- `X-Content-Type-Options`: 防止 MIME 类型嗅探
+- `X-Frame-Options`: 防止点击劫持
+- `X-XSS-Protection`: 防止 XSS 攻击
+- `Referrer-Policy`: 控制引用信息泄露
+- `Permissions-Policy`: 限制浏览器功能访问
+
 #### 构建失败
 - 检查依赖版本兼容性
 - 确保 TypeScript 编译无错误
@@ -153,3 +184,32 @@ Vercel 免费版提供：
 - 全球 CDN 加速
 
 享受你的低代码编辑器吧！ 🚀
+
+---
+
+## 🏆 2025年最佳实践
+
+### 性能优化
+- ✅ 使用 Node.js 20.x (LTS) 获得最佳性能
+- ✅ 启用 `--frozen-lockfile` 确保构建一致性
+- ✅ 优化资源缓存策略（静态资源1年缓存）
+- ✅ 压缩和优化构建输出
+
+### 安全性
+- ✅ 完整的安全头配置 (CSP, XSS, CSRF 防护)
+- ✅ 严格的内容类型检查
+- ✅ 防止点击劫持和内容嗅探
+- ✅ 限制浏览器权限访问
+
+### 可维护性
+- ✅ 版本锁定 (pnpm-lock.yaml)
+- ✅ 环境一致性 (.nvmrc)
+- ✅ 构建前检查脚本
+- ✅ 详细的部署日志和监控
+
+## 🔗 相关链接
+
+- [Vercel 官方文档](https://vercel.com/docs)
+- [Vite 部署指南](https://vitejs.dev/guide/static-deploy.html#vercel)
+- [React 部署最佳实践](https://react.dev/learn/start-a-new-react-project#deploying-to-production)
+- [Node.js 20.x 发布说明](https://nodejs.org/en/blog/release/v20.0.0)

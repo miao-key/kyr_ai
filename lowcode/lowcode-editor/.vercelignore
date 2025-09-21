@@ -2,8 +2,8 @@
 node_modules/
 .pnpm-store/
 
-# Development files
-src/
+# Development files (keep src/ for build)
+# src/
 .env.local
 .env.development.local
 .env.test.local
@@ -49,3 +49,26 @@ temp/
 
 # Optional eslint cache
 .eslintcache
+
+# Test files
+__tests__/
+tests/
+test/
+*.test.js
+*.test.ts
+*.test.tsx
+*.spec.js
+*.spec.ts
+*.spec.tsx
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Config files that aren't needed for build
+.eslintrc*
+.prettierrc*
+.editorconfig
+jest.config.*
+vitest.config.*
