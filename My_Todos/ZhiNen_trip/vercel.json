@@ -1,7 +1,7 @@
 {
   "buildCommand": "pnpm run build",
   "outputDirectory": "dist",
-  "installCommand": "pnpm install --frozen-lockfile",
+  "installCommand": "pnpm install --frozen-lockfile --prod=false",
   "devCommand": "pnpm run dev",
   "framework": "vite",
   "env": {
