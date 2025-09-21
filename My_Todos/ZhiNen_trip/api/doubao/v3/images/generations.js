@@ -41,9 +41,30 @@ export default async function handler(req, res) {
     const result = await response.text()
     const duration = Date.now() - startTime
     
-    console.log(`✅ 豆包图片生成完成，耗时: ${duration}ms`)
+    console.log(`豆包API响应状态: ${response.status}`)
+    console.log(`豆包图片生成耗时: ${duration}ms`)
 
-    res.status(response.status).json(JSON.parse(result))
+    // 如果不是200状态，记录错误信息
+    if (!response.ok) {
+      console.error(`豆包API错误 ${response.status}:`, result)
+      return res.status(response.status).json({
+        error: `Doubao API Error: ${response.status}`,
+        message: result
+      })
+    }
+
+    // 尝试解析JSON
+    try {
+      const parsedResult = JSON.parse(result)
+      res.status(response.status).json(parsedResult)
+    } catch (parseError) {
+      console.error('JSON解析失败:', parseError.message)
+      console.error('原始响应:', result)
+      res.status(500).json({
+        error: 'Invalid JSON response',
+        raw_response: result
+      })
+    }
   } catch (err) {
     console.error('❌ 豆包图片生成失败:', err)
     res.status(500).json({ error: err.message || 'Internal Error' })
