@@ -1,6 +1,4 @@
-import React,{
-    useEffect
-} from 'react';
+import React from 'react';
 import {
     type Component,
     useComponentsStore
@@ -8,7 +6,7 @@ import {
 import { useComponentConfigStore } from '../../stores/component-config';
 
 export function EditArea() {
-    const { components, addComponent,deleteComponent } = useComponentsStore();
+    const { components } = useComponentsStore();
     const { componentConfigs } = useComponentConfigStore();
     
     // useEffect(() => {
