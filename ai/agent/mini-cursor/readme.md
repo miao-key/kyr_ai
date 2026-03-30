@@ -39,10 +39,18 @@
 
 ### Langchain
 AI Agent 框架 提供了 memory tool rag
-后端功底(node)
+后端功底(node) nest.js
 
 AI Agent 全栈开发
 
+## LLM with Tools
+
+-llm 选择 
+    qwen-coder
+- tools
+    [read,write,exec]
 
 
 
+npm init -y
+pnpm i @langchain/openai
