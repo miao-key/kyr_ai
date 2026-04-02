@@ -1,25 +1,18 @@
 import {
   useEffect
 } from 'react';
+import {
+  chat
+} from './api/index';
+import { useGitDiff } from './hooks/useGitDiff.js';
 
 export default function App() {
-  useEffect(() => {
-    fetch('http://localhost:3000/chat',{
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message: '你好',
-      }),
-    })
-    .then(data => {
-      console.log(data);
-    })
-  },[]);
+  // console.log(useGitDiff);
+  const {loading, content} = useGitDiff();
+  
   return (
     <div className="flex">
-    
+      {loading ? 'loading...' : content}
     </div>
   )
 }

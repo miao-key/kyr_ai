@@ -1,4 +1,5 @@
 import express from 'express'; // 引入后端框架
+import cors from 'cors'; // 引入跨域模块
 // langchain 支持ollama
 import { ChatOllama } from '@langchain/ollama';
 // 提示词模板
@@ -14,15 +15,16 @@ const model = new ChatOllama({
 })
 
 const app = express(); // server app
+// 使用 json 解析中间件服务
+app.use(express.json());
+// 跨域配置中间件
+app.use(cors());
 
 // 路由  get method path /hello
 // req 请求对象 res 响应对象
 app.get('/hello', (req, res) => {
   res.send('Hello World');
 })
-
-// 使用 json 解析中间件服务
-app.use(express.json());
 
 app.post('/chat',async (req, res) => {
     //处理函数
