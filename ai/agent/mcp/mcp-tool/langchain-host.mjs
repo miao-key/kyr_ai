@@ -19,21 +19,20 @@ const model = new ChatOpenAI({
     }
 });
 
-const tools = await mcpClient.getTools();
-console.log(tools,'////');
-const modelWithTools = model.bindTools(tools);
-
 // client
 const mcpClient = new MultiServerMCPClient({
     mcpServers: {
         'my-mcp-server': {
             command: 'node',
             args: [
-                'Users/chenxiang/Desktop/ai/agent/mini-cursor/mcp/mcp-tool/mcp-server.mjs'
+                'C:/Users/why/Desktop/lesson_ai/ai/agent/mcp/mcp-tool/my-mcp-server.mjs'
             ],
         },
     }
 });
+
+const tools = await mcpClient.getTools();
+const modelWithTools = model.bindTools(tools);
 
 async function runAgentWithTools(query, maxIterations = 30) {
     const messages = [
@@ -54,8 +53,8 @@ async function runAgentWithTools(query, maxIterations = 30) {
         console.log(chalk.bgBlue(`工具调用：${response.tool_calls.map(t => t.name).join(', ')}`));
         for (const toolCall of response.tool_calls) {
             const found = tools.find(t => t.name === toolCall.name);
-            if (foundTool) {
-                const toolResult = await foundTool.invoke(toolCall.args);
+            if (found) {
+                const toolResult = await found.invoke(toolCall.args);
                 messages.push(new ToolMessage({
                     content: toolResult,
                     tool_call_id: toolCall.id,
