@@ -40,6 +40,16 @@ Model Context Protocol Anthropic
 - Anthropic 24 年底 25底 贡献给开源社区
 - sdk @modelcontextprotocol/sdk
 
+- 为什么mcp 需要配置？
+    - cursor/trea 编程Agent 支持MCP client
+    - 读取mcp.json 需要的mcp tool
+    - 手写 MCP tool
+        - Client/Server 架构
+        - tool 的基础上加上MCP 规范
+        - tool 需要一个server 容器 @modelcontextprotocol/mcp/server... 提供
+        - refisterTool
+        - connect transport
+
 ## mcp 三者关系
 
 - mcp hosts
