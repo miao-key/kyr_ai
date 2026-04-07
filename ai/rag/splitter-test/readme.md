@@ -32,3 +32,11 @@
 - RecursiveCharacterTextSplitter
     更人性化，更努力
     尝试其他符号时，语义就弱下来了，overlap 来弥补一下
+
+四种 TextSplitter 子类的对比实验:
+
+  CharacterTextSplitter — 按单个字符（或字符串）分隔符切割，最简单
+  RecursiveCharacterTextSplitter — 按优先级 ["\n", "。", "？", "!", "，"] 递归切割，语义保持更好，通过 overlap 弥补切割痕迹
+  TokenTextSplitter — 按 token 数量切割，使用 tiktoken 的 cl100k_base 编码，适合 LLM 上下文窗口限制
+  通过 tiktoken 验证每个 chunk 的字符数与 token 数对应关系
+  核心知识点：chunkSize 控制块大小、chunkOverlap 控制重叠、separators 控制语义切割优先级
