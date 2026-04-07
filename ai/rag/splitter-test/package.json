@@ -1,0 +1,18 @@
+{
+  "name": "splitter-test",
+  "version": "1.0.0",
+  "description": "- loader 加载的大Document @langchain/community\r     paf doc 不是一个类型\r - RecursiveCharacterTextSplitter \r     Text\r - splitter\r     character 按这个切  符合语义\r     [\"。\",\"？\",\"!\",\"，\"]\r     优先级 。最优先\r     chunk_size 的靠近 递归的尝试，? !\r     保持语义\r     切断 overlap 牺牲一定的空间 (chunk_size 10%) 重复",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@langchain/core": "^1.1.39",
+    "@langchain/textsplitters": "^1.0.1",
+    "dotenv": "^17.4.1",
+    "tiktoken": "^1.0.22"
+  }
+}
